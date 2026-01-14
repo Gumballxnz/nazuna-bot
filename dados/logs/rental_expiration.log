@@ -1,0 +1,4 @@
+[2026-01-12T14:58:06.644Z] Scheduler started with interval: 0 */6 * * *
+[2026-01-12T14:58:06.644Z] RentalExpirationManager initialized successfully
+[2026-01-12T15:00:00.060Z] Starting rental expiration check...
+[2026-01-12T15:00:00.064Z] Rental check completed. Processed: 0, Warnings: 0, Final Warnings: 0, Expired: 0. Duration: 4ms

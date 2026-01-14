@@ -1479,6 +1479,7 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 process.on('uncaughtException', async (error) => {
     console.error('🚨 Erro não capturado:', error.message);
+    console.error(error.stack);
     
     if (error.message.includes('ENOSPC') || error.message.includes('ENOMEM')) {
         try {
@@ -1487,6 +1488,9 @@ process.on('uncaughtException', async (error) => {
             console.error('❌ Falha na limpeza de emergência:', cleanupErr.message);
         }
     }
+    
+    // Força o encerramento para que o PM2/start.js possa reiniciar limpo
+    process.exit(1);
 });
 
 export { rentalExpirationManager, messageQueue };

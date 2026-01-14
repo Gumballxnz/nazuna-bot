@@ -28113,6 +28113,30 @@ case 'divulgar':
           await reply("Ocorreu um erro ao alterar o prefixo 💔");
         }
         break;
+      case 'globalprefix':
+        try {
+          if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
+          if (!q) return reply(`Por favor, forneça o novo prefixo global.\nExemplo: ${prefix}globalprefix .`);
+          
+          let newPrefix = q.trim();
+          
+          if (newPrefix.length > 1) {
+            return reply("🤔 O prefixo deve ter no máximo 1 digito.");
+          }
+          if (newPrefix.includes(' ')) {
+            return reply("🤔 O prefixo não pode conter espaços.");
+          }
+
+          // Atualiza config em memória e no arquivo
+          config.prefixo = newPrefix;
+          writeJsonFile(CONFIG_FILE, config);
+          
+          await reply(`✅ Prefixo global do bot alterado para "${newPrefix}"!\n\n⚠️ Nota: Grupos com prefixo personalizado continuarão usando o prefixo deles.`);
+        } catch (e) {
+          console.error('Erro no comando globalprefix:', e);
+          await reply("Ocorreu um erro ao alterar o prefixo global 💔");
+        }
+        break;
       case 'antiflood':
         try {
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
