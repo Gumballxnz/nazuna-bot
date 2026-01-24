@@ -23307,10 +23307,13 @@ Precisa de ajuda? Entre em contato:
       case 'seradm':
         try {
           if (!isOwner) return reply("Este comando é apenas para o meu dono");
+          if (!isGroup) return reply("Este comando só pode ser usado em grupos!");
+          if (!isBotGroupAdmin) return reply("Preciso ser administrador do grupo para te promover! 👮‍♀️");
           await nazu.groupParticipantsUpdate(from, [sender], "promote");
+          await reply("👑 Pronto! Você agora é administrador.");
         } catch (e) {
           console.error(e);
-          await reply("❌ Ocorreu um erro interno. Tente novamente em alguns minutos.");
+          await reply("❌ Ocorreu um erro ao tentar te promover. Verifique se já sou admin ou se houve algum problema de conexão.");
         }
         break;
       case 'sermembro':
@@ -27608,11 +27611,11 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de São P
       case 'sorteio':
         try {
           if (!isGroup) return reply("Este comando só pode ser usado em grupos 💔");
-          
+
           let path = pathz.join(GRUPOS_DIR, `${from}.json`);
           // Otimização: Usar cache para leitura de arquivo
           let data = await optimizer.loadJsonWithCache(path, { mark: {} });
-          
+
           let participants = [];
           let usingList = false;
 
@@ -27626,10 +27629,10 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de São P
           }
 
           if (participants.length < 2) {
-             return reply(usingList ? 
-                '❌ A lista de sorteio tem poucos participantes (mínimo 2)!' : 
-                '❌ Preciso de pelo menos 2 membros válidos no grupo para realizar o sorteio!'
-             );
+            return reply(usingList ?
+              '❌ A lista de sorteio tem poucos participantes (mínimo 2)!' :
+              '❌ Preciso de pelo menos 2 membros válidos no grupo para realizar o sorteio!'
+            );
           }
 
           let numVencedores = parseInt(q) || 1;
@@ -27645,7 +27648,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de São P
             membrosDisponiveis.splice(indice, 1);
           }
           const vencedoresText = vencedores.map((v, i) => `🏆 *#${i + 1}* - @${getUserName(v)}`).join('\n');
-          
+
           await reply(`🎉 *Resultado do Sorteio${usingList ? ' (Da Lista)' : ''}* 🎉\n\n${vencedoresText}`, {
             mentions: vencedores
           });
@@ -27659,24 +27662,24 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de São P
       case 'entrarnalista':
       case 'participar':
         try {
-           if (!isGroup) return reply("Este comando só funciona em grupos.");
-           
-           // Ensure array exists
-           if (!groupData.participationList) groupData.participationList = [];
-           
-           if (groupData.participationList.includes(sender)) {
-               return reply(`✅ @${getUserName(sender)}, você já está na lista de sorteio!`, { mentions: [sender] });
-           }
-           
-           groupData.participationList.push(sender);
-           const gpPath = buildGroupFilePath(from);
-           writeJsonFile(gpPath, groupData);
-           if (typeof optimizer !== 'undefined' && optimizer.invalidateJson) optimizer.invalidateJson(gpPath);
-           
-           await reply(`✅ @${getUserName(sender)} foi adicionado à lista de sorteio!`, { mentions: [sender] });
+          if (!isGroup) return reply("Este comando só funciona em grupos.");
+
+          // Ensure array exists
+          if (!groupData.participationList) groupData.participationList = [];
+
+          if (groupData.participationList.includes(sender)) {
+            return reply(`✅ @${getUserName(sender)}, você já está na lista de sorteio!`, { mentions: [sender] });
+          }
+
+          groupData.participationList.push(sender);
+          const gpPath = buildGroupFilePath(from);
+          writeJsonFile(gpPath, groupData);
+          if (typeof optimizer !== 'undefined' && optimizer.invalidateJson) optimizer.invalidateJson(gpPath);
+
+          await reply(`✅ @${getUserName(sender)} foi adicionado à lista de sorteio!`, { mentions: [sender] });
         } catch (e) {
-           console.error('Erro no addonlist:', e);
-           await reply("❌ Erro ao entrar na lista.");
+          console.error('Erro no addonlist:', e);
+          await reply("❌ Erro ao entrar na lista.");
         }
         break;
 
@@ -27684,38 +27687,38 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de São P
       case 'verlista':
       case 'listaparticipantes':
         try {
-           if (!isGroup) return reply("Este comando só funciona em grupos.");
-           if (!groupData.participationList || groupData.participationList.length === 0) {
-               return reply("📜 A lista de sorteio está vazia no momento.");
-           }
-           
-           let listText = "📝 *Lista de Participantes do Sorteio:*\n\n";
-           groupData.participationList.forEach((id, index) => {
-               listText += `${index + 1}. @${getUserName(id)}\n`;
-           });
-           
-           await reply(listText, { mentions: groupData.participationList });
+          if (!isGroup) return reply("Este comando só funciona em grupos.");
+          if (!groupData.participationList || groupData.participationList.length === 0) {
+            return reply("📜 A lista de sorteio está vazia no momento.");
+          }
+
+          let listText = "📝 *Lista de Participantes do Sorteio:*\n\n";
+          groupData.participationList.forEach((id, index) => {
+            listText += `${index + 1}. @${getUserName(id)}\n`;
+          });
+
+          await reply(listText, { mentions: groupData.participationList });
         } catch (e) {
-           console.error('Erro no seelist:', e);
-           await reply("❌ Erro ao ver a lista.");
+          console.error('Erro no seelist:', e);
+          await reply("❌ Erro ao ver a lista.");
         }
         break;
 
       case 'clearlist':
       case 'limparlista':
         try {
-           if (!isGroup) return reply("Este comando só funciona em grupos.");
-           if (!isGroupAdmin) return reply("Apenas administradores podem limpar a lista.");
-           
-           groupData.participationList = [];
-           const gpPath = buildGroupFilePath(from);
-           writeJsonFile(gpPath, groupData);
-           if (typeof optimizer !== 'undefined' && optimizer.invalidateJson) optimizer.invalidateJson(gpPath);
-           
-           await reply("✅ Lista de sorteio limpa com sucesso!");
+          if (!isGroup) return reply("Este comando só funciona em grupos.");
+          if (!isGroupAdmin) return reply("Apenas administradores podem limpar a lista.");
+
+          groupData.participationList = [];
+          const gpPath = buildGroupFilePath(from);
+          writeJsonFile(gpPath, groupData);
+          if (typeof optimizer !== 'undefined' && optimizer.invalidateJson) optimizer.invalidateJson(gpPath);
+
+          await reply("✅ Lista de sorteio limpa com sucesso!");
         } catch (e) {
-           console.error('Erro no clearlist:', e);
-           await reply("❌ Erro ao limpar a lista.");
+          console.error('Erro no clearlist:', e);
+          await reply("❌ Erro ao limpar a lista.");
         }
         break;
       case 'totag':
@@ -28342,15 +28345,15 @@ Exemplos:
           const statusAtual = groupData.modobrincadeira ? 'LIGADO ✅' : 'DESLIGADO ❌';
 
           if (args === 'on' || args === 'ligar' || args === 'ativar') {
-             groupData.modobrincadeira = true;
-             writeJsonFile(groupFilePath, groupData);
-             await reply('🎉 *Modo de Brincadeiras ATIVADO!*\n\nAgora o grupo está no modo de brincadeiras. Divirta-se!');
+            groupData.modobrincadeira = true;
+            writeJsonFile(groupFilePath, groupData);
+            await reply('🎉 *Modo de Brincadeiras ATIVADO!*\n\nAgora o grupo está no modo de brincadeiras. Divirta-se!');
           } else if (args === 'off' || args === 'desligar' || args === 'desativar') {
-             groupData.modobrincadeira = false;
-             writeJsonFile(groupFilePath, groupData);
-             await reply('⚠️ *Modo de Brincadeiras DESATIVADO!*\n\nO grupo não está mais no modo de brincadeiras.');
+            groupData.modobrincadeira = false;
+            writeJsonFile(groupFilePath, groupData);
+            await reply('⚠️ *Modo de Brincadeiras DESATIVADO!*\n\nO grupo não está mais no modo de brincadeiras.');
           } else {
-             await reply(`ℹ️ *Status do Modo Brincadeiras*\n\nEstado Atual: *${statusAtual}*\n\nPara alterar, use:\n✅ *${prefix}brincadeiras on* (Para ligar)\n❌ *${prefix}brincadeiras off* (Para desligar)`);
+            await reply(`ℹ️ *Status do Modo Brincadeiras*\n\nEstado Atual: *${statusAtual}*\n\nPara alterar, use:\n✅ *${prefix}brincadeiras on* (Para ligar)\n❌ *${prefix}brincadeiras off* (Para desligar)`);
           }
         } catch (e) {
           console.error(e);
@@ -34260,7 +34263,8 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
         }
         const msgPrefix = loadMsgPrefix();
         if (['prefix', 'prefixo'].includes(budy2) && msgPrefix) {
-          await reply(msgPrefix.replace('#prefixo#', prefix));
+          const displayPrefix = groupData?.customPrefix || prefix;
+          await reply(msgPrefix.replace('#prefixo#', displayPrefix));
         };
         const customReacts = loadCustomReacts();
         for (const react of customReacts) {

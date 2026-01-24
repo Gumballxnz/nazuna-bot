@@ -96,7 +96,7 @@ class RelationshipManager {
   _formatDate(dateValue) {
     const date = new Date(dateValue);
     if (Number.isNaN(date.getTime())) return null;
-    return date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    return date.toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' });
   }
 
   hasPendingRequest(groupId) {
@@ -253,14 +253,14 @@ class RelationshipManager {
           message: `Vocês já são casados desde ${dateText}.`
         };
       }
-      
+
       if (currentStatus !== 'namoro') {
         return {
           allowed: false,
           message: 'Vocês precisam estar namorando para casar.'
         };
       }
-      
+
       const since = pair.stages?.namoro?.since;
       if (!since) {
         return {
@@ -268,7 +268,7 @@ class RelationshipManager {
           message: 'Vocês precisam estar namorando para casar. O registro do namoro não foi encontrado.'
         };
       }
-      
+
       const sinceTime = Date.parse(since);
       if (Number.isNaN(sinceTime)) {
         return {
@@ -276,7 +276,7 @@ class RelationshipManager {
           message: 'Não foi possível validar a data do namoro. Reinicie o namoro antes de casar.'
         };
       }
-      
+
       const elapsed = Date.now() - sinceTime;
       if (elapsed < MARRIAGE_REQUIRED_MS) {
         return {
@@ -284,7 +284,7 @@ class RelationshipManager {
           message: `Vocês precisam namorar por mais ${this._formatDuration(MARRIAGE_REQUIRED_MS - elapsed)} antes de casar.`
         };
       }
-      
+
       return { allowed: true };
     }
 
@@ -521,7 +521,7 @@ class RelationshipManager {
     if (pair.status && TYPE_CONFIG[pair.status]) {
       const statusConfig = TYPE_CONFIG[pair.status];
       lines.push(`${statusConfig.emoji} Status atual: ${statusConfig.label}`);
-      
+
       const statusSince = pair.stages?.[pair.status]?.since;
       if (statusSince) {
         const formatted = this._formatDate(statusSince);
@@ -742,7 +742,7 @@ class RelationshipManager {
   // Cria pedido de traição
   createBetrayalRequest(userId, targetId, groupId, prefix = '/') {
     const userActivePair = this.getActivePairForUser(userId);
-    
+
     if (!userActivePair) {
       return {
         success: false,
@@ -784,7 +784,7 @@ class RelationshipManager {
 
     const now = Date.now();
     const betrayalKey = `${groupId}:${userId}:${targetId}:${now}`;
-    
+
     const betrayalRequest = {
       userId,
       targetId,
@@ -814,7 +814,7 @@ class RelationshipManager {
 
     const data = this._loadData();
     const currentPair = data.pairs[userKey];
-    
+
     if (!currentPair || !currentPair.status) {
       return {
         success: false,
@@ -825,10 +825,10 @@ class RelationshipManager {
 
     // Verifica se o alvo também está em um relacionamento
     const targetActivePair = this.getActivePairForUser(targetId);
-    
+
     let targetInRelationship = false;
     let targetPartner = null;
-    
+
     if (targetActivePair) {
       targetInRelationship = true;
       targetPartner = targetActivePair.partnerId;
@@ -914,7 +914,7 @@ class RelationshipManager {
 
     const data = this._loadData();
     const pair = data.pairs[key];
-    
+
     if (!pair || !pair.status) {
       return {
         success: false,
@@ -923,7 +923,7 @@ class RelationshipManager {
     }
 
     const betrayals = (pair.history || []).filter(h => h.type === 'traicao');
-    
+
     if (betrayals.length === 0) {
       return {
         success: true,
@@ -935,7 +935,7 @@ class RelationshipManager {
 
     const partnerA = getUserName(userA);
     const partnerB = getUserName(userB);
-    
+
     const lines = [
       '📜 *HISTÓRICO DE TRAIÇÕES*',
       '',
@@ -949,7 +949,7 @@ class RelationshipManager {
       const victimName = getUserName(betrayal.victim);
       const accompliceName = getUserName(betrayal.accomplice);
       const date = this._formatDate(betrayal.date);
-      
+
       lines.push(`${index + 1}. 😈 @${traitorName} traiu @${victimName}`);
       lines.push(`   👤 Com: @${accompliceName}`);
       lines.push(`   📅 Data: ${date || 'N/A'}`);

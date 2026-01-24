@@ -21,7 +21,7 @@ class RentalExpirationManager {
       logFile: config.logFile || path.join(__dirname, '../logs/rental_expiration.log'),
       ...config
     };
-    
+
     this.isRunning = false;
     this.lastCheckTime = null;
     this.stats = {
@@ -38,13 +38,13 @@ class RentalExpirationManager {
       // Ensure logs directory exists
       const logDir = path.dirname(this.config.logFile);
       await fs.mkdir(logDir, { recursive: true });
-      
+
       // Start the scheduler
       this.startScheduler();
-      
+
       // Log initialization
       await this.log('RentalExpirationManager initialized successfully');
-      
+
       return true;
     } catch (error) {
       console.error('❌ Failed to initialize RentalExpirationManager:', error);
@@ -62,12 +62,12 @@ class RentalExpirationManager {
       await this.checkExpiredRentals();
     }, {
       scheduled: false,
-      timezone: 'America/Sao_Paulo'
+      timezone: 'Africa/Maputo'
     });
 
     this.cronJob.start();
     this.isRunning = true;
-    
+
     this.log('Scheduler started with interval: ' + this.config.checkInterval);
   }
 
@@ -79,7 +79,7 @@ class RentalExpirationManager {
     if (this.cronJob) {
       this.cronJob.stop();
     }
-    
+
     this.isRunning = false;
     this.log('Scheduler stopped');
   }
@@ -88,7 +88,7 @@ class RentalExpirationManager {
     try {
       const startTime = Date.now();
       await this.log('Starting rental expiration check...');
-      
+
       this.stats.totalChecks++;
       this.lastCheckTime = new Date();
 
@@ -164,7 +164,7 @@ class RentalExpirationManager {
   async processExpiredRental(groupId, groupInfo, rentalData) {
     try {
       const groupMetadata = await this.nazu.groupMetadata(groupId).catch(() => null);
-      
+
       if (!groupMetadata) {
         await this.log(`Group ${groupId} not found, removing from rental data`);
         delete rentalData.groups[groupId];
@@ -208,7 +208,7 @@ class RentalExpirationManager {
       // Also send to group admins
       const participants = groupMetadata.participants || [];
       const admins = participants.filter(p => p.admin === true);
-      
+
       for (const admin of admins) {
         await this.nazu.sendMessage(admin.id, {
           text: message
@@ -228,7 +228,7 @@ class RentalExpirationManager {
     const groupName = groupMetadata.subject;
     const ownerName = ownerInfo.name;
     const ownerNumber = ownerInfo.number;
-    
+
     let header, message, instructions, footer;
 
     switch (type) {
@@ -237,19 +237,19 @@ class RentalExpirationManager {
         message = `O aluguel do grupo *${groupName}* está prestes a expirar em ${daysUntilExpiry} dia${daysUntilExpiry > 1 ? 's' : ''}!`;
         instructions = `Para renovar, entre em contato com o dono do bot ou use um código de aluguel válido.`;
         break;
-      
+
       case 'final':
         header = '🚨 ÚLTIMO AVISO';
         message = `O aluguel do grupo *${groupName}* expira amanhã!`;
         instructions = `Ação necessária: Renove o aluguel imediatamente para evitar que o bot saia do grupo.`;
         break;
-      
+
       case 'expired':
         header = '❌ ALUGUEL EXPIRADO';
         message = `O aluguel do grupo *${groupName}* expirou e o bot está configurado para sair em breve.`;
         instructions = `Para continuar usando o bot, renove o aluguel entrando em contato com o dono.`;
         break;
-      
+
       default:
         header = '📢 INFORMAÇÃO';
         message = `Atualização sobre o status do aluguel do grupo *${groupName}*`;
@@ -305,7 +305,7 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
 
       // Leave the group
       await this.nazu.groupLeave(groupId);
-      
+
       // Remove from rental data
       const rentalData = await this.loadRentalData();
       if (rentalData.groups && rentalData.groups[groupId]) {
@@ -374,7 +374,7 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
     try {
       const DONO_DIR = path.join(__dirname, '../../database/dono');
       const ALUGUEIS_FILE = path.join(DONO_DIR, 'alugueis.json');
-      
+
       // Check if file exists
       try {
         await fs.access(ALUGUEIS_FILE);
@@ -400,7 +400,7 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
     try {
       const DONO_DIR = path.join(__dirname, '../../database/dono');
       const ALUGUEIS_FILE = path.join(DONO_DIR, 'alugueis.json');
-      
+
       await fs.writeFile(ALUGUEIS_FILE, JSON.stringify(data, null, 2));
       return true;
     } catch (error) {
@@ -413,7 +413,7 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
     try {
       const timestamp = new Date().toISOString();
       const logEntry = `[${timestamp}] ${message}\n`;
-      
+
       await fs.appendFile(this.config.logFile, logEntry, 'utf8');
     } catch (error) {
       console.error('❌ Error writing to log file:', error);

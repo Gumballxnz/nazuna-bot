@@ -1,10 +1,11 @@
 {
   "prefixo": "/",
   "nomebot": "nazuna",
-  "nomedono": "Dono",
+  "nomedono": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
   "numerodono": "258879116693",
   "debug": false,
   "apikey": "",
   "botNumber": "258858148698",
-  "lidowner": "159034049044504@lid"
+  "lidowner": "159034049044504@lid",
+  "timezone": "Africa/Maputo"
 }
