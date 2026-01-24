@@ -27157,7 +27157,7 @@ ${prefix}togglecmdvip premium_ia off`);
           // (Re)agendar job em memória
           try { scheduleGroupJob(from, 'open', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar open cron:', e); }
 
-          let msg = `✅ Agendamento salvo! O grupo será ABERTO todos os dias às ${normalizedTime} (horário de São Paulo).`;
+          let msg = `✅ Agendamento salvo! O grupo será ABERTO todos os dias às ${normalizedTime} (horário de Moçambique).`;
           if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar a abertura no horário.';
           await reply(msg);
         } catch (e) {
@@ -27215,7 +27215,7 @@ ${prefix}togglecmdvip premium_ia off`);
           // (Re)agendar job em memória
           try { scheduleGroupJob(from, 'close', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar close cron:', e); }
 
-          let msg = `✅ Agendamento salvo! O grupo será FECHADO todos os dias às ${normalizedTime} (horário de São Paulo).`;
+          let msg = `✅ Agendamento salvo! O grupo será FECHADO todos os dias às ${normalizedTime} (horário de Moçambique).`;
           if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar o fechamento no horário.';
           await reply(msg);
         } catch (e) {
@@ -27389,7 +27389,7 @@ A mensagem será enviada todos os dias no horário especificado.`);
 📝 Tipo: ${msgConfig.type}
 📋 Descrição: ${description}
 
-A mensagem será enviada todos os dias às ${normalizedTime} (horário de São Paulo).`);
+A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçambique).`);
               break;
 
             case 'list':
