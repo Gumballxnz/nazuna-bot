@@ -1,0 +1,35 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-08T20:27:32.846Z",
+  "groupName": "Face2FaceClub 🥵🔥🔞",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "79358597304565@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "Helton Simão",
+      "firstSeen": "2026-02-08T20:27:32.852Z",
+      "lastActivity": "2026-02-08T20:27:37.616Z"
+    },
+    {
+      "id": "38393400578295@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "cleyton",
+      "firstSeen": "2026-02-08T20:30:08.429Z",
+      "lastActivity": "2026-02-08T20:30:08.429Z"
+    }
+  ]
+}

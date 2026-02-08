@@ -1,0 +1,33 @@
+
+                    <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta http-equiv="refresh" content="2">
+                            <title>Nazuna Bot - QR Code</title>
+                            <style>
+                                body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: #f0f2f5; }
+                                .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+                                h1 { color: #333; margin-bottom: 20px; }
+                                p { color: #666; margin-top: 20px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h1>🤖 Escaneie o QR Code</h1>
+                                <div id="qrcode"></div>
+                                <p>Atualiza automaticamente a cada 2 segundos...</p>
+                            </div>
+                            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                            <script>
+                                new QRCode(document.getElementById("qrcode"), {
+                                    text: "2@noJUto9LQ9u0NXXCXGut/AKl/1VNPijdAsKKwCd3LhwPl3caSXBhSVN489guQ2MUc+LhQdKP7aOXNiyYnxCdsJtRmVNY02J5xkE=,ktk86K0rdtfdMMsh6muVBfADRn8r3urx72u9Ux9fJ0M=,Nn/0XJtQ6vzgajPUZdbg3ft61o5I9ak2Jb3aGpFSKF0=,RJz/TbKNHsQOaZMuKyRgLTlFJmEVXfWymcYYSoNDKUs=",
+                                    width: 256,
+                                    height: 256,
+                                    colorDark : "#000000",
+                                    colorLight : "#ffffff",
+                                    correctLevel : QRCode.CorrectLevel.H
+                                });
+                            </script>
+                        </body>
+                    </html>
+                

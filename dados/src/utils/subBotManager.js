@@ -1,5 +1,5 @@
-import a, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from 'whaileys';
-const makeWASocket = a.default;
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys';
+
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
 import pino from 'pino';
@@ -87,7 +87,7 @@ function createSubBotDirectories(botId) {
     const donoDir = path.join(databaseDir, 'dono');
 
     const dirs = [botDir, authDir, databaseDir, gruposDir, usersDir, donoDir];
-    
+
     dirs.forEach(dir => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
@@ -109,26 +109,26 @@ function createSubBotDirectories(botId) {
  */
 function createSubBotConfig(botId, phoneNumber, ownerNumber) {
     const dirs = createSubBotDirectories(botId);
-    
+
     // Config baseado no principal
     const mainConfigPath = path.join(__dirname, '../config.json');
     let mainConfig = {};
-    
+
     try {
         mainConfig = JSON.parse(fs.readFileSync(mainConfigPath, 'utf-8'));
     } catch (error) {
         console.error('Erro ao ler config principal:', error);
     }
 
-        const config = {
+    const config = {
         numerodono: ownerNumber || mainConfig.numerodono || '',
         nomedono: mainConfig.nomedono || 'Dono',
         nomebot: `SubBot ${botId.substring(0, 8)}`,
         prefixo: mainConfig.prefixo || '!',
         apikey: mainConfig.apikey || '',
         debug: false,
-    // Se ownerNumber já for um LID, persiste aqui; index.js deve passar LID para manter DB consistente
-    lidowner: ownerNumber && ownerNumber.includes('@lid') ? ownerNumber : '',
+        // Se ownerNumber já for um LID, persiste aqui; index.js deve passar LID para manter DB consistente
+        lidowner: ownerNumber && ownerNumber.includes('@lid') ? ownerNumber : '',
         botNumber: phoneNumber
     };
 
@@ -148,7 +148,7 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
         console.log(`🤖 Inicializando sub-bot ${botId}...`);
 
         const { config, dirs } = createSubBotConfig(botId, phoneNumber, ownerNumber);
-        
+
         const { state, saveCreds } = await useMultiFileAuthState(dirs.authDir, makeCacheableSignalKeyStore);
         const version = [2, 3000, 1030831524];
 
@@ -177,16 +177,16 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
         // Aguarda a conexão abrir antes de solicitar pairing code
         if (generatePairingCode && !sock.authState.creds.registered) {
             const cleanPhone = phoneNumber;
-            
+
             console.log(`⏳ Aguardando socket inicializar...`);
-            
+
             // Aguarda um pouco para o socket estar pronto
             await new Promise(resolve => setTimeout(resolve, 3000));
-            
+
             try {
                 // Agora solicita o código
                 pairingCode = await sock.requestPairingCode(cleanPhone);
-                
+
                 console.log(`🔑 Código de pareamento gerado para ${phoneNumber}: ${pairingCode}`);
 
                 // Salva informações do sub-bot
@@ -210,7 +210,7 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
 
             if (connection === 'open') {
                 console.log(`✅ Sub-bot ${botId} conectado com sucesso!`);
-                
+
                 const subbots = loadSubBots();
                 if (subbots[botId]) {
                     subbots[botId].status = 'conectado';
@@ -225,7 +225,7 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
                     subbots[botId].number = botNum;
                     saveSubBots(subbots);
                 }
- 
+
                 activeSubBots.set(botId, sock);
             }
 
@@ -269,53 +269,53 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
         // Handler de mensagens - processa comandos
         sock.ev.on('messages.upsert', async (m) => {
             if (!m.messages || m.type !== 'notify') return;
-            
+
             try {
                 for (const info of m.messages) {
                     if (!info || !info.message || !info.key?.remoteJid) continue;
-                    
+
                     // Ignora mensagens próprias do bot
                     if (info.key.fromMe) continue;
-                    
+
                     console.log(`📨 Sub-bot ${botId} processando mensagem de ${info.key.remoteJid}`);
-                    
+
                     // Define o caminho do config do sub-bot temporariamente
                     const originalConfigPath = process.env.CONFIG_PATH;
                     const originalDatabasePath = process.env.DATABASE_PATH;
                     const originalIsSubbot = process.env.IS_SUBBOT;
                     const originalSubbotId = process.env.SUBBOT_ID;
-                    
+
                     const subBotConfigPath = path.join(dirs.databaseDir, 'config.json');
-                    
+
                     // IMPORTANTE: Define as variáveis ANTES de importar qualquer módulo
                     process.env.CONFIG_PATH = subBotConfigPath;
                     process.env.DATABASE_PATH = dirs.databaseDir;
                     process.env.IS_SUBBOT = 'true';
                     process.env.SUBBOT_ID = botId;
-                    
+
                     try {
                         // Carrega o módulo de processamento (import dinâmico)
                         // As variáveis de ambiente devem estar definidas antes deste import
                         const indexModule = await import('../index.js');
-                        
+
                         // Obtém a função default exportada
                         const NazuninhaBotExec = indexModule.default || indexModule;
-                        
+
                         if (typeof NazuninhaBotExec !== 'function') {
                             console.error(`❌ Erro: NazuninhaBotExec não é uma função. Tipo: ${typeof NazuninhaBotExec}`);
                             console.error(`Módulo importado:`, Object.keys(indexModule));
                             continue;
                         }
-                        
+
                         // Cria um cache simples para este sub-bot usando Map (compatível com bot principal)
                         const messagesCache = new Map();
-                        
+
                         // Chave composta: remoteJid_messageId para permitir filtrar por grupo
                         if (info.key?.id && info.key?.remoteJid) {
                             const cacheKey = `${info.key.remoteJid}_${info.key.id}`;
                             messagesCache.set(cacheKey, info);
                         }
-                        
+
                         // Processa a mensagem usando a mesma lógica do bot principal
                         await NazuninhaBotExec(sock, info, null, messagesCache, null);
                     } catch (importError) {
@@ -363,7 +363,7 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
  */
 async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
     try {
-    // Valida número
+        // Valida número
         const cleanPhone = phoneNumber.replace(/\D/g, '');
         if (!/^\d{10,15}$/.test(cleanPhone)) {
             return {
@@ -459,7 +459,7 @@ async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
 async function removeSubBot(botId) {
     try {
         const subbots = loadSubBots();
-        
+
         if (!subbots[botId]) {
             return {
                 success: false,
@@ -557,12 +557,12 @@ async function initializeAllSubBots() {
         let initialized = 0;
         for (const botId of keys) {
             const bot = subbots[botId];
-            
+
             // Só inicializa se não estiver ativo e se tiver credenciais salvas (já foi pareado)
             if (!activeSubBots.has(botId)) {
                 const authDir = path.join(SUBBOTS_DIR, botId, 'auth');
                 const credsFile = path.join(authDir, 'creds.json');
-                
+
                 // Verifica se já foi pareado (tem creds.json)
                 if (fs.existsSync(credsFile)) {
                     try {
@@ -592,7 +592,7 @@ async function initializeAllSubBots() {
 async function disconnectAllSubBots() {
     try {
         console.log('🛑 Desconectando todos os sub-bots...');
-        
+
         for (const [botId, sock] of activeSubBots.entries()) {
             try {
                 await sock.logout();
@@ -615,7 +615,7 @@ async function disconnectAllSubBots() {
 function getSubBotInfo(botId) {
     const subbots = loadSubBots();
     const bot = subbots[botId];
-    
+
     if (!bot) {
         return { success: false, message: '❌ Sub-bot não encontrado!' };
     }
@@ -636,7 +636,7 @@ async function reconnectSubBot(botId) {
     try {
         const subbots = loadSubBots();
         const bot = subbots[botId];
-        
+
         if (!bot) {
             return {
                 success: false,
@@ -674,10 +674,10 @@ async function reconnectSubBot(botId) {
 async function generatePairingCodeForSubBot(userLid) {
     try {
         const subbots = loadSubBots();
-        
+
         // Encontra o sub-bot pelo LID
         const botEntry = Object.entries(subbots).find(([_, bot]) => bot.subBotLid === userLid);
-        
+
         if (!botEntry) {
             return {
                 success: false,

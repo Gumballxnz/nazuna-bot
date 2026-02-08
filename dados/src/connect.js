@@ -1,5 +1,4 @@
-import a, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from 'whaileys';
-const makeWASocket = a.default;
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
 import readline from 'readline';
@@ -57,9 +56,9 @@ class MessageQueue {
                 timestamp: Date.now(),
                 id: `msg_${++this.idCounter}_${Date.now()}`
             });
-            
+
             this.stats.currentQueueLength = this.queue.length;
-            
+
             if (!this.isProcessing) {
                 this.startProcessing();
             }
@@ -68,7 +67,7 @@ class MessageQueue {
 
     startProcessing() {
         if (this.isProcessing) return;
-        
+
         this.isProcessing = true;
         // Usa processo recursivo em vez de setInterval para melhor performance
         this.processQueue();
@@ -116,11 +115,11 @@ class MessageQueue {
             await Promise.allSettled(
                 batches.map(batch => this.processBatch(batch))
             );
-            
+
             const batchDuration = Date.now() - batchStartTime;
             this.stats.batchesProcessed++;
-            this.stats.avgBatchTime = 
-                (this.stats.avgBatchTime * (this.stats.batchesProcessed - 1) + batchDuration) / 
+            this.stats.avgBatchTime =
+                (this.stats.avgBatchTime * (this.stats.batchesProcessed - 1) + batchDuration) /
                 this.stats.batchesProcessed;
         }
 
@@ -132,9 +131,9 @@ class MessageQueue {
     async processBatch(batchItems) {
         // Processa todas as mensagens do lote em paralelo
         const batchPromises = batchItems.map(item => this.processItem(item));
-        
+
         const results = await Promise.allSettled(batchPromises);
-        
+
         // Contabiliza resultados
         results.forEach((result, index) => {
             if (result.status === 'fulfilled') {
@@ -147,7 +146,7 @@ class MessageQueue {
 
     async processItem(item) {
         const { message, processor, resolve, reject } = item;
-        
+
         try {
             const result = await processor(message);
             resolve(result);
@@ -161,9 +160,9 @@ class MessageQueue {
 
     async handleProcessingError(item, error) {
         this.stats.totalErrors++;
-        
+
         console.error(`❌ Queue processing error for message ${item.id}:`, error.message);
-        
+
         if (this.errorHandler) {
             try {
                 await this.errorHandler(item, error);
@@ -171,7 +170,7 @@ class MessageQueue {
                 console.error('❌ Error handler failed:', handlerError.message);
             }
         }
-        
+
         item.reject(error);
     }
 
@@ -202,7 +201,7 @@ class MessageQueue {
         const seconds = Math.floor(ms / 1000);
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
-        
+
         if (hours > 0) {
             return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
         } else if (minutes > 0) {
@@ -227,19 +226,19 @@ class MessageQueue {
     async shutdown() {
         console.log('🛑 Finalizando MessageQueue...');
         this.stopProcessing();
-        
+
         // Aguarda workers ativos terminarem (timeout de 10s)
         const shutdownTimeout = 10000;
         const startTime = Date.now();
-        
+
         while (this.activeWorkers > 0 && (Date.now() - startTime) < shutdownTimeout) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
+
         if (this.activeWorkers > 0) {
             console.warn(`⚠️ ${this.activeWorkers} workers ainda ativos após timeout de shutdown`);
         }
-        
+
         this.clear();
         console.log('✅ MessageQueue finalizado');
     }
@@ -255,12 +254,12 @@ let DEBUG_MODE = false; // Modo debug para logs detalhados
 try {
     const configContent = readFileSync(configPath, "utf8");
     config = JSON.parse(configContent);
-    
+
     // Valida campos obrigatórios
     if (!config.prefixo || !config.nomebot || !config.numerodono) {
         throw new Error('Configuração inválida: campos obrigatórios ausentes (prefixo, nomebot, numerodono)');
     }
-    
+
     // Ativa modo debug se configurado
     DEBUG_MODE = config.debug === true || process.env.NAZUNA_DEBUG === '1';
     if (DEBUG_MODE) {
@@ -308,27 +307,27 @@ let messagesCache;
 async function initializeOptimizedCaches() {
     try {
         await performanceOptimizer.initialize();
-        
+
         // Inicializa índice de captcha para busca rápida
         await initCaptchaIndex();
-        
+
         msgRetryCounterCache = {
             get: (key) => performanceOptimizer.cacheGet('msgRetry', key),
             set: (key, value, ttl) => performanceOptimizer.cacheSet('msgRetry', key, value, ttl),
             del: (key) => performanceOptimizer.modules.cacheManager?.del('msgRetry', key)
         };
-        
+
         messagesCache = new Map();
-        
+
     } catch (error) {
         console.error('❌ Erro ao inicializar sistema de otimização:', error.message);
-        
+
         msgRetryCounterCache = new NodeCache({
             stdTTL: 5 * 60,
             useClones: false
         });
         messagesCache = new Map();
-        
+
     }
 }
 const codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE === '1';
@@ -337,14 +336,14 @@ const codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE
 let cacheCleanupInterval = null;
 const setupMessagesCacheCleanup = () => {
     if (cacheCleanupInterval) clearInterval(cacheCleanupInterval);
-    
+
     cacheCleanupInterval = setInterval(() => {
         if (!messagesCache || messagesCache.size <= 3000) return;
-        
+
         const keysToDelete = Math.floor(messagesCache.size * 0.4); // Remove 40% dos mais antigos
         const keys = Array.from(messagesCache.keys()).slice(0, keysToDelete);
         keys.forEach(key => messagesCache.delete(key));
-        
+
         console.log(`🧹 Cache limpo: ${keysToDelete} mensagens removidas (total: ${messagesCache.size})`);
     }, 300000); // A cada 5 minutos
 };
@@ -426,14 +425,16 @@ async function createGroupMessage(NazunaSock, groupMetadata, participants, setti
     };
     if (settings.image) {
         let profilePicUrl = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
-        if (participants.length === 1 && isWelcome) {
+        if (participants.length === 1) {
             profilePicUrl = await NazunaSock.profilePictureUrl(participants[0], 'image').catch(() => profilePicUrl);
         }
-       
-        const image = settings.image !== 'banner' ? {
+
+        const image = settings.image === 'banner' ? {
+            url: profilePicUrl
+        } : {
             url: settings.image
-        } : null;
-        
+        };
+
         if (image) {
             message.image = image;
             message.caption = text;
@@ -446,12 +447,12 @@ async function createGroupMessage(NazunaSock, groupMetadata, participants, setti
 async function handleGroupParticipantsUpdate(NazunaSock, inf) {
     try {
         const from = inf.id || inf.jid || (inf.participants && inf.participants.length > 0 ? inf.participants[0].split('@')[0] + '@s.whatsapp.net' : null);
-        
+
         if (DEBUG_MODE) {
             console.log('🐛 [handleGroupParticipantsUpdate] Processando evento...');
             console.log('🐛 Group ID extraído:', from);
         }
-        
+
         if (!from) {
             console.error('❌ Erro: ID do grupo não encontrado nos dados do evento.');
             if (DEBUG_MODE) {
@@ -465,7 +466,7 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
             console.warn('⚠️ Evento de participantes sem lista válida');
             return;
         }
-        
+
         // Ignora eventos do próprio bot
         const botId = NazunaSock.user.id.split(':')[0];
 
@@ -474,17 +475,17 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
         if (inf.participants.some(p => p && typeof p === 'string' && p.startsWith(botId))) {
             return;
         }
-            
+
         let groupMetadata = await NazunaSock.groupMetadata(from).catch(err => {
             console.error(`❌ Erro ao buscar metadados do grupo ${from}: ${err.message}`);
             return null;
         });
-        
+
         if (!groupMetadata) {
             console.error(`❌ Metadados do grupo ${from} não encontrados.`);
             return;
         }
-        
+
         const groupSettings = await loadGroupSettings(from);
         const globalBlacklist = await loadGlobalBlacklist();
         switch (inf.action) {
@@ -511,7 +512,7 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                     await NazunaSock.groupParticipantsUpdate(from, membersToRemove, 'remove').catch(err => {
                         console.error(`❌ Erro ao remover membros do grupo ${from}: ${err.message}`);
                     });
-                    
+
                     await NazunaSock.sendMessage(from, {
                         text: `🚫 Foram removidos ${membersToRemove.length} membros por regras de moderação:\n- ${removalReasons.join('\n- ')}`,
                         mentions: membersToRemove,
@@ -519,12 +520,12 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                         console.error(`❌ Erro ao enviar notificação de remoção: ${err.message}`);
                     });
                 }
-                
+
                 if (membersToWelcome.length > 0) {
                     const message = await createGroupMessage(NazunaSock, groupMetadata, membersToWelcome, groupSettings.welcome || {
                         text: groupSettings.textbv
                     });
-                    
+
                     await NazunaSock.sendMessage(from, message).catch(err => {
                         console.error(`❌ Erro ao enviar mensagem de boas-vindas: ${err.message}`);
                     });
@@ -556,7 +557,7 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
 async function handleGroupJoinRequest(NazunaSock, inf) {
     try {
         const from = inf.id;
-        
+
         if (DEBUG_MODE) {
             console.log('🐛 [handleGroupJoinRequest] Processando solicitação...');
             console.log('🐛 Group ID:', from);
@@ -566,25 +567,25 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
             console.log('🐛 Author:', inf.author);
             console.log('🐛 Method:', inf.method);
         }
-        
+
         if (!from) {
             if (DEBUG_MODE) console.log('🐛 Group ID não encontrado, abortando');
             return;
         }
-        
+
         const groupSettings = await loadGroupSettings(from);
-        
+
         if (DEBUG_MODE) {
             console.log('🐛 Group settings:');
             console.log('  - autoAcceptRequests:', groupSettings.autoAcceptRequests);
             console.log('  - captchaEnabled:', groupSettings.captchaEnabled);
             console.log('  - x9:', groupSettings.x9);
         }
-        
+
         // O participante pode vir como LID ou phone number
         const participantJid = inf.participantPn || inf.participant;
         const participantDisplay = participantJid ? participantJid.split('@')[0] : 'Desconhecido';
-        
+
         // Auto-aceitar se configurado e for uma nova solicitação
         if (groupSettings.autoAcceptRequests && inf.action === 'created' && participantJid) {
             try {
@@ -593,7 +594,7 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
                     const num1 = Math.floor(Math.random() * 10) + 1;
                     const num2 = Math.floor(Math.random() * 10) + 1;
                     const answer = num1 + num2;
-                    
+
                     // Salvar captcha pendente
                     if (!groupSettings.pendingCaptchas) groupSettings.pendingCaptchas = {};
                     groupSettings.pendingCaptchas[participantJid] = {
@@ -602,19 +603,19 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
                         timestamp: Date.now()
                     };
                     await saveGroupSettings(from, groupSettings);
-                    
+
                     // Enviar captcha no PV
                     await NazunaSock.sendMessage(participantJid, {
                         text: `🔐 *Verificação de Segurança*\n\nVocê solicitou entrar no grupo. Para ser aprovado, resolva esta conta:\n\n❓ Quanto é *${num1} + ${num2}*?\n\n⏱️ Você tem 5 minutos para responder.\n\n💡 Responda apenas com o número.`
                     }).catch(err => console.error(`❌ Erro ao enviar captcha: ${err.message}`));
-                    
+
                     // Auto-rejeitar após 5 minutos se não responder
                     setTimeout(async () => {
                         const currentSettings = await loadGroupSettings(from);
                         if (currentSettings.pendingCaptchas?.[participantJid]) {
                             delete currentSettings.pendingCaptchas[participantJid];
                             await saveGroupSettings(from, currentSettings);
-                            await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'reject').catch(() => {});
+                            await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'reject').catch(() => { });
                         }
                     }, 5 * 60 * 1000);
                 } else {
@@ -645,17 +646,17 @@ function isValidParticipant(participant) {
         if (participant.trim().length === 0) return false;
         return participant;
     }
-    
+
     // If participant is an object with id property
     if (participant && typeof participant === 'object' && participant.hasOwnProperty('id')) {
         const id = participant.id;
         if (id === null || id === undefined || id === '') return false;
         if (typeof id === 'string' && id.trim().length === 0) return false;
         if (id === 0) return false;
-        
+
         return id;
     }
-    
+
     return false;
 }
 
@@ -858,7 +859,7 @@ async function handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet) {
             try {
                 await fs.access(newPath);
                 continue;
-            } catch {}
+            } catch { }
 
             const updatedContent = JSON.stringify(jsonObj, null, 2);
             await fs.writeFile(newPath, updatedContent, 'utf-8');
@@ -880,7 +881,7 @@ async function fetchLidWithRetry(NazunaSock, jid, maxRetries = 3) {
         console.warn(`⚠️ JID inválido fornecido: ${jid}`);
         return null;
     }
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const result = await NazunaSock.onWhatsApp(jid);
@@ -907,10 +908,10 @@ async function fetchLidsInBatches(NazunaSock, uniqueJids, batchSize = 5) {
 
     for (let i = 0; i < uniqueJids.length; i += batchSize) {
         const batch = uniqueJids.slice(i, i + batchSize);
-        
+
         const batchPromises = batch.map(jid => fetchLidWithRetry(NazunaSock, jid));
         const batchResults = await Promise.allSettled(batchPromises);
-        
+
         batchResults.forEach((result, index) => {
             if (result.status === 'fulfilled' && result.value) {
                 const { jid, lid } = result.value;
@@ -955,7 +956,7 @@ async function performMigration(NazunaSock) {
     if (uniqueJids.length === 0) {
         return;
     }
-    
+
     const { jidToLidMap, successfulFetches } = await fetchLidsInBatches(NazunaSock, uniqueJids);
     const orphanJidsSet = new Set(uniqueJids.filter(jid => !jidToLidMap.has(jid)));
 
@@ -1003,24 +1004,24 @@ async function createBotSocket(authDir) {
             saveCreds,
             signalRepository
         } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
-        
+
         // Busca a versão mais recente do Baileys
         const { version } = await fetchLatestBaileysVersion();
         console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
-        
+
         const NazunaSock = makeWASocket({
             version,
             emitOwnEvents: true,
             fireInitQueries: true,
             generateHighQualityLinkPreview: true,
-            syncFullHistory: true,
+            syncFullHistory: false,
             markOnlineOnConnect: true,
-            connectTimeoutMs: 120000,
-            retryRequestDelayMs: 5000,
+            connectTimeoutMs: 180000,
+            retryRequestDelayMs: 10000,
             qrTimeout: 180000,
-            keepAliveIntervalMs: 30_000,
+            keepAliveIntervalMs: 60_000,
             defaultQueryTimeoutMs: undefined,
-            browser: ['Windows', 'Edge', '143.0.3650.66'],
+            browser: ['Ubuntu', 'Chrome', '20.0.04'],
             msgRetryCounterCache,
             auth: state,
             signalRepository,
@@ -1044,7 +1045,7 @@ async function createBotSocket(authDir) {
 
         NazunaSock.ev.on('groups.update', async (updates) => {
             if (!Array.isArray(updates) || updates.length === 0) return;
-            
+
             if (DEBUG_MODE) {
                 console.log('\n🐛 ========== GROUPS UPDATE ==========');
                 console.log('📅 Timestamp:', new Date().toISOString());
@@ -1055,11 +1056,11 @@ async function createBotSocket(authDir) {
                 });
                 console.log('🐛 ====================================\n');
             }
-            
+
             // Processa atualizações em lote para melhor performance
             const updatePromises = updates.map(async ([ev]) => {
                 if (!ev || !ev.id) return;
-                
+
                 try {
                     const meta = await NazunaSock.groupMetadata(ev.id).catch(() => null);
                     if (meta) {
@@ -1072,7 +1073,7 @@ async function createBotSocket(authDir) {
                     console.error(`❌ Erro ao atualizar metadados do grupo ${ev.id}: ${e.message}`);
                 }
             });
-            
+
             await Promise.allSettled(updatePromises);
         });
 
@@ -1089,7 +1090,7 @@ async function createBotSocket(authDir) {
             }
             await handleGroupParticipantsUpdate(NazunaSock, inf);
         });
-        
+
         // Listener para solicitações de entrada em grupos (join requests)
         NazunaSock.ev.on('group.join-request', async (inf) => {
             if (DEBUG_MODE) {
@@ -1111,7 +1112,7 @@ async function createBotSocket(authDir) {
 
         const queueErrorHandler = async (item, error) => {
             console.error(`❌ Critical error processing message ${item.id}:`, error);
-            
+
             if (error.message.includes('ENOSPC') || error.message.includes('ENOMEM')) {
                 console.error('🚨 Critical system error detected, triggering emergency cleanup...');
                 try {
@@ -1120,7 +1121,7 @@ async function createBotSocket(authDir) {
                     console.error('❌ Emergency cleanup failed:', cleanupErr.message);
                 }
             }
-            
+
             console.error({
                 messageId: item.id,
                 errorType: error.constructor.name,
@@ -1136,7 +1137,7 @@ async function createBotSocket(authDir) {
         const processMessage = async (info) => {
             // Verifica se é uma solicitação de entrada (messageStubType no info, não em message)
             const isJoinRequest = info?.messageStubType === 172; // GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST_NON_ADMIN_ADD
-          
+
             // Solicitações de entrada não têm message, apenas messageStubType
             if (isJoinRequest) {
                 // Cria um objeto message fake para o index.js processar
@@ -1145,18 +1146,18 @@ async function createBotSocket(authDir) {
                     messageStubParameters: info.messageStubParameters
                 };
             }
-            
+
             if (!info || !info.message || !info.key?.remoteJid) {
                 return;
             }
-            
+
             // Cache da mensagem para uso posterior no processamento (anti-delete, resumirchat, etc)
             if (messagesCache && info.key?.id && info.key?.remoteJid) {
                 // Chave composta: remoteJid_messageId para permitir filtrar por grupo
                 const cacheKey = `${info.key.remoteJid}_${info.key.id}`;
                 messagesCache.set(cacheKey, info);
             }
-            
+
             // Processa mensagem
             if (typeof indexModule === 'function') {
                 await indexModule(NazunaSock, info, null, messagesCache, rentalExpirationManager);
@@ -1171,29 +1172,29 @@ async function createBotSocket(authDir) {
 
             NazunaSock.ev.on('messages.upsert', async (m) => {
                 if (!m.messages || !Array.isArray(m.messages)) return;
-                
+
                 // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
                 if (m.type === 'append') {
                     const isJoinRequest = m.messages.some(info => info?.messageStubType === 172);
                     if (!isJoinRequest) return;
                 }
-                
+
                 // Processa 'notify' (mensagens normais) e 'append' (apenas solicitações de entrada)
                 if (m.type !== 'notify' && m.type !== 'append') return;
-                    
+
                 try {
-                    
+
                     const messageProcessingPromises = m.messages.map(info =>
                         messageQueue.add(info, processMessage).catch(err => {
                             console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
                         })
                     );
-                    
+
                     await Promise.allSettled(messageProcessingPromises);
-                    
+
                 } catch (err) {
                     console.error(`❌ Error in message upsert handler: ${err.message}`);
-                    
+
                     if (err.message.includes('ENOSPC') || err.message.includes('ENOMEM')) {
                         console.error('🚨 Critical system error detected, triggering emergency cleanup...');
                         try {
@@ -1214,38 +1215,76 @@ async function createBotSocket(authDir) {
             } = update;
             if (qr && !NazunaSock.authState.creds.registered && !codeMode) {
                 console.log('🔗 QR Code gerado para autenticação:');
+
+                // Gerar arquivo HTML com o QR Code
+                const htmlContent = `
+                    <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta http-equiv="refresh" content="2">
+                            <title>Nazuna Bot - QR Code</title>
+                            <style>
+                                body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: #f0f2f5; }
+                                .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+                                h1 { color: #333; margin-bottom: 20px; }
+                                p { color: #666; margin-top: 20px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h1>🤖 Escaneie o QR Code</h1>
+                                <div id="qrcode"></div>
+                                <p>Atualiza automaticamente a cada 2 segundos...</p>
+                            </div>
+                            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                            <script>
+                                new QRCode(document.getElementById("qrcode"), {
+                                    text: "${qr}",
+                                    width: 256,
+                                    height: 256,
+                                    colorDark : "#000000",
+                                    colorLight : "#ffffff",
+                                    correctLevel : QRCode.CorrectLevel.H
+                                });
+                            </script>
+                        </body>
+                    </html>
+                `;
+                await fs.writeFile(path.join(process.cwd(), 'qrcode.html'), htmlContent);
+                console.log(`📄 QR Code salvo em: ${path.join(process.cwd(), 'qrcode.html')}`);
+
                 qrcode.generate(qr, {
                     small: true
                 }, (qrcodeText) => {
                     console.log(qrcodeText);
                 });
-                console.log('📱 Escaneie o QR code acima com o WhatsApp para autenticar o bot.');
+                console.log('📱 Escaneie o QR code acima (ou abra qrcode.html no Chrome) com o WhatsApp.');
             }
             if (connection === 'open') {
                 console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
-                
+
                 await initializeOptimizedCaches();
-                
+
                 await updateOwnerLid(NazunaSock);
                 await performMigration(NazunaSock);
-                
+
                 rentalExpirationManager.nazu = NazunaSock;
                 await rentalExpirationManager.initialize();
-                
+
                 attachMessagesListener();
                 startCacheCleanup(); // Inicia o sistema de limpeza de cache
-                
+
                 // Envia mensagem de boas-vindas para o dono
                 try {
                     const msgBotOnConfig = loadMsgBotOn();
-                    
+
                     if (msgBotOnConfig.enabled) {
                         // Aguarda 3 segundos para garantir que o bot está totalmente conectado
                         setTimeout(async () => {
                             try {
                                 const ownerJid = buildUserId(numerodono, config);
-                                await NazunaSock.sendMessage(ownerJid, { 
-                                    text: msgBotOnConfig.message 
+                                await NazunaSock.sendMessage(ownerJid, {
+                                    text: msgBotOnConfig.message
                                 });
                                 console.log('✅ Mensagem de inicialização enviada para o dono');
                             } catch (sendError) {
@@ -1258,7 +1297,7 @@ async function createBotSocket(authDir) {
                 } catch (msgError) {
                     console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
                 }
-                
+
                 // Inicializa sub-bots automaticamente
                 try {
                     const subBotManagerModule = await import('./utils/subBotManager.js');
@@ -1270,7 +1309,7 @@ async function createBotSocket(authDir) {
                 } catch (error) {
                     console.error('❌ Erro ao inicializar sub-bots:', error.message);
                 }
-                
+
                 console.log(`✅ Bot ${nomebot} iniciado com sucesso! Prefixo: ${prefixo} | Dono: ${nomedono}`);
                 console.log(`📊 Configuração: ${messageQueue.batchSize} lotes de ${messageQueue.messagesPerBatch} mensagens (${messageQueue.batchSize * messageQueue.messagesPerBatch} msgs paralelas)`);
             }
@@ -1286,28 +1325,28 @@ async function createBotSocket(authDir) {
                     [DisconnectReason.timedOut]: 'Tempo de conexão esgotado',
                     [DisconnectReason.badSession]: 'Sessão inválida',
                     [DisconnectReason.restartRequired]: 'Reinício necessário',
-                } [reason] || 'Motivo desconhecido';
-                
+                }[reason] || 'Motivo desconhecido';
+
                 console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage}`);
-                
+
                 // Limpa recursos antes de reconectar
                 if (cacheCleanupInterval) {
                     clearInterval(cacheCleanupInterval);
                     cacheCleanupInterval = null;
                 }
-                
+
                 // Tratamento especial para erro 403 (Forbidden)
                 if (reason === 403) {
                     forbidden403Attempts++;
                     console.log(`⚠️ Erro 403 detectado. Tentativa ${forbidden403Attempts}/${MAX_403_ATTEMPTS}`);
-                    
+
                     if (forbidden403Attempts >= MAX_403_ATTEMPTS) {
                         console.log('❌ Máximo de tentativas para erro 403 atingido. Apagando QR code e parando...');
                         await clearAuthDir();
                         console.log('🗑️ Autenticação removida. Reinicie o bot para gerar um novo QR code.');
                         process.exit(1);
                     }
-                    
+
                     // Aguarda antes de tentar reconectar
                     console.log('🔄 Tentando reconectar em 5 segundos...');
                     if (reconnectTimer) {
@@ -1318,21 +1357,21 @@ async function createBotSocket(authDir) {
                     }, 5000);
                     return;
                 }
-                
+
                 // Reset do contador 403 se for outro tipo de erro
                 forbidden403Attempts = 0;
-                
+
                 if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut) {
                     await clearAuthDir();
                     console.log('🔄 Nova autenticação será necessária na próxima inicialização.');
                 }
-                
+
                 // Não reconecta se conexão foi substituída (outra instância assumiu)
                 if (reason === DisconnectReason.connectionReplaced) {
                     console.log('⚠️ Conexão substituída por outra instância. Não reconectando para evitar conflito.');
                     return;
                 }
-                
+
                 // Delay antes de reconectar baseado no motivo
                 let reconnectDelay = 5000;
                 if (reason === DisconnectReason.timedOut) {
@@ -1342,14 +1381,14 @@ async function createBotSocket(authDir) {
                 } else if (reason === DisconnectReason.loggedOut || reason === DisconnectReason.badSession) {
                     reconnectDelay = 10000; // Delay maior para problemas de autenticação
                 }
-                
+
                 console.log(`🔄 Aguardando ${reconnectDelay / 1000} segundos antes de reconectar...`);
-                
+
                 // Cancela timer anterior se existir
                 if (reconnectTimer) {
                     clearTimeout(reconnectTimer);
                 }
-                
+
                 reconnectTimer = setTimeout(() => {
                     reconnectAttempts = 0; // Reset ao reconectar por desconexão normal
                     forbidden403Attempts = 0; // Reset contador de erro 403
@@ -1370,9 +1409,9 @@ async function startNazu() {
         console.log('⚠️ Reconexão já em andamento, ignorando chamada duplicada...');
         return;
     }
-    
+
     isReconnecting = true;
-    
+
     try {
         reconnectAttempts = 0; // Reset contador ao conectar com sucesso
         forbidden403Attempts = 0; // Reset contador de erro 403
@@ -1382,14 +1421,14 @@ async function startNazu() {
     } catch (err) {
         reconnectAttempts++;
         console.error(`❌ Erro ao iniciar o bot (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}): ${err.message}`);
-        
+
         // Se excedeu tentativas, para de tentar
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
             console.error(`❌ Máximo de tentativas de reconexão alcançado (${MAX_RECONNECT_ATTEMPTS}). Parando...`);
             isReconnecting = false;
             process.exit(1);
         }
-        
+
         if (err.message.includes('ENOSPC') || err.message.includes('ENOMEM')) {
             console.log('🧹 Tentando limpeza de emergência...');
             try {
@@ -1399,16 +1438,16 @@ async function startNazu() {
                 console.error('❌ Falha na limpeza de emergência:', cleanupErr.message);
             }
         }
-        
+
         // Delay exponencial (backoff) para evitar spam de conexões
         const delay = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.5, reconnectAttempts - 1), 60000);
         console.log(`🔄 Aguardando ${Math.round(delay / 1000)} segundos antes de tentar novamente...`);
-        
+
         // Cancela timer anterior se existir
         if (reconnectTimer) {
             clearTimeout(reconnectTimer);
         }
-        
+
         // Permite nova tentativa de reconexão após o delay
         isReconnecting = false;
         reconnectTimer = setTimeout(() => {
@@ -1423,22 +1462,22 @@ async function startNazu() {
 async function gracefulShutdown(signal) {
     const signalName = signal === 'SIGTERM' ? 'SIGTERM' : 'SIGINT';
     console.log(`📡 ${signalName} recebido, parando bot graciosamente...`);
-    
+
     // Cancela qualquer timer de reconexão pendente
     if (reconnectTimer) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
     }
     isReconnecting = false;
-    
+
     let shutdownTimeout;
-    
+
     // Timeout de segurança para forçar saída após 15 segundos
     shutdownTimeout = setTimeout(() => {
         console.error('⚠️ Timeout de shutdown, forçando saída...');
         process.exit(1);
     }, 15000);
-    
+
     try {
         // Desconecta sub-bots
         try {
@@ -1449,21 +1488,21 @@ async function gracefulShutdown(signal) {
         } catch (error) {
             console.error('❌ Erro ao desconectar sub-bots:', error.message);
         }
-        
+
         // Limpa recursos
         if (cacheCleanupInterval) {
             clearInterval(cacheCleanupInterval);
             cacheCleanupInterval = null;
         }
-        
+
         // Finaliza fila de mensagens
         await messageQueue.shutdown();
         console.log('✅ MessageQueue finalizado');
-        
+
         // Finaliza otimizador
         await performanceOptimizer.shutdown();
         console.log('✅ Performance optimizer finalizado');
-        
+
         clearTimeout(shutdownTimeout);
         console.log('✅ Desligamento concluído');
         process.exit(0);
@@ -1480,7 +1519,7 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('uncaughtException', async (error) => {
     console.error('🚨 Erro não capturado:', error.message);
     console.error(error.stack);
-    
+
     if (error.message.includes('ENOSPC') || error.message.includes('ENOMEM')) {
         try {
             await performanceOptimizer.emergencyCleanup();
@@ -1488,7 +1527,7 @@ process.on('uncaughtException', async (error) => {
             console.error('❌ Falha na limpeza de emergência:', cleanupErr.message);
         }
     }
-    
+
     // Força o encerramento para que o PM2/start.js possa reiniciar limpo
     process.exit(1);
 });

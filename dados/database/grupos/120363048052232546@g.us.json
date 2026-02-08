@@ -1,0 +1,35 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-08T20:13:44.557Z",
+  "groupName": "FF chanel mz",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "159034049044504@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-02-08T20:13:44.563Z",
+      "lastActivity": "2026-02-08T20:13:44.563Z"
+    },
+    {
+      "id": "96488084471894@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Real J4",
+      "firstSeen": "2026-02-08T20:13:56.942Z",
+      "lastActivity": "2026-02-08T20:13:56.942Z"
+    }
+  ]
+}

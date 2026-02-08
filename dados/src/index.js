@@ -1,16 +1,25 @@
-import makeWASocket from 'whaileys';
-import {
-  downloadContentFromMessage,
-  generateWAMessageFromContent,
-  generateWAMessage,
-  getContentType,
+import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore
-} from 'whaileys';
+  makeCacheableSignalKeyStore,
+  jidDecode,
+  proto,
+  delay,
+  downloadContentFromMessage,
+  getAggregateVotesInPollMessage
+} from '@whiskeysockets/baileys';
 import { exec, execSync, spawn } from 'child_process';
 import { promisify } from 'util';
+
+// Helper para substituir getContentType removido
+const getContentType = (content) => {
+  if (content) {
+    const keys = Object.keys(content);
+    const key = keys.find(k => (k === 'conversation' || k.endsWith('Message')) && k !== 'senderKeyDistributionMessage');
+    return key;
+  }
+}
 
 const execAsync = promisify(exec);
 import { parseHTML } from 'linkedom';
@@ -1262,6 +1271,8 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     });
 
     const type = getContentType(info.message);
+    console.log('[DEBUG] Mensagem recebida:', JSON.stringify(info.message, null, 2));
+    console.log('[DEBUG] Tipo detectado:', type);
 
     // ==================== PROCESSAMENTO DE SOLICITAÇÕES DE ENTRADA NO GRUPO ====================
     // Fallback: Solicitações também podem vir via messageStubType (backup do evento 'group.join-request')
@@ -2193,7 +2204,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       try {
         const afkReason = groupData.afkUsers[sender].reason;
         const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR', {
-          timeZone: 'America/Sao_Paulo'
+          timeZone: 'Africa/Maputo'
         });
         delete groupData.afkUsers[sender];
         writeJsonFile(groupFile, groupData);
@@ -2626,13 +2637,13 @@ Código: *${roleCode}*`,
     const getNowMinutes = () => {
       // Use Brazil/Sao_Paulo timezone for accurate time comparisons
       const now = new Date();
-      const saoPauloTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      const saoPauloTime = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Maputo" }));
       return saoPauloTime.getHours() * 60 + saoPauloTime.getMinutes();
     };
     const getTodayStr = () => {
       // Use Brazil/Sao_Paulo timezone for consistent date handling
       const d = new Date();
-      const saoPauloDate = new Date(d.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      const saoPauloDate = new Date(d.toLocaleString("en-US", { timeZone: "Africa/Maputo" }));
       const y = saoPauloDate.getFullYear();
       const m = String(saoPauloDate.getMonth() + 1).padStart(2, '0');
       const day = String(saoPauloDate.getDate()).padStart(2, '0');
@@ -2825,7 +2836,7 @@ Código: *${roleCode}*`,
           } catch (e) {
             console.error('[Cron] Unexpected error in scheduled job:', e);
           }
-        }, { timezone: 'America/Sao_Paulo' });
+        }, { timezone: 'Africa/Maputo' });
 
         gpCronJobs[key] = task;
       } catch (e) {
@@ -3091,13 +3102,13 @@ Código: *${roleCode}*`,
           }
         }, {
           scheduled: true,
-          timezone: 'America/Sao_Paulo'
+          timezone: 'Africa/Maputo'
         });
 
         // Iniciar a task imediatamente
         task.start();
         autoMsgCronJobs[key] = task;
-        console.log(`[AutoMsg] 🔔 Agendamento criado para ${key} em ${cronExpr} (timezone: America/Sao_Paulo)`);
+        console.log(`[AutoMsg] 🔔 Agendamento criado para ${key} em ${cronExpr} (timezone: Africa/Maputo)`);
       } catch (e) {
         console.error('[AutoMsg] Failed to schedule message', cronExpr, e);
       }
@@ -3272,7 +3283,7 @@ Código: *${roleCode}*`,
           if (groupData.afkUsers[jid]) {
             const afkData = groupData.afkUsers[jid];
             const afkSince = new Date(afkData.since).toLocaleString('pt-BR', {
-              timeZone: 'America/Sao_Paulo'
+              timeZone: 'Africa/Maputo'
             });
             let afkMsg = `😴 @${getUserName(jid)} está AFK desde ${afkSince}.`;
             if (afkData.reason) {
@@ -3673,7 +3684,7 @@ Código: *${roleCode}*`,
       if (budy2 && budy2.length > 1) {
         const timestamp = new Date().toLocaleTimeString('pt-BR', {
           hour12: false,
-          timeZone: 'America/Sao_Paulo'
+          timeZone: 'Africa/Maputo'
         });
         const messageType = isCmd ? 'COMANDO' : 'MENSAGEM';
         const context = isGroup ? 'GRUPO' : 'PRIVADO';
@@ -3902,12 +3913,12 @@ Código: *${roleCode}*`,
     const globalBlacklist = loadGlobalBlacklist();
     if (isCmd && sender && globalBlacklist.users && (globalBlacklist.users[sender] || globalBlacklist.users[getUserName(sender)])) {
       const blacklistEntry = globalBlacklist.users[sender] || globalBlacklist.users[getUserName(sender)];
-      return reply(`🚫 Você está na blacklist global e não pode usar comandos.\nMotivo: ${blacklistEntry.reason}\nAdicionado por: ${blacklistEntry.addedBy}\nData: ${new Date(blacklistEntry.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
+      return reply(`🚫 Você está na blacklist global e não pode usar comandos.\nMotivo: ${blacklistEntry.reason}\nAdicionado por: ${blacklistEntry.addedBy}\nData: ${new Date(blacklistEntry.addedAt).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' })}`);
     };
 
     if (isGroup && isCmd && groupData.blacklist && (groupData.blacklist[sender] || groupData.blacklist[getUserName(sender)])) {
       const blacklistEntry = groupData.blacklist[sender] || groupData.blacklist[getUserName(sender)];
-      return reply(`🚫 Você está na blacklist deste grupo e não pode usar comandos.\nMotivo: ${blacklistEntry.reason}\nData: ${new Date(blacklistEntry.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
+      return reply(`🚫 Você está na blacklist deste grupo e não pode usar comandos.\nMotivo: ${blacklistEntry.reason}\nData: ${new Date(blacklistEntry.timestamp).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' })}`);
     }
     if (sender && sender.includes('@') && globalBlocks.users && (globalBlocks.users[sender] || globalBlocks.users[getUserName(sender)]) && isCmd) {
       return reply(`🚫 Parece que você está bloqueado de usar meus comandos globalmente.\nMotivo: ${globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[getUserName(sender)].reason}`);
@@ -3984,10 +3995,10 @@ Código: *${roleCode}*`,
           tem_mencao: mencoesFiltradas.length > 0,
           id_mensagem: info.key.id,
           data_atual: new Date().toLocaleString('pt-BR', {
-            timeZone: 'America/Sao_Paulo'
+            timeZone: 'Africa/Maputo'
           }),
           data_mensagem: new Date(info.messageTimestamp * 1000).toLocaleString('pt-BR', {
-            timeZone: 'America/Sao_Paulo'
+            timeZone: 'Africa/Maputo'
           })
         };
         let {
@@ -14918,12 +14929,12 @@ Seja específico e recomende opções variadas (populares e menos conhecidas). F
       case 'horario':
       case 'timezone': {
         const fusos = {
-          'brasil': 'America/Sao_Paulo',
-          'br': 'America/Sao_Paulo',
-          'saopaulo': 'America/Sao_Paulo',
-          'sp': 'America/Sao_Paulo',
-          'rio': 'America/Sao_Paulo',
-          'brasilia': 'America/Sao_Paulo',
+          'brasil': 'Africa/Maputo',
+          'br': 'Africa/Maputo',
+          'saopaulo': 'Africa/Maputo',
+          'sp': 'Africa/Maputo',
+          'rio': 'Africa/Maputo',
+          'brasilia': 'Africa/Maputo',
           'manaus': 'America/Manaus',
           'am': 'America/Manaus',
           'acre': 'America/Rio_Branco',
@@ -14964,8 +14975,8 @@ Seja específico e recomende opções variadas (populares e menos conhecidas). F
 
         if (!q) {
           const agora = new Date();
-          const horaBrasil = agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          const dataBrasil = agora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+          const horaBrasil = agora.toLocaleString('pt-BR', { timeZone: 'Africa/Maputo', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const dataBrasil = agora.toLocaleDateString('pt-BR', { timeZone: 'Africa/Maputo', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
           return reply(`🕐 *Horário Atual*\n\n🇧🇷 *Brasil (Brasília):*\n⏰ ${horaBrasil}\n📅 ${dataBrasil}\n\n💡 *Ver outro fuso:*\n${prefix}hora <local>\n\n📍 *Locais disponíveis:*\nbrasil, eua, japao, china, coreia, londres, paris, portugal, dubai, australia, argentina...`);
         }
@@ -14983,7 +14994,7 @@ Seja específico e recomende opções variadas (populares e menos conhecidas). F
           const data = agora.toLocaleDateString('pt-BR', { timeZone: timezone, weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
           // Calcular diferença com Brasil
-          const brTime = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+          const brTime = new Date(agora.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
           const localTime = new Date(agora.toLocaleString('en-US', { timeZone: timezone }));
           const diffHours = Math.round((localTime - brTime) / (1000 * 60 * 60));
           const diffStr = diffHours >= 0 ? `+${diffHours}h` : `${diffHours}h`;
@@ -16057,7 +16068,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               const shouldInclude = !filtro || filtro === 'ven' && status === 'Expirado' || filtro === 'atv' && status === 'Ativo' || filtro === 'perm' && status === 'Permanente';
               if (!shouldInclude) continue;
               const expires = info.expiresAt === 'permanent' ? '∞ Permanente' : info.expiresAt ? new Date(info.expiresAt).toLocaleString('pt-BR', {
-                timeZone: 'America/Sao_Paulo'
+                timeZone: 'Africa/Maputo'
               }) : 'N/A';
 
               message += `🔹 *${index}. ${groupName}*\n`;
@@ -18065,7 +18076,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           let message = `🛑 *Blacklist Global* 🛑\n\n`;
           for (const [userId, data] of Object.entries(blacklistData.users)) {
 
-            message += `➤ @${getUserName(userId)}\n   Motivo: ${data.reason}\n   Adicionado por: ${data.addedBy}\n   Data: ${new Date(data.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n\n`;
+            message += `➤ @${getUserName(userId)}\n   Motivo: ${data.reason}\n   Adicionado por: ${data.addedBy}\n   Data: ${new Date(data.addedAt).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' })}\n\n`;
           }
           await reply(message, {
             mentions: Object.keys(blacklistData.users)
@@ -19023,8 +19034,8 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 
           // Mapa de fusos horários comuns
           const timezoneMap = {
-            'brasil': 'America/Sao_Paulo', 'brazil': 'America/Sao_Paulo', 'são paulo': 'America/Sao_Paulo', 'sao paulo': 'America/Sao_Paulo',
-            'rio': 'America/Sao_Paulo', 'rio de janeiro': 'America/Sao_Paulo', 'brasilia': 'America/Sao_Paulo',
+            'brasil': 'Africa/Maputo', 'brazil': 'Africa/Maputo', 'são paulo': 'Africa/Maputo', 'sao paulo': 'Africa/Maputo',
+            'rio': 'Africa/Maputo', 'rio de janeiro': 'Africa/Maputo', 'brasilia': 'Africa/Maputo',
             'tokyo': 'Asia/Tokyo', 'toquio': 'Asia/Tokyo', 'japao': 'Asia/Tokyo', 'japan': 'Asia/Tokyo',
             'new york': 'America/New_York', 'nova york': 'America/New_York', 'ny': 'America/New_York',
             'los angeles': 'America/Los_Angeles', 'la': 'America/Los_Angeles', 'california': 'America/Los_Angeles',
@@ -19086,7 +19097,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           const formattedTime = formatter.format(now);
 
           // Calcular diferença com Brasil
-          const brTime = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+          const brTime = new Date().toLocaleString('en-US', { timeZone: 'Africa/Maputo' });
           const targetTime = new Date().toLocaleString('en-US', { timeZone: timezone });
           const brDate = new Date(brTime);
           const targetDate = new Date(targetTime);
@@ -25080,7 +25091,7 @@ ${prefix}togglecmdvip premium_ia off`);
 
           const lastActivity = userData.lastActivity
             ? new Date(userData.lastActivity).toLocaleString('pt-BR', {
-              timeZone: 'America/Sao_Paulo',
+              timeZone: 'Africa/Maputo',
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',
@@ -25272,7 +25283,7 @@ ${prefix}togglecmdvip premium_ia off`);
         const serverNetworkInterfaces = os.networkInterfaces();
         const serverInterfaces = Object.keys(serverNetworkInterfaces).length;
         const currentServerTime = new Date().toLocaleString('pt-BR', {
-          timeZone: 'America/Sao_Paulo',
+          timeZone: 'Africa/Maputo',
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
@@ -25461,7 +25472,7 @@ ${prefix}togglecmdvip premium_ia off`);
           const blockedUsers = Object.keys(globalBlocks.users || {}).length;
           const blockedCommands = Object.keys(globalBlocks.commands || {}).length;
           const currentTime = new Date().toLocaleString('pt-BR', {
-            timeZone: 'America/Sao_Paulo'
+            timeZone: 'Africa/Maputo'
           });
           const lines = ["╭───🤖 STATUS DO BOT ───╮", `┊ 🏷️ Nome: ${nomebot}`, `┊ 👨‍💻 Dono: ${nomedono}`, `┊ 🆚 Versão: ${botVersion}`, `┊ 🟢 Status: ${botStatus}`, `┊ ⏰ Online há: ${botUptime}`, `┊ 🖥️ Plataforma: ${platform}`, `┊ 🟢 Node.js: ${nodeVersion}`, "┊", "┊ 📊 *Estatísticas:*", `┊ • 👥 Grupos: ${totalGroups}`, `┊ • 👤 Usuários: ${totalUsers}`, `┊ • ⚒️ Comandos: ${totalCommands}`, `┊ • 💎 Users Premium: ${premiumUsers}`, `┊ • 💎 Grupos Premium: ${premiumGroups}`, "┊", "┊ 🛡️ *Segurança:*", `┊ • 🚫 Users Bloqueados: ${blockedUsers}`, `┊ • 🚫 Cmds Bloqueados: ${blockedCommands}`, `┊ • 🏠 Modo Aluguel: ${rentalMode}`, "┊", "┊ 💾 *Sistema:*", `┊ • 🧠 RAM Usada: ${memUsed}MB`, `┊ • 📦 RAM Total: ${memTotal}MB`, `┊ • 🕐 Hora Atual: ${currentTime}`, "╰───────────────╯"].join("\n");
           await reply(lines);
@@ -25488,7 +25499,7 @@ ${prefix}togglecmdvip premium_ia off`);
             statusColor = '🔴';
           }
 
-          const lastCheckTime = new Date(apiStatus.lastCheck).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+          const lastCheckTime = new Date(apiStatus.lastCheck).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' });
           const keyPreview = KeyCog ? `${KeyCog.substring(0, 8)}...` : 'Não configurada';
 
           const statusMessage = [
@@ -25582,7 +25593,7 @@ ${prefix}togglecmdvip premium_ia off`);
           const topUsersText = stats.topUsers.length > 0 ? stats.topUsers.map((user, index) => {
             return `${index + 1}º @${getUserName(user.userId)} - ${user.count} usos`;
           }).join('\n') : 'Nenhum usuário registrado';
-          const lastUsed = new Date(stats.lastUsed).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+          const lastUsed = new Date(stats.lastUsed).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' });
           const infoMessage = `📊 *Estatísticas do Comando: ${prefix}${stats.name}* 📊\n\n` + `📈 *Total de Usos*: ${stats.count}\n` + `👥 *Usuários Únicos*: ${stats.uniqueUsers}\n` + `🕒 *Último Uso*: ${lastUsed}\n\n` + `🏆 *Top Usuários*:\n${topUsersText}\n\n` + `✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
           await nazu.sendMessage(from, {
             text: infoMessage,
@@ -25602,7 +25613,7 @@ ${prefix}togglecmdvip premium_ia off`);
           const meta = await getCachedGroupMetadata(from);
           const subject = meta.subject || "—";
           const desc = meta.desc?.toString() || "Sem descrição";
-          const createdAt = meta.creation ? new Date(meta.creation * 1000).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : "Desconhecida";
+          const createdAt = meta.creation ? new Date(meta.creation * 1000).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' }) : "Desconhecida";
           const ownerJid = meta.owner || meta.participants.find(p => p.admin && p.isCreator)?.lid || meta.participants.find(p => p.admin && p.isCreator)?.id || "Desconhecido";
           const ownerTag = ownerJid !== "Desconhecido" ? `@${getUserName(ownerJid)}` : "Desconhecido";
           const totalMembers = meta.participants.length;
@@ -28858,7 +28869,7 @@ Exemplos:
           if (Object.keys(groupData.blacklist).length === 0) return reply("📋 A blacklist está vazia.");
           let text = "📋 *Lista de Usuários na Blacklist*\n\n";
           for (const [user, data] of Object.entries(groupData.blacklist)) {
-            text += `👤 @${getUserName(user)}\n📝 Motivo: ${data.reason}\n🕒 Adicionado em: ${new Date(data.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n\n`;
+            text += `👤 @${getUserName(user)}\n📝 Motivo: ${data.reason}\n🕒 Adicionado em: ${new Date(data.timestamp).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' })}\n\n`;
           }
           reply(text, {
             mentions: Object.keys(groupData.blacklist)
@@ -28954,7 +28965,7 @@ Exemplos:
                 warnings.forEach((warn, index) => {
                   text += `  ${index + 1}. Motivo: ${warn.reason}\n`;
                   text += `     Por: @${getUserName(warn.issuer)}\n`;
-                  text += `     Em: ${new Date(warn.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n`;
+                  text += `     Em: ${new Date(warn.timestamp).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' })}\n`;
                 });
                 text += "\n";
               }
@@ -31112,7 +31123,7 @@ ${nivelSorte >= 70 ? '🎉 Hoje é seu dia de sorte!' : nivelSorte >= 40 ? '🤔
               bioSetAt = new Date(status.setAt).toLocaleString('pt-BR', {
                 dateStyle: 'short',
                 timeStyle: 'short',
-                timeZone: 'America/Sao_Paulo'
+                timeZone: 'Africa/Maputo'
               });
             }
           } catch (error) {
@@ -32213,7 +32224,7 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
             data.antis.forEach(anti => {
               message += `   • ${anti}\n`;
             });
-            message += `   *Adicionado em:* ${new Date(data.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n\n`;
+            message += `   *Adicionado em:* ${new Date(data.addedAt).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' })}\n\n`;
           });
 
           message += `═══════════════════\n`;
@@ -33750,8 +33761,8 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
           msg += `🏅 *Rank Atual:* ${basic.rank || 'N/A'}\n`;
           msg += `🐾 *Pet:* ${pet.name || 'Nenhum'}\n`;
           msg += `👥 *Clã:* ${clan.name || 'Nenhum'}\n`;
-          msg += `📅 *Criado em:* ${basic.createAt ? new Date(parseInt(basic.createAt) * 1000).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'N/A'}\n`;
-          msg += `🕒 *Último Login:* ${basic.lastLoginAt ? new Date(parseInt(basic.lastLoginAt) * 1000).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'N/A'}`;
+          msg += `📅 *Criado em:* ${basic.createAt ? new Date(parseInt(basic.createAt) * 1000).toLocaleDateString('pt-BR', { timeZone: 'Africa/Maputo' }) : 'N/A'}\n`;
+          msg += `🕒 *Último Login:* ${basic.lastLoginAt ? new Date(parseInt(basic.lastLoginAt) * 1000).toLocaleString('pt-BR', { timeZone: 'Africa/Maputo' }) : 'N/A'}`;
 
           if (basic.avatars && basic.avatars.png) {
             const avatarUrl = basic.avatars.png;

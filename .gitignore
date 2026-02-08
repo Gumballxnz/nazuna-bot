@@ -8,3 +8,4 @@ dados/database/auth
 dados/src/.scripts/node_modules
 .DS_Store
 Thumbs.db
+*.zip

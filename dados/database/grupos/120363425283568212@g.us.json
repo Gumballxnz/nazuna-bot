@@ -6,7 +6,9 @@
   "minMessage": null,
   "moderators": [],
   "allowedModCommands": [],
-  "mutedUsers": {},
+  "mutedUsers": {
+    "138551954002160@lid": true
+  },
   "mutedUsers2": {},
   "levelingEnabled": false,
   "adminWhitelist": {},
@@ -15,12 +17,66 @@
   "contador": [
     {
       "id": "159034049044504@lid",
+      "msg": 29,
+      "cmd": 2,
+      "figu": 5,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-01-12T14:59:42.640Z",
+      "lastActivity": "2026-02-08T20:38:40.716Z"
+    },
+    {
+      "id": "88756136722601@lid",
+      "msg": 16,
+      "cmd": 2,
+      "figu": 6,
+      "pushname": "Zacarias Thequimo",
+      "firstSeen": "2026-02-08T20:06:46.645Z",
+      "lastActivity": "2026-02-08T20:38:31.592Z"
+    },
+    {
+      "id": "274234349744182@lid",
+      "msg": 7,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "𝚂𝚊𝚒𝚝𝚊𝚖𝚊 𝚋𝚘𝚝",
+      "firstSeen": "2026-02-08T20:07:49.431Z",
+      "lastActivity": "2026-02-08T20:37:55.584Z"
+    },
+    {
+      "id": "25108932485151@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ＧＨＯＳＴ ＢＯＴ",
+      "firstSeen": "2026-02-08T20:07:51.726Z",
+      "lastActivity": "2026-02-08T20:22:33.114Z"
+    },
+    {
+      "id": "138551954002160@lid",
+      "msg": 39,
+      "cmd": 3,
+      "figu": 8,
+      "pushname": "ᗪᗩÚᗪO ᗷՏՏ",
+      "firstSeen": "2026-02-08T20:10:38.380Z",
+      "lastActivity": "2026-02-08T20:38:01.747Z"
+    },
+    {
+      "id": "180874712735976@lid",
+      "msg": 26,
+      "cmd": 0,
+      "figu": 4,
+      "pushname": "António 💥",
+      "firstSeen": "2026-02-08T20:11:05.171Z",
+      "lastActivity": "2026-02-08T20:38:43.330Z"
+    },
+    {
+      "id": "241523929149531@lid",
       "msg": 1,
       "cmd": 0,
       "figu": 0,
-      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
-      "firstSeen": "2026-01-12T14:59:42.640Z",
-      "lastActivity": "2026-01-12T14:59:42.640Z"
+      "pushname": "075",
+      "firstSeen": "2026-02-08T20:35:40.089Z",
+      "lastActivity": "2026-02-08T20:35:40.089Z"
     }
   ]
 }

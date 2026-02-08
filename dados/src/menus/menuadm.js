@@ -58,6 +58,9 @@ ${middleBorder}${menuItemIcon}${prefix}limpar
 ${middleBorder}${menuItemIcon}${prefix}marcar
 ${middleBorder}${menuItemIcon}${prefix}hidetag
 ${middleBorder}${menuItemIcon}${prefix}sorteio
+${middleBorder}${menuItemIcon}${prefix}addonlist (entrar lista)
+${middleBorder}${menuItemIcon}${prefix}seelist (ver lista)
+${middleBorder}${menuItemIcon}${prefix}clearlist (limpar lista)
 ${middleBorder}${menuItemIcon}${prefix}nomegp
 ${middleBorder}${menuItemIcon}${prefix}descgrupo
 ${middleBorder}${menuItemIcon}${prefix}fotogrupo
@@ -139,7 +142,7 @@ ${middleBorder}${menuItemIcon}${prefix}fotobv
 ${middleBorder}${menuItemIcon}${prefix}rmfotobv
 ${middleBorder}${menuItemIcon}${prefix}fotosaiu
 ${middleBorder}${menuItemIcon}${prefix}rmfotosaiu
-${middleBorder}${menuItemIcon}${prefix}setprefix
+${middleBorder}${menuItemIcon}${prefix}setprefix (prefixo grupo)
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *💬 AUTO-RESPOSTAS*
@@ -166,10 +169,8 @@ ${middleBorder}${menuItemIcon}${prefix}bemvindo
 ${middleBorder}${menuItemIcon}${prefix}saida
 ${middleBorder}${menuItemIcon}${prefix}autosticker
 ${middleBorder}${menuItemIcon}${prefix}soadm
-${middleBorder}${menuItemIcon}${prefix}cmdlimit
 ${middleBorder}${menuItemIcon}${prefix}fotomenugrupo
 ${middleBorder}${menuItemIcon}${prefix}nomegp
-${middleBorder}${menuItemIcon}${prefix}infoperso
 ${bottomBorder}
 `;
 }
