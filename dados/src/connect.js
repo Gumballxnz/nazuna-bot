@@ -1378,6 +1378,16 @@ async function createBotSocket(authDir) {
                     return;
                 }
 
+                // Tratamento especial para 515 (restartRequired) — evento normal durante pairing
+                if (reason === DisconnectReason.restartRequired) {
+                    console.log('🔄 Reinício necessário (515) — reconectando em 3s sem incrementar tentativas...');
+                    if (reconnectTimer) clearTimeout(reconnectTimer);
+                    reconnectTimer = setTimeout(() => {
+                        startNazu();
+                    }, 3000);
+                    return;
+                }
+
                 // Backoff exponencial real
                 reconnectAttempts++;
 
@@ -1432,7 +1442,7 @@ async function startNazu() {
         // NÃO reseta counters aqui — reseta no connection=open
         console.log(`🚀 Iniciando Nazuna... (tentativa ${reconnectAttempts + 1})`);
         await createBotSocket(AUTH_DIR);
-        // NÃO reseta isReconnecting aqui — reseta no connection=open
+        isReconnecting = false; // Libera flag para permitir reconexões futuras (ex: 515 durante pairing)
     } catch (err) {
         reconnectAttempts++;
         console.error(`❌ Erro ao iniciar o bot (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}): ${err.message}`);
