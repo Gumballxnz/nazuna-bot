@@ -338,7 +338,7 @@ const setupMessagesCacheCleanup = () => {
     if (cacheCleanupInterval) clearInterval(cacheCleanupInterval);
 
     cacheCleanupInterval = setInterval(() => {
-        if (!messagesCache || messagesCache.size <= 3000) return;
+        if (!messagesCache || messagesCache.size <= 1000) return; // Reduzido de 3000 para 1000 (anti-OOM)
 
         const keysToDelete = Math.floor(messagesCache.size * 0.4); // Remove 40% dos mais antigos
         const keys = Array.from(messagesCache.keys()).slice(0, keysToDelete);
@@ -991,9 +991,10 @@ let reconnectAttempts = 0;
 let isReconnecting = false; // Flag para evitar múltiplas reconexões simultâneas
 let reconnectTimer = null; // Timer de reconexão para poder cancelar
 let forbidden403Attempts = 0; // Contador específico para erro 403
-const MAX_RECONNECT_ATTEMPTS = 10;
+const MAX_RECONNECT_ATTEMPTS = 15;
 const MAX_403_ATTEMPTS = 3; // Máximo de 3 tentativas para erro 403
 const RECONNECT_DELAY_BASE = 5000; // 5 segundos base
+const MAX_RECONNECT_DELAY = 120000; // Máximo 2 minutos de delay
 
 async function createBotSocket(authDir) {
     try {
@@ -1263,6 +1264,11 @@ async function createBotSocket(authDir) {
             if (connection === 'open') {
                 console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
 
+                // Reset de flags apenas quando conexão REALMENTE abre
+                isReconnecting = false;
+                reconnectAttempts = 0;
+                forbidden403Attempts = 0;
+
                 await initializeOptimizedCaches();
 
                 await updateOwnerLid(NazunaSock);
@@ -1327,7 +1333,7 @@ async function createBotSocket(authDir) {
                     [DisconnectReason.restartRequired]: 'Reinício necessário',
                 }[reason] || 'Motivo desconhecido';
 
-                console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage}`);
+                console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage} | Tentativa: ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
 
                 // Limpa recursos antes de reconectar
                 if (cacheCleanupInterval) {
@@ -1372,26 +1378,36 @@ async function createBotSocket(authDir) {
                     return;
                 }
 
-                // Delay antes de reconectar baseado no motivo
-                let reconnectDelay = 5000;
-                if (reason === DisconnectReason.timedOut) {
-                    reconnectDelay = 3000; // Reconexão mais rápida para timeout
-                } else if (reason === DisconnectReason.connectionLost) {
-                    reconnectDelay = 2000; // Reconexão ainda mais rápida para perda de conexão
-                } else if (reason === DisconnectReason.loggedOut || reason === DisconnectReason.badSession) {
-                    reconnectDelay = 10000; // Delay maior para problemas de autenticação
+                // Backoff exponencial real
+                reconnectAttempts++;
+
+                if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                    console.error(`❌ Máximo de tentativas de reconexão (${MAX_RECONNECT_ATTEMPTS}) atingido. Parando...`);
+                    isReconnecting = false;
+                    process.exit(1);
                 }
 
-                console.log(`🔄 Aguardando ${reconnectDelay / 1000} segundos antes de reconectar...`);
+                // Delay baseado no motivo
+                let baseDelay = 5000;
+                if (reason === DisconnectReason.timedOut) {
+                    baseDelay = 3000;
+                } else if (reason === DisconnectReason.connectionLost) {
+                    baseDelay = 2000;
+                } else if (reason === DisconnectReason.loggedOut || reason === DisconnectReason.badSession) {
+                    baseDelay = 10000;
+                }
+
+                // Backoff: base * 1.5^tentativas, máx MAX_RECONNECT_DELAY
+                const reconnectDelay = Math.min(baseDelay * Math.pow(1.5, reconnectAttempts - 1), MAX_RECONNECT_DELAY);
+                console.log(`🔄 Aguardando ${Math.round(reconnectDelay / 1000)}s antes de reconectar... (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
 
                 // Cancela timer anterior se existir
                 if (reconnectTimer) {
                     clearTimeout(reconnectTimer);
                 }
 
+                // NÃO reseta reconnectAttempts aqui — reseta no connection=open
                 reconnectTimer = setTimeout(() => {
-                    reconnectAttempts = 0; // Reset ao reconectar por desconexão normal
-                    forbidden403Attempts = 0; // Reset contador de erro 403
                     startNazu();
                 }, reconnectDelay);
             }
@@ -1413,11 +1429,10 @@ async function startNazu() {
     isReconnecting = true;
 
     try {
-        reconnectAttempts = 0; // Reset contador ao conectar com sucesso
-        forbidden403Attempts = 0; // Reset contador de erro 403
-        console.log('🚀 Iniciando Nazuna...');
+        // NÃO reseta counters aqui — reseta no connection=open
+        console.log(`🚀 Iniciando Nazuna... (tentativa ${reconnectAttempts + 1})`);
         await createBotSocket(AUTH_DIR);
-        isReconnecting = false; // Conexão estabelecida com sucesso
+        // NÃO reseta isReconnecting aqui — reseta no connection=open
     } catch (err) {
         reconnectAttempts++;
         console.error(`❌ Erro ao iniciar o bot (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}): ${err.message}`);
@@ -1440,7 +1455,7 @@ async function startNazu() {
         }
 
         // Delay exponencial (backoff) para evitar spam de conexões
-        const delay = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.5, reconnectAttempts - 1), 60000);
+        const delay = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.5, reconnectAttempts - 1), MAX_RECONNECT_DELAY);
         console.log(`🔄 Aguardando ${Math.round(delay / 1000)} segundos antes de tentar novamente...`);
 
         // Cancela timer anterior se existir
@@ -1520,6 +1535,11 @@ process.on('uncaughtException', async (error) => {
     console.error('🚨 Erro não capturado:', error.message);
     console.error(error.stack);
 
+    const isCritical = error.message.includes('ENOSPC') ||
+        error.message.includes('ENOMEM') ||
+        error.message.includes('MODULE_NOT_FOUND') ||
+        error.message.includes('Cannot find module');
+
     if (error.message.includes('ENOSPC') || error.message.includes('ENOMEM')) {
         try {
             await performanceOptimizer.emergencyCleanup();
@@ -1528,8 +1548,16 @@ process.on('uncaughtException', async (error) => {
         }
     }
 
-    // Força o encerramento para que o PM2/start.js possa reiniciar limpo
-    process.exit(1);
+    if (isCritical) {
+        console.error('💀 Erro crítico — encerrando para restart pelo PM2...');
+        process.exit(1);
+    } else {
+        console.warn('⚠️ Erro não-crítico — bot continuará funcionando.');
+    }
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('🚨 Promise não tratada:', reason);
 });
 
 export { rentalExpirationManager, messageQueue };
