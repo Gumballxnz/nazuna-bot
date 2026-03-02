@@ -1,0 +1,35 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-22T09:16:38.064Z",
+  "groupName": "Grupo de vendas  💰💸",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "81557150773306@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "EdwinB.Business",
+      "firstSeen": "2026-02-22T09:16:38.069Z",
+      "lastActivity": "2026-02-22T09:16:38.069Z"
+    },
+    {
+      "id": "76305093660751@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-02-22T09:16:56.824Z",
+      "lastActivity": "2026-02-22T09:16:56.824Z"
+    }
+  ]
+}

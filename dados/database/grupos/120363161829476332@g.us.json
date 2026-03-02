@@ -1,0 +1,35 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-22T09:02:42.565Z",
+  "groupName": "MinderAds - NETWORKING 24/7",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "31800525078719@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "```WELCOME```",
+      "firstSeen": "2026-02-22T09:02:42.590Z",
+      "lastActivity": "2026-02-22T09:02:42.590Z"
+    },
+    {
+      "id": "30125336867046@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Ricardo Júnior",
+      "firstSeen": "2026-02-22T09:16:50.619Z",
+      "lastActivity": "2026-02-22T09:16:52.863Z"
+    }
+  ]
+}

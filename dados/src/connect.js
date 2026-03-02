@@ -1,4 +1,4 @@
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, Browsers } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
 import readline from 'readline';
@@ -11,6 +11,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import axios from 'axios';
+import { execSync } from 'child_process';
 
 import PerformanceOptimizer from './utils/performanceOptimizer.js';
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
@@ -338,14 +339,16 @@ const setupMessagesCacheCleanup = () => {
     if (cacheCleanupInterval) clearInterval(cacheCleanupInterval);
 
     cacheCleanupInterval = setInterval(() => {
-        if (!messagesCache || messagesCache.size <= 1000) return; // Reduzido de 3000 para 1000 (anti-OOM)
+        if (!messagesCache) return;
 
-        const keysToDelete = Math.floor(messagesCache.size * 0.4); // Remove 40% dos mais antigos
-        const keys = Array.from(messagesCache.keys()).slice(0, keysToDelete);
-        keys.forEach(key => messagesCache.delete(key));
-
-        console.log(`🧹 Cache limpo: ${keysToDelete} mensagens removidas (total: ${messagesCache.size})`);
-    }, 300000); // A cada 5 minutos
+        // Limite duro: se passar de 300, limpa imediatamente
+        if (messagesCache.size > 300) {
+            const keysToDelete = messagesCache.size - 200; // Mantém apenas 200
+            const keys = Array.from(messagesCache.keys()).slice(0, keysToDelete);
+            keys.forEach(key => messagesCache.delete(key));
+            console.log(`🧹 Cache limpo: ${keysToDelete} mensagens removidas (total: ${messagesCache.size})`);
+        }
+    }, 120000); // A cada 2 minutos (era 5)
 };
 
 // Inicia cleanup quando o bot conectar
@@ -991,8 +994,10 @@ let reconnectAttempts = 0;
 let isReconnecting = false; // Flag para evitar múltiplas reconexões simultâneas
 let reconnectTimer = null; // Timer de reconexão para poder cancelar
 let forbidden403Attempts = 0; // Contador específico para erro 403
+let consecutive428Count = 0; // Contador de 428 consecutivos para detectar loop
 const MAX_RECONNECT_ATTEMPTS = 15;
 const MAX_403_ATTEMPTS = 3; // Máximo de 3 tentativas para erro 403
+const MAX_428_CONSECUTIVE = 5; // Máximo de 428 consecutivos antes de parar
 const RECONNECT_DELAY_BASE = 5000; // 5 segundos base
 const MAX_RECONNECT_DELAY = 120000; // Máximo 2 minutos de delay
 
@@ -1006,23 +1011,22 @@ async function createBotSocket(authDir) {
             signalRepository
         } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
 
-        // Busca a versão mais recente do Baileys
+        // Busca a versão mais recente do Baileys e simula browser macOS nativo
         const { version } = await fetchLatestBaileysVersion();
         console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
 
         const NazunaSock = makeWASocket({
             version,
             emitOwnEvents: true,
-            fireInitQueries: true,
-            generateHighQualityLinkPreview: true,
+            fireInitQueries: false,
+            generateHighQualityLinkPreview: false,
             syncFullHistory: false,
-            markOnlineOnConnect: true,
+            markOnlineOnConnect: false,
             connectTimeoutMs: 180000,
             retryRequestDelayMs: 10000,
             qrTimeout: 180000,
             keepAliveIntervalMs: 60_000,
             defaultQueryTimeoutMs: undefined,
-            browser: ['Ubuntu', 'Chrome', '20.0.04'],
             msgRetryCounterCache,
             auth: state,
             signalRepository,
@@ -1154,9 +1158,11 @@ async function createBotSocket(authDir) {
 
             // Cache da mensagem para uso posterior no processamento (anti-delete, resumirchat, etc)
             if (messagesCache && info.key?.id && info.key?.remoteJid) {
-                // Chave composta: remoteJid_messageId para permitir filtrar por grupo
-                const cacheKey = `${info.key.remoteJid}_${info.key.id}`;
-                messagesCache.set(cacheKey, info);
+                // Limite duro: não adicionar se cache já está cheio
+                if (messagesCache.size < 400) {
+                    const cacheKey = `${info.key.remoteJid}_${info.key.id}`;
+                    messagesCache.set(cacheKey, info);
+                }
             }
 
             // Processa mensagem
@@ -1223,6 +1229,9 @@ async function createBotSocket(authDir) {
                         <head>
                             <meta charset="UTF-8">
                             <meta http-equiv="refresh" content="2">
+                            <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+                            <meta http-equiv="Pragma" content="no-cache">
+                            <meta http-equiv="Expires" content="0">
                             <title>Nazuna Bot - QR Code</title>
                             <style>
                                 body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: #f0f2f5; }
@@ -1268,6 +1277,7 @@ async function createBotSocket(authDir) {
                 isReconnecting = false;
                 reconnectAttempts = 0;
                 forbidden403Attempts = 0;
+                consecutive428Count = 0; // Só reseta 428 quando REALMENTE conecta
 
                 await initializeOptimizedCaches();
 
@@ -1341,6 +1351,43 @@ async function createBotSocket(authDir) {
                     cacheCleanupInterval = null;
                 }
 
+                // Tratamento especial para erro 428 (Connection Closed / rate limit)
+                // O 428 é o erro mais perigoso porque cria loops infinitos:
+                // O bot conecta (open), recebe 428 logo depois, reconnectAttempts reseta no open,
+                // e o ciclo se repete INFINITAMENTE sem nunca atingir o limite de 15.
+                if (reason === 428) {
+                    consecutive428Count++;
+                    console.log(`⚠️ Erro 428 consecutivo #${consecutive428Count}/${MAX_428_CONSECUTIVE}`);
+
+                    if (consecutive428Count >= MAX_428_CONSECUTIVE) {
+                        console.log('🛑 Loop de 428 detectado! O WhatsApp está recusando esta sessão repetidamente.');
+                        console.log('🛑 Parando o bot DEFINITIVAMENTE para evitar ban.');
+                        console.log('🛑 Será necessário re-parear o bot manualmente.');
+                        // Cria lock file para impedir PM2 de reiniciar em loop
+                        try {
+                            const lockPath = path.join(DATABASE_DIR, '428_LOCK');
+                            await fs.writeFile(lockPath, `Loop 428 detectado em ${new Date().toISOString()}. Re-pareamento necessário.`);
+                            // Para o PM2 definitivamente em vez de process.exit que reinicia
+                            execSync('pm2 stop nazuna', { timeout: 5000 });
+                        } catch (e) {
+                            process.exit(0); // exit 0 = PM2 não reinicia se configurado com --stop-exit-codes 0
+                        }
+                        return;
+                    }
+
+                    // Delay progressivo para 428: 10s, 20s, 40s, 60s, 120s
+                    const delay428 = Math.min(10000 * Math.pow(2, consecutive428Count - 1), MAX_RECONNECT_DELAY);
+                    console.log(`🔄 Aguardando ${Math.round(delay428 / 1000)}s antes de reconectar (anti-loop 428)...`);
+                    if (reconnectTimer) clearTimeout(reconnectTimer);
+                    reconnectTimer = setTimeout(() => {
+                        startNazu();
+                    }, delay428);
+                    return;
+                }
+
+                // Reset do contador 428 se for outro tipo de erro
+                consecutive428Count = 0;
+
                 // Tratamento especial para erro 403 (Forbidden)
                 if (reason === 403) {
                     forbidden403Attempts++;
@@ -1367,9 +1414,17 @@ async function createBotSocket(authDir) {
                 // Reset do contador 403 se for outro tipo de erro
                 forbidden403Attempts = 0;
 
-                if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut) {
+                // APENAS loggedOut real apaga a sessão (NÃO 401/badSession)
+                // O 401 pode ser temporário e apagar a sessão é irreversível
+                if (reason === DisconnectReason.loggedOut) {
                     await clearAuthDir();
-                    console.log('🔄 Nova autenticação será necessária na próxima inicialização.');
+                    console.log('🔄 Sessão foi deslogada pelo WhatsApp. Nova autenticação necessária.');
+                } else if (reason === DisconnectReason.badSession) {
+                    // badSession: NÃO apaga, apenas loga. A sessão pode se recuperar.
+                    console.log('⚠️ Sessão reportada como inválida. Tentando reconectar sem apagar credenciais...');
+                } else if (reason === 401) {
+                    // 401 (sessão expirada): NÃO apaga automaticamente
+                    console.log('⚠️ Sessão expirada (401). Tentando reconectar sem apagar credenciais...');
                 }
 
                 // Não reconecta se conexão foi substituída (outra instância assumiu)
@@ -1430,6 +1485,18 @@ async function createBotSocket(authDir) {
 }
 
 async function startNazu() {
+    // Verifica lock de loop 428 — se existir, NÃO inicia
+    try {
+        const lockPath = path.join(DATABASE_DIR, '428_LOCK');
+        await fs.access(lockPath);
+        // Lock existe — bot está em estado de loop 428
+        console.log('🛑 LOCK de 428 detectado! O bot foi parado por loop de desconexão.');
+        console.log('🛑 Para reconectar: delete o arquivo dados/database/428_LOCK e re-pareie.');
+        process.exit(0);
+    } catch {
+        // Lock não existe — prossegue normalmente
+    }
+
     // Evita múltiplas instâncias sendo criadas ao mesmo tempo
     if (isReconnecting) {
         console.log('⚠️ Reconexão já em andamento, ignorando chamada duplicada...');

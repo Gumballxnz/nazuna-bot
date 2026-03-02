@@ -1,7 +1,7 @@
 {
   "mark": {},
   "createdAt": "2026-01-12T14:59:42.632Z",
-  "groupName": "Desenvolvimento de bots 🤖",
+  "groupName": "DESENVOLVIMENTO DE BOTS⚒️",
   "modorpg": false,
   "minMessage": null,
   "moderators": [],
@@ -26,12 +26,12 @@
     },
     {
       "id": "88756136722601@lid",
-      "msg": 16,
+      "msg": 19,
       "cmd": 2,
       "figu": 6,
       "pushname": "Zacarias Thequimo",
       "firstSeen": "2026-02-08T20:06:46.645Z",
-      "lastActivity": "2026-02-08T20:38:31.592Z"
+      "lastActivity": "2026-02-21T08:49:04.985Z"
     },
     {
       "id": "274234349744182@lid",
@@ -44,21 +44,21 @@
     },
     {
       "id": "25108932485151@lid",
-      "msg": 4,
+      "msg": 6,
       "cmd": 0,
       "figu": 0,
-      "pushname": "ＧＨＯＳＴ ＢＯＴ",
+      "pushname": "GHOST BOT",
       "firstSeen": "2026-02-08T20:07:51.726Z",
-      "lastActivity": "2026-02-08T20:22:33.114Z"
+      "lastActivity": "2026-02-21T08:51:11.634Z"
     },
     {
       "id": "138551954002160@lid",
-      "msg": 39,
+      "msg": 46,
       "cmd": 3,
-      "figu": 8,
+      "figu": 9,
       "pushname": "ᗪᗩÚᗪO ᗷՏՏ",
       "firstSeen": "2026-02-08T20:10:38.380Z",
-      "lastActivity": "2026-02-08T20:38:01.747Z"
+      "lastActivity": "2026-02-21T08:51:11.619Z"
     },
     {
       "id": "180874712735976@lid",
@@ -77,6 +77,15 @@
       "pushname": "075",
       "firstSeen": "2026-02-08T20:35:40.089Z",
       "lastActivity": "2026-02-08T20:35:40.089Z"
+    },
+    {
+      "id": "272950154526741@lid",
+      "msg": 9,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "GHOST MODZ",
+      "firstSeen": "2026-02-21T08:42:47.526Z",
+      "lastActivity": "2026-02-21T08:53:13.800Z"
     }
   ]
 }
