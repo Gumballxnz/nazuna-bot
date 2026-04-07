@@ -19,7 +19,9 @@
     "author": "Hiudy",
     "license": "ISC",
     "dependencies": {
+        "@distube/ytdl-core": "^4.16.0",
         "@hapi/boom": "^10.0.1",
+        "@tobyg74/tiktok-api-dl": "^1.1.2",
         "@whiskeysockets/baileys": "^7.0.0-rc.9",
         "axios": "^1.13.2",
         "fluent-ffmpeg": "^2.1.3",

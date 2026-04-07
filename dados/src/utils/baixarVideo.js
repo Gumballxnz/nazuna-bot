@@ -70,19 +70,43 @@ async function baixarTiktok(url) {
 
 // ==================== YOUTUBE ====================
 async function baixarYoutube(url) {
-    const ytdl = await import('@distube/ytdl-core');
-    const ytdlCore = ytdl.default || ytdl;
-    
-    const info = await ytdlCore.getInfo(url);
-    const format = ytdlCore.chooseFormat(info.formats, { 
-        quality: 'highest',
-        filter: 'videoandaudio' 
-    });
+    // Extrair ID do vídeo
+    const idMatch = url.match(/(?:v=|\/shorts\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (!idMatch) throw new Error('ID do vídeo não encontrado');
+    const videoId = idMatch[1];
 
-    if (!format || !format.url) throw new Error('Formato não encontrado');
+    // Método 1: API pública gratuita (yt-dlp via noembed proxy)
+    const apis = [
+        `https://yt-api.p.rapidapi.com/dl?id=${videoId}`,
+        `https://inv.nadeko.net/api/v1/videos/${videoId}`,
+        `https://invidious.fdn.fr/api/v1/videos/${videoId}`,
+    ];
 
-    const title = info.videoDetails?.title || 'Vídeo';
-    return { type: 'video', url: format.url, desc: title, isStream: true, ytdlCore, ytdlUrl: url };
+    // Tentar Invidious (sem chave)
+    for (const apiUrl of apis.slice(1)) {
+        try {
+            const { data } = await axios.get(apiUrl, { timeout: 15000 });
+            if (data?.formatStreams) {
+                const best = data.formatStreams.find(f => f.type?.includes('video/mp4')) || data.formatStreams[0];
+                if (best?.url) return { type: 'video', url: best.url, desc: data.title || 'YouTube' };
+            }
+        } catch {}
+    }
+
+    // Método 2: ytdl-core como último recurso
+    try {
+        const ytdl = await import('@distube/ytdl-core');
+        const ytdlCore = ytdl.default || ytdl;
+        const info = await ytdlCore.getInfo(url);
+        const format = ytdlCore.chooseFormat(info.formats, { quality: 'highest', filter: 'videoandaudio' });
+        if (format?.url) {
+            return { type: 'video', url: format.url, desc: info.videoDetails?.title || 'YouTube', isStream: true, ytdlCore, ytdlUrl: url };
+        }
+    } catch (e) {
+        console.error('[YouTube ytdl fallback] erro:', e.message);
+    }
+
+    throw new Error('YouTube não acessível de IPs de datacenter');
 }
 
 // ==================== INSTAGRAM ====================
