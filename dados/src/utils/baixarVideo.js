@@ -127,15 +127,15 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
         });
 
         dl.on('close', async (code) => {
+            clearTimeout(timeout);
+            
             if (code !== 0) {
                 console.error(`yt-dlp fechou com código ${code}:`, stderrout);
-                clearTimeout(timeout);
                 limparArquivos();
-                return reply('❌ *Falha ao baixar vídeo.*\nO link pode ser privado, indisponível, ter expirado, ou o site bloqueou a solicitação de bots gratuitas.');
+                return reply('❌ *Falha ao baixar vídeo.*\nO link pode ser privado, conter restrições de IP (como Instagram) ou está indisponível.');
             }
 
             if (!fs.existsSync(raw)) {
-                clearTimeout(timeout);
                 limparArquivos();
                 return reply('❌ Arquivo não encontrado após download.');
             }
@@ -145,80 +145,28 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
             const tamanhoMB = stats.size / (1024 * 1024);
             
             if (tamanhoMB > MAX_SIZE_MB) {
-                clearTimeout(timeout);
                 limparArquivos();
-                return reply(`❌ *Vídeo muito Grande!*\nO vídeo pussuí (${tamanhoMB.toFixed(1)}MB). Nosso limite de processamento no WhatsApp é de ${MAX_SIZE_MB}MB.`);
+                return reply(`❌ *Vídeo muito Grande!*\nO vídeo pussuí (${tamanhoMB.toFixed(1)}MB). Nosso limite é de ${MAX_SIZE_MB}MB.`);
             }
 
-            await digitando(nazu, from, 3000);
+            await nazu.sendMessage(from, { text: `🎬 Enviando (${tamanhoMB.toFixed(1)}MB)...\n🚀 Hospedado sem uso de APIs de Baixo Padrão!` }, { quoted: m });
 
-            // 🔄 Converter com ffmpeg para o formato mais compatível com Whatsapp
-            console.log(`[ffmpeg local] Convertendo vídeo de ${tamanhoMB.toFixed(1)}MB`);
-            ffmpeg = spawn('ffmpeg', [
-                '-i', raw,
-                // Redimensiona o video e melhora a compatibilidade h264 no android/ios
-                '-vf', 'scale=\'min(1280,iw)\':-2', 
-                '-c:v', 'libx264',
-                '-preset', 'fast',
-                '-crf', '26', // Compactação decente
-                '-c:a', 'aac',
-                '-b:a', '128k',
-                '-movflags', '+faststart',
-                '-y', 
-                final
-            ]);
-
-            ffmpeg.on('error', (err) => {
-                console.error('Erro no ffmpeg:', err);
-                clearTimeout(timeout);
-                limparArquivos();
-                reply('❌ Erro na conversão do vídeo pelo FFmpeg. Contate o administrador do servidor.');
+            // Enviar vídeo
+            await nazu.sendMessage(from, {
+                video: { url: raw },
+                mimetype: 'video/mp4',
+                caption: `🎬 Download Local Concluído\n✦ Plataforma: Automática\n✦ Tamanho: **${tamanhoMB.toFixed(1)}MB**`
+            }, { quoted: m }).catch((e) => {
+                console.error("Falha ao enviar video gigante no Whatsapp:", e);
+                reply("❌ Houve um erro no baileys ao tentar processar o Buffer do Vídeo e injetar na rede do WhatsApp.");
             });
 
-            ffmpeg.on('close', async (code) => {
-                clearTimeout(timeout);
-                
-                if (code !== 0) {
-                    console.error(`ffmpeg fechou com código ${code}`);
-                    limparArquivos();
-                    return reply('❌ Erro de processamento ao tentar codificar o vídeo para o WhatsApp.');
-                }
+            limparArquivos();
 
-                if (!fs.existsSync(final)) {
-                    limparArquivos();
-                    return reply('❌ Erro interno ao gerar arquivo final MP4.');
-                }
-
-                const statsFinal = fs.statSync(final);
-                const tamanhoFinalMB = statsFinal.size / (1024 * 1024);
-
-                if (tamanhoFinalMB > MAX_SIZE_MB) {
-                    limparArquivos();
-                    
-                    // Se o convertido ficou também gigantesco, avise e encerre
-                    return reply(`⚠️ *Vídeo Extra-Largo*\nMesmo após a conversão, o vídeo tem (${tamanhoFinalMB.toFixed(1)}MB). Isso travará o envio WhatsApp da AWS. Limitado a ${MAX_SIZE_MB}MB.`);
-                }
-
-                await nazu.sendMessage(from, { text: `🎬 Enviando de (${tamanhoFinalMB.toFixed(1)}MB)...\nHospedado sem uso de APIs de Baixo Padrão!` }, { quoted: m });
-
-                // Enviar vídeo
-                await nazu.sendMessage(from, {
-                    video: { url: final },
-                    mimetype: 'video/mp4',
-                    caption: `🎬 Download Local Concluído\n✦ Plataforma: Automática\n✦ Tamanho: **${tamanhoFinalMB.toFixed(1)}MB**`
-                }, { quoted: m }).catch((e) => {
-                    console.error("Falha ao enviar video gigante no Whatsapp:", e);
-                    reply("❌ Houve um erro no baileys ao tentar processar o Buffer do Vídeo e injetar na rede do WhatsApp.");
-                });
-
-                // Limpar
-                limparArquivos();
-
-                // Reagir com sucesso
-                if (m.key) {
-                    await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(()=>{});
-                }
-            });
+            // Reagir com sucesso
+            if (m.key) {
+                await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(()=>{});
+            }
         });
 
     } catch (err) {
