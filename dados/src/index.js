@@ -37,6 +37,7 @@ import * as ia from './funcs/private/ia.js';
 import * as vipCommandsManager from './utils/vipCommandsManager.js';
 import { notifyOwnerAboutApiKey, isApiKeyError } from './funcs/utils/apiKeyNotifier.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
+import baixarVideoLocal from './utils/baixarVideo.js';
 import fsPromises from 'fs/promises';
 import {
   formatUptime,
@@ -4828,8 +4829,15 @@ Entre em contato com o dono do bot:
       }
     }
 
-    switch (command) {
+    // --- INÍCIO: INTECEPTAÇÃO DE DOWNLOADS API-LESS ---
+    const modulosDownload = ['baixar', 'dl', 'down', 'ig', 'igdl', 'instagram', 'instavideo', 'igstory', 'tk', 'tiktok', 'tt', 'fb', 'facebook', 'fbdl', 'tw', 'x', 'twitter', 'twitterdl', 'yt', 'youtube', 'ytdl', 'dailymotion', 'dailymotiondl', 'streamable', 'streamabledl', 'video'];
+    if (modulosDownload.includes(command)) {
+      await baixarVideoLocal(nazu, from, info, q, reply);
+      return; 
+    }
+    // --- FIM: INTECEPTAÇÃO ---
 
+    switch (command) {
       case 'roles':
       case 'role.lista':
       case 'listaroles': {
