@@ -46,7 +46,7 @@ async function digitando(nazu, from, tempo = 4000) {
 }
 
 function validarUrl(url) {
-    const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|fb\.watch|fb\.com|twitter\.com|x\.com|tiktok\.com)\/.+$/i;
+    const regex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)*(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|fb\.watch|fb\.com|twitter\.com|x\.com|tiktok\.com)\/.+$/i;
     return regex.test(url);
 }
 
