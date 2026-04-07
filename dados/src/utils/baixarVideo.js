@@ -1,183 +1,276 @@
-import { spawn } from 'child_process';
+/**
+ * Módulo de Download Universal - Sem APIs pagas
+ * Usa pacotes npm nativos (JavaScript puro) para máxima velocidade
+ * TikTok: @tobyg74/tiktok-api-dl
+ * YouTube: @distube/ytdl-core
+ * Instagram/Facebook/Twitter: scraping via axios
+ */
+
+import axios from 'axios';
 import fs from 'fs';
-const fsPromises = fs.promises;
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
+// Pasta temporária
+const tmpDir = path.join(__dirname, '..', '..', 'tmp');
+if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
-// Configurações
-const dir = path.join(__dirname, '..', '..', 'tmp');
-const MAX_SIZE_MB = 100; // Limite do WhatsApp agora é arredor de 100MB (embora 50 seja mais seguro)
-const TIMEOUT_MS = 240000; // 4 minutos de limite
-const TEMPO_LIMPEZA_MS = 3600000; // 1 hora
-
-// Garantir que a pasta tmp existe em dados/tmp
-if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-// Limpeza automática do tmp
+// Limpeza automática a cada 30 min
 setInterval(() => {
     try {
-        const files = fs.readdirSync(dir);
         const now = Date.now();
-        files.forEach(file => {
-            const filePath = path.join(dir, file);
-            const stats = fs.statSync(filePath);
-            if (now - stats.mtimeMs > TEMPO_LIMPEZA_MS) {
-                fs.unlinkSync(filePath);
+        for (const f of fs.readdirSync(tmpDir)) {
+            const fp = path.join(tmpDir, f);
+            if (now - fs.statSync(fp).mtimeMs > 1800000) fs.unlinkSync(fp);
+        }
+    } catch {}
+}, 1800000);
+
+// ==================== DETECTAR PLATAFORMA ====================
+function detectarPlataforma(url) {
+    const u = url.toLowerCase();
+    if (u.includes('tiktok.com')) return 'TikTok';
+    if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YouTube';
+    if (u.includes('instagram.com') || u.includes('instagr.am')) return 'Instagram';
+    if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com')) return 'Facebook';
+    if (u.includes('twitter.com') || u.includes('x.com')) return 'Twitter/X';
+    return null;
+}
+
+// ==================== TIKTOK ====================
+async function baixarTiktok(url) {
+    const Tiktok = await import('@tobyg74/tiktok-api-dl');
+    const TiktokDL = Tiktok.Downloader || Tiktok.default?.Downloader || Tiktok.default;
+    
+    // Tentar v1 primeiro, depois v2, depois v3
+    for (const version of ['v1', 'v2', 'v3']) {
+        try {
+            const result = await TiktokDL(url, { version });
+            if (result.status === 'success' && result.result) {
+                const r = result.result;
+                // Para vídeo
+                if (r.type === 'video' && r.video) {
+                    const videoUrl = r.video.downloadAddr?.[0] || r.video.playAddr?.[0];
+                    if (videoUrl) return { type: 'video', url: videoUrl, desc: r.desc };
+                }
+                // Para imagens/slides
+                if (r.type === 'image' && r.images) {
+                    return { type: 'images', urls: r.images, desc: r.desc };
+                }
+            }
+        } catch (e) {
+            console.error(`[TikTok v${version}] erro:`, e.message);
+        }
+    }
+    throw new Error('Falha em todas as versões do TikTok');
+}
+
+// ==================== YOUTUBE ====================
+async function baixarYoutube(url) {
+    const ytdl = await import('@distube/ytdl-core');
+    const ytdlCore = ytdl.default || ytdl;
+    
+    const info = await ytdlCore.getInfo(url);
+    const format = ytdlCore.chooseFormat(info.formats, { 
+        quality: 'highest',
+        filter: 'videoandaudio' 
+    });
+
+    if (!format || !format.url) throw new Error('Formato não encontrado');
+
+    const title = info.videoDetails?.title || 'Vídeo';
+    return { type: 'video', url: format.url, desc: title, isStream: true, ytdlCore, ytdlUrl: url };
+}
+
+// ==================== INSTAGRAM ====================
+async function baixarInstagram(url) {
+    // Método 1: API pública gratuita
+    try {
+        const { data } = await axios.get(`https://igdownloader.app/api/v1/media?url=${encodeURIComponent(url)}`, {
+            timeout: 15000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+        });
+        if (data && data.items && data.items.length > 0) {
+            const item = data.items[0];
+            return { type: 'video', url: item.url, desc: 'Instagram' };
+        }
+    } catch {}
+
+    // Método 2: Scraping direto
+    try {
+        const { data: html } = await axios.get(url, {
+            timeout: 15000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'text/html'
             }
         });
-    } catch (err) {
-        console.error('Erro na limpeza de download:', err);
-    }
-}, TEMPO_LIMPEZA_MS);
-
-async function digitando(nazu, from, tempo = 4000) {
-    try {
-        await nazu.sendPresenceUpdate('composing', from);
-        // Atraso síncrono da promise apenas para manter o presence ativo caso não respondamos logo
-        setTimeout(async () => {
-             await nazu.sendPresenceUpdate('paused', from);
-        }, tempo);
+        const videoMatch = html.match(/"video_url":"([^"]+)"/);
+        if (videoMatch) {
+            const videoUrl = videoMatch[1].replace(/\\u0026/g, '&');
+            return { type: 'video', url: videoUrl, desc: 'Instagram' };
+        }
     } catch {}
+
+    throw new Error('Instagram bloqueou a solicitação');
 }
 
-function validarUrl(url) {
-    const regex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)*(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|fb\.watch|fb\.com|twitter\.com|x\.com|tiktok\.com)\/.+$/i;
-    return regex.test(url);
+// ==================== FACEBOOK ====================
+async function baixarFacebook(url) {
+    try {
+        const { data: html } = await axios.get(url, {
+            timeout: 15000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'text/html'
+            }
+        });
+        // Procurar URL HD
+        const hdMatch = html.match(/"hd_src":"([^"]+)"/) || html.match(/hd_src\s*:\s*"([^"]+)"/);
+        const sdMatch = html.match(/"sd_src":"([^"]+)"/) || html.match(/sd_src\s*:\s*"([^"]+)"/);
+        const videoUrl = (hdMatch || sdMatch)?.[1]?.replace(/\\/g, '');
+        if (videoUrl) return { type: 'video', url: videoUrl, desc: 'Facebook' };
+    } catch {}
+    throw new Error('Facebook bloqueou a solicitação');
 }
 
-const PYTHON = 'python3';
-const YTDLP = ['-m', 'yt_dlp'];
+// ==================== TWITTER/X ====================
+async function baixarTwitter(url) {
+    // Usar API fxtwitter (gratuita)
+    try {
+        const tweetUrl = url.replace('twitter.com', 'api.fxtwitter.com').replace('x.com', 'api.fxtwitter.com');
+        const { data } = await axios.get(tweetUrl, { timeout: 15000 });
+        if (data?.tweet?.media?.videos?.[0]) {
+            const video = data.tweet.media.videos[0];
+            const bestVariant = video.variants?.filter(v => v.content_type === 'video/mp4')
+                ?.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))?.[0];
+            if (bestVariant) return { type: 'video', url: bestVariant.url, desc: 'Twitter/X' };
+            if (video.url) return { type: 'video', url: video.url, desc: 'Twitter/X' };
+        }
+    } catch {}
+    throw new Error('Twitter/X bloqueou a solicitação');
+}
 
+// ==================== DOWNLOAD DO BUFFER ====================
+async function baixarBuffer(videoUrl) {
+    const response = await axios.get(videoUrl, {
+        responseType: 'arraybuffer',
+        timeout: 60000,
+        maxContentLength: 100 * 1024 * 1024, // 100MB
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+    });
+    return Buffer.from(response.data);
+}
+
+// ==================== FUNÇÃO PRINCIPAL (COMANDO) ====================
 export default async function baixarVideoLocal(nazu, from, m, q, reply) {
-    let dl = null;
-    let ffmpeg = null;
-    let timeout = null;
-    let raw = null;
-    let final = null;
-
     try {
         if (!q) {
-            return reply('❌ Envie um link válido.\n\n📌 *Exemplos:*\n• youtube.com/watch?v=...\n• instagram.com/p/...\n• tiktok.com/@user/video/...\n• x.com/user/status/...\\n• fb.watch/...');
+            return reply('❌ Envie um link válido.\n\n📌 *Sites suportados:*\n• TikTok\n• YouTube\n• Instagram\n• Facebook\n• Twitter/X');
         }
 
-        const url = q.trim().split(' ')[0]; // Garante que pega só o primeiro link no texto
+        const url = q.trim().split(' ')[0];
+        const plataforma = detectarPlataforma(url);
 
-        // Validar URL
-        if (!validarUrl(url)) {
-            return reply('❌ Link inválido ou não suportado para o módulo gratuito.\n\n📌 *Sites suportados:*\n• YouTube\n• Instagram\n• Facebook\n• Twitter/X\n• TikTok');
+        if (!plataforma) {
+            return reply('❌ Link não suportado.\n\n📌 *Sites suportados:*\n• TikTok\n• YouTube\n• Instagram\n• Facebook\n• Twitter/X');
         }
 
-        // Reagir com download
+        // Reagir com loading
         if (m.key) {
-            await nazu.sendMessage(from, { react: { text: '🔄', key: m.key } }).catch(()=>{});
+            await nazu.sendMessage(from, { react: { text: '⏳', key: m.key } }).catch(() => {});
         }
 
-        const notifyMsg = await reply('📥 *Iniciando Download...*\nIsso não gasta APIs. Por favor, aguarde a conversão não fechar.');
-        await digitando(nazu, from, 5000);
-
-        // Criar nomes de arquivos únicos
-        const timestamp = Date.now();
-        raw = path.join(dir, `raw_${timestamp}.mp4`);
-        final = path.join(dir, `final_${timestamp}.mp4`);
-
-        // Função para limpar arquivos
-        const limparArquivos = () => {
-            try {
-                if (raw && fs.existsSync(raw)) fs.unlinkSync(raw);
-                if (final && fs.existsSync(final)) fs.unlinkSync(final);
-            } catch (err) {}
-        };
-
-        // Timeout global
-        timeout = setTimeout(() => {
-            console.log('Timeout: download local yt-dlp excedeu o limite');
-            if (dl) dl.kill();
-            if (ffmpeg) ffmpeg.kill();
-            limparArquivos();
-            reply('⏰ *Tempo Limite Excedido!*\nO vídeo demorou mais de 4 minutos para ser puxado ou convertido. O processo foi abortado.');
-        }, TIMEOUT_MS);
-
-        // 📥 Download com yt-dlp
-        console.log(`[yt-dlp local] Iniciando download: ${url}`);
-        dl = spawn(PYTHON, [
-            ...YTDLP,
-            '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-            '--merge-output-format', 'mp4',
-            '-o', raw,
-            '--no-playlist', 
-            '--socket-timeout', '30',
-            url
-        ]);
-
-        let stderrout = '';
-        dl.stderr.on('data', (data) => {
-            stderrout += data.toString();
-        });
-
-        dl.on('error', (err) => {
-            console.error('Erro no yt-dlp:', err);
-            clearTimeout(timeout);
-            limparArquivos();
-            reply('❌ *Ocorreu um erro interno de processo* (yt-dlp ausente ou quebrado). Verifique se os pacotes python estão instalados no servidor.');
-        });
-
-        dl.on('close', async (code) => {
-            clearTimeout(timeout);
-            
-            if (code !== 0) {
-                console.error(`yt-dlp fechou com código ${code}:`, stderrout);
-                limparArquivos();
-                return reply('❌ *Falha ao baixar vídeo.*\nO link pode ser privado, conter restrições de IP (como Instagram) ou está indisponível.');
+        // Baixar conforme plataforma
+        let resultado;
+        try {
+            switch (plataforma) {
+                case 'TikTok': resultado = await baixarTiktok(url); break;
+                case 'YouTube': resultado = await baixarYoutube(url); break;
+                case 'Instagram': resultado = await baixarInstagram(url); break;
+                case 'Facebook': resultado = await baixarFacebook(url); break;
+                case 'Twitter/X': resultado = await baixarTwitter(url); break;
             }
+        } catch (err) {
+            console.error(`[Download ${plataforma}] Erro:`, err.message);
+            if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
+            return reply(`❌ Falha ao baixar do ${plataforma}.`);
+        }
 
-            if (!fs.existsSync(raw)) {
-                limparArquivos();
-                return reply('❌ Arquivo não encontrado após download.');
+        if (!resultado) {
+            if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
+            return reply(`❌ Não foi possível extrair mídia do ${plataforma}.`);
+        }
+
+        // Enviar conforme tipo
+        if (resultado.type === 'video') {
+            // YouTube com stream especial
+            if (resultado.isStream) {
+                const ytdlCore = resultado.ytdlCore;
+                const filePath = path.join(tmpDir, `yt_${Date.now()}.mp4`);
+                
+                await new Promise((resolve, reject) => {
+                    const stream = ytdlCore.default
+                        ? ytdlCore.default(resultado.ytdlUrl, { quality: 'highest', filter: 'videoandaudio' })
+                        : ytdlCore(resultado.ytdlUrl, { quality: 'highest', filter: 'videoandaudio' });
+                    const writeStream = fs.createWriteStream(filePath);
+                    stream.pipe(writeStream);
+                    stream.on('error', reject);
+                    writeStream.on('finish', resolve);
+                    writeStream.on('error', reject);
+                    // Timeout de 2 minutos
+                    setTimeout(() => reject(new Error('Timeout YouTube')), 120000);
+                });
+
+                const stats = fs.statSync(filePath);
+                if (stats.size > 100 * 1024 * 1024) {
+                    fs.unlinkSync(filePath);
+                    return reply('❌ Vídeo muito grande (>100MB).');
+                }
+
+                await nazu.sendMessage(from, {
+                    video: { url: filePath },
+                    mimetype: 'video/mp4',
+                    caption: `✅ Download automático do ${plataforma}!`
+                }, { quoted: m });
+
+                fs.unlinkSync(filePath);
+            } else {
+                // Download direto via buffer (TikTok, Instagram, etc.)
+                const buffer = await baixarBuffer(resultado.url);
+                
+                await nazu.sendMessage(from, {
+                    video: buffer,
+                    mimetype: 'video/mp4',
+                    caption: `✅ Download automático do ${plataforma}!`
+                }, { quoted: m });
             }
-
-            // Verificar tamanho do arquivo
-            const stats = fs.statSync(raw);
-            const tamanhoMB = stats.size / (1024 * 1024);
-            
-            if (tamanhoMB > MAX_SIZE_MB) {
-                limparArquivos();
-                return reply(`❌ *Vídeo muito Grande!*\nO vídeo pussuí (${tamanhoMB.toFixed(1)}MB). Nosso limite é de ${MAX_SIZE_MB}MB.`);
+        } else if (resultado.type === 'images') {
+            // TikTok slides
+            for (const imgUrl of resultado.urls.slice(0, 10)) {
+                try {
+                    const buffer = await baixarBuffer(imgUrl);
+                    await nazu.sendMessage(from, {
+                        image: buffer,
+                        caption: `✅ Download automático do ${plataforma}!`
+                    }, { quoted: m });
+                } catch {}
             }
+        }
 
-            await nazu.sendMessage(from, { text: `🎬 Enviando (${tamanhoMB.toFixed(1)}MB)...\n🚀 Hospedado sem uso de APIs de Baixo Padrão!` }, { quoted: m });
-
-            // Enviar vídeo
-            await nazu.sendMessage(from, {
-                video: { url: raw },
-                mimetype: 'video/mp4',
-                caption: `🎬 Download Local Concluído\n✦ Plataforma: Automática\n✦ Tamanho: **${tamanhoMB.toFixed(1)}MB**`
-            }, { quoted: m }).catch((e) => {
-                console.error("Falha ao enviar video gigante no Whatsapp:", e);
-                reply("❌ Houve um erro no baileys ao tentar processar o Buffer do Vídeo e injetar na rede do WhatsApp.");
-            });
-
-            limparArquivos();
-
-            // Reagir com sucesso
-            if (m.key) {
-                await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(()=>{});
-            }
-        });
+        // Reagir com sucesso
+        if (m.key) {
+            await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(() => {});
+        }
 
     } catch (err) {
-        console.error('Erro fatal no downloader local:', err);
-        if (timeout) clearTimeout(timeout);
-        
-        try {
-            if (raw && fs.existsSync(raw)) fs.unlinkSync(raw);
-            if (final && fs.existsSync(final)) fs.unlinkSync(final);
-        } catch (e) {}
-
-        reply('❌ Erro de sistema crítico ao processar módulo universal de mídia.');
+        console.error('Erro fatal no downloader:', err);
+        if (m?.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
+        reply('❌ Erro ao processar download.');
     }
-};
+}
