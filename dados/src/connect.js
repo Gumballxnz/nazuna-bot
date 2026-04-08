@@ -1001,6 +1001,68 @@ const MAX_428_CONSECUTIVE = 5; // Máximo de 428 consecutivos antes de parar
 const RECONNECT_DELAY_BASE = 5000; // 5 segundos base
 const MAX_RECONNECT_DELAY = 120000; // Máximo 2 minutos de delay
 
+// === WATCHDOG ANTI-FANTASMA ===
+// Detecta quando o bot fica "mudo" (nenhum evento recebido) e força reconexão
+let lastActivityTimestamp = Date.now();
+let watchdogInterval = null;
+const WATCHDOG_CHECK_INTERVAL = 30_000; // Verifica a cada 30 segundos
+const WATCHDOG_TIMEOUT = 180_000; // Se não há atividade há 3 minutos, força reconexão
+
+function updateWatchdog() {
+    lastActivityTimestamp = Date.now();
+}
+
+function startWatchdog(sock) {
+    if (watchdogInterval) clearInterval(watchdogInterval);
+    lastActivityTimestamp = Date.now();
+    
+    watchdogInterval = setInterval(async () => {
+        const inactiveMs = Date.now() - lastActivityTimestamp;
+        
+        if (inactiveMs > WATCHDOG_TIMEOUT) {
+            console.error(`🐕 WATCHDOG: Bot sem atividade há ${Math.round(inactiveMs/1000)}s! Modo fantasma detectado.`);
+            console.error('🐕 WATCHDOG: Forçando reconexão...');
+            
+            // Tenta enviar um ping primeiro
+            try {
+                const isAlive = await Promise.race([
+                    sock.query({ tag: 'iq', attrs: { to: '@s.whatsapp.net', type: 'get', xmlns: 'w:p' }, content: [{ tag: 'ping', attrs: {} }] }).then(() => true),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), 10000))
+                ]);
+                if (isAlive) {
+                    console.log('🐕 WATCHDOG: Ping bem-sucedido, bot está vivo. Resetando timer.');
+                    updateWatchdog();
+                    return;
+                }
+            } catch {
+                console.error('🐕 WATCHDOG: Ping falhou! Conexão está morta.');
+            }
+            
+            // Força reconexão
+            stopWatchdog();
+            try {
+                sock.end(new Error('Watchdog: inatividade detectada'));
+            } catch {}
+            
+            // Dá tempo pro close handler pegar, senão força restart
+            setTimeout(() => {
+                if (!isReconnecting) {
+                    console.error('🐕 WATCHDOG: Close handler não disparou. Forçando startNazu...');
+                    startNazu();
+                }
+            }, 5000);
+        }
+    }, WATCHDOG_CHECK_INTERVAL);
+}
+
+function stopWatchdog() {
+    if (watchdogInterval) {
+        clearInterval(watchdogInterval);
+        watchdogInterval = null;
+    }
+}
+// === FIM WATCHDOG ===
+
 async function createBotSocket(authDir) {
     try {
         await fs.mkdir(path.join(DATABASE_DIR, 'grupos'), { recursive: true });
@@ -1025,8 +1087,8 @@ async function createBotSocket(authDir) {
             connectTimeoutMs: 180000,
             retryRequestDelayMs: 10000,
             qrTimeout: 180000,
-            keepAliveIntervalMs: 60_000,
-            defaultQueryTimeoutMs: undefined,
+            keepAliveIntervalMs: 30_000, // 30s para detectar morte de conexão mais rápido
+            defaultQueryTimeoutMs: 60_000, // Timeout de 60s para queries (evita travamento infinito)
             msgRetryCounterCache,
             auth: state,
             signalRepository,
@@ -1191,11 +1253,13 @@ async function createBotSocket(authDir) {
 
                 try {
 
-                    const messageProcessingPromises = m.messages.map(info =>
-                        messageQueue.add(info, processMessage).catch(err => {
+                    const messageProcessingPromises = m.messages.map(info => {
+                        // Atualiza watchdog a cada mensagem recebida
+                        updateWatchdog();
+                        return messageQueue.add(info, processMessage).catch(err => {
                             console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
-                        })
-                    );
+                        });
+                    });
 
                     await Promise.allSettled(messageProcessingPromises);
 
@@ -1279,6 +1343,10 @@ async function createBotSocket(authDir) {
                 forbidden403Attempts = 0;
                 consecutive428Count = 0; // Só reseta 428 quando REALMENTE conecta
 
+                // Inicia watchdog anti-fantasma
+                startWatchdog(NazunaSock);
+                console.log('🐕 WATCHDOG: Sistema anti-fantasma ativado (timeout: 3min)');
+
                 await initializeOptimizedCaches();
 
                 await updateOwnerLid(NazunaSock);
@@ -1346,6 +1414,7 @@ async function createBotSocket(authDir) {
                 console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage} | Tentativa: ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
 
                 // Limpa recursos antes de reconectar
+                stopWatchdog(); // Para watchdog anti-fantasma
                 if (cacheCleanupInterval) {
                     clearInterval(cacheCleanupInterval);
                     cacheCleanupInterval = null;
