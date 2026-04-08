@@ -846,11 +846,11 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   async function handleAutoDownload(nazu, from, url, info) {
     try {
       const urlLower = url.toLowerCase();
-      // Sites de vídeo principais que usaremos o baixarVideoLocal
-      const supportedSites = ['youtube.com', 'youtu.be', 'tiktok.com', 'vt.tiktok.com', 'instagram.com', 'instagr.am', 'facebook.com', 'fb.watch', 'twitter.com', 'x.com'];
+      // Apenas plataformas 100% funcionais com download local
+      const localSites = ['tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com', 'twitter.com', 'x.com'];
       
-      if (supportedSites.some(site => urlLower.includes(site))) {
-         await baixarVideoLocal(nazu, from, info, url, (msg) => {}); // Passa dummy pra erro pra não spammar texto
+      if (localSites.some(site => urlLower.includes(site))) {
+         await baixarVideoLocal(nazu, from, info, url, (msg) => {});
          return true;
       }
       return false;
@@ -4626,13 +4626,19 @@ Entre em contato com o dono do bot:
       }
     }
 
-    // --- INÍCIO: INTECEPTAÇÃO DE DOWNLOADS API-LESS ---
-    const modulosDownload = ['baixar', 'dl', 'down', 'ig', 'igdl', 'instagram', 'instavideo', 'igstory', 'tk', 'tiktok', 'tt', 'fb', 'facebook', 'fbdl', 'tw', 'x', 'twitter', 'twitterdl', 'yt', 'youtube', 'ytdl', 'dailymotion', 'dailymotiondl', 'streamable', 'streamabledl', 'video'];
-    if (modulosDownload.includes(command)) {
-      await baixarVideoLocal(nazu, from, info, q, reply);
-      return; 
+    // --- DOWNLOAD LOCAL GRATUITO (sem API) ---
+    // Apenas plataformas 100% confirmadas são interceptadas
+    const cmdDownloadLocal = ['tiktok', 'tk', 'tt', 'ttk', 'tkk', 'twitter', 'tw', 'x', 'twitterdl'];
+    if (cmdDownloadLocal.includes(command) && q && (q.includes('tiktok.com') || q.includes('twitter.com') || q.includes('x.com'))) {
+      try {
+        await baixarVideoLocal(nazu, from, info, q, reply);
+        return;
+      } catch (e) {
+        console.error('[Download local fallback]', e.message);
+        // Se falhar, continua pro switch original
+      }
     }
-    // --- FIM: INTECEPTAÇÃO ---
+    // --- FIM DOWNLOAD LOCAL ---
 
     switch (command) {
       case 'roles':
