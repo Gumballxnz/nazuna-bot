@@ -338,7 +338,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
             await nazu.sendMessage(from, {
                 video: { url: resultado.filePath },
                 mimetype: 'video/mp4',
-                caption: `✅ Download automático do ${plataforma}!`
+                caption: `✅ ${plataforma}`
             }, { quoted: m });
             try { fs.unlinkSync(resultado.filePath); } catch {}
         } else if (resultado.isStream) {
@@ -360,7 +360,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
             await nazu.sendMessage(from, {
                 video: { url: filePath },
                 mimetype: 'video/mp4',
-                caption: `✅ Download automático do ${plataforma}!`
+                caption: `✅ ${plataforma}`
             }, { quoted: m });
             try { fs.unlinkSync(filePath); } catch {}
         } else {
@@ -369,7 +369,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
             await nazu.sendMessage(from, {
                 video: buffer,
                 mimetype: 'video/mp4',
-                caption: `✅ Download automático do ${plataforma}!`
+                caption: `✅ ${plataforma}`
             }, { quoted: m });
         }
     } else if (resultado.type === 'audio') {
@@ -390,7 +390,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
         const buffer = await baixarBuffer(resultado.url);
         await nazu.sendMessage(from, {
             image: buffer,
-            caption: `✅ Download automático do ${plataforma}!`
+            caption: `✅ ${plataforma}`
         }, { quoted: m });
     } else if (resultado.type === 'images') {
         for (const imgUrl of resultado.urls.slice(0, 10)) {
@@ -398,7 +398,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                 const buffer = await baixarBuffer(imgUrl);
                 await nazu.sendMessage(from, {
                     image: buffer,
-                    caption: `✅ Download automático do ${plataforma}!`
+                    caption: `✅ ${plataforma}`
                 }, { quoted: m });
             } catch {}
         }
