@@ -157,15 +157,12 @@ async function baixarYoutube(url, formato = 'video') {
         const btch = await import('btch-downloader');
         const bFn = btch.default || btch;
         
-        if (formato === 'audio') {
-            const res = await bFn.ytmp3(url);
-            if (res && res.status && res.result) {
-                return { type: 'audio', url: res.result, desc: 'YouTube Áudio', isStream: false, formato };
-            }
-        } else {
-            const res = await bFn.ytmp4(url);
-            if (res && res.status && res.result) {
-                return { type: 'video', url: res.result, desc: 'YouTube Vídeo', isStream: false, formato };
+        const res = await bFn.youtube(url);
+        if (res && res.status) {
+            if (formato === 'audio' && res.mp3) {
+                return { type: 'audio', url: res.mp3, desc: res.title || 'YouTube Áudio', isStream: false, formato };
+            } else if (res.mp4) {
+                return { type: 'video', url: res.mp4, desc: res.title || 'YouTube Vídeo', isStream: false, formato };
             }
         }
     } catch (e) { console.error('[YouTube btch-dl]', e.message); }
@@ -275,12 +272,22 @@ async function baixarPinterest(url) {
         if (imgMatch) return { type: 'image', url: imgMatch[1], desc: 'Pinterest' };
     } catch {}
 
+    // Siputzx API Fallback
+    try {
+        const { data } = await axios.get(`https://api.siputzx.my.id/api/d/pinterest?url=${finalUrl}`, { timeout: 15000 });
+        if (data && data.status && data.data) {
+            const urlData = data.data.url;
+            return { type: urlData.includes('.mp4') ? 'video' : 'image', url: urlData, desc: 'Pinterest' };
+        }
+    } catch {}
+
     // btch-downloader fallback
     try {
         const btch = await import('btch-downloader');
-        const res = await btch.pindl(finalUrl);
-        if (res && res.result) {
-            return { type: res.result.includes('.mp4') ? 'video' : 'image', url: res.result, desc: 'Pinterest' };
+        const bFn = btch.default || btch;
+        const res = await bFn.pinterest(finalUrl);
+        if (res && res.status && res.result?.url) {
+            return { type: res.result.url.includes('.mp4') ? 'video' : 'image', url: res.result.url, desc: 'Pinterest' };
         }
     } catch {}
 
