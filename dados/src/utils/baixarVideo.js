@@ -66,12 +66,14 @@ async function baixarTiktok(url) {
             `url=${encodeURIComponent(url)}&count=12&cursor=0&web=1&hd=1`,
             { headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA }, timeout: 15000 }
         );
-        if (data?.code === 0 && data?.data) {
+    if (data?.code === 0 && data?.data) {
             const d = data.data;
+            // TikWM às vezes retorna URLs relativas, prefixar com base
+            const fixUrl = (u) => u && u.startsWith('/') ? `https://tikwm.com${u}` : u;
             if (d.images && d.images.length > 0) {
-                return { type: 'images', urls: d.images, desc: d.title || 'TikTok' };
+                return { type: 'images', urls: d.images.map(fixUrl), desc: d.title || 'TikTok' };
             }
-            const videoUrl = d.hdplay || d.play || d.wmplay;
+            const videoUrl = fixUrl(d.hdplay || d.play || d.wmplay);
             if (videoUrl) return { type: 'video', url: videoUrl, desc: d.title || 'TikTok' };
         }
     } catch (e) { console.error('[TikTok TikWM]', e.message); }

@@ -4653,12 +4653,16 @@ Entre em contato com o dono do bot:
       'alldl', 'dl', 'down', 'baixar', 'video'
     ];
     
-    if (cmdDownloadURL.includes(command) && q) {
+    // Só intercepta se q contém URL (http). Textos de pesquisa vão pro switch original.
+    const isUrl = q && (q.includes('http://') || q.includes('https://') || q.includes('.com/') || q.includes('.be/'));
+    
+    if (cmdDownloadURL.includes(command) && isUrl) {
       try {
         await baixarVideoLocal(nazu, from, info, q, reply);
         return;
       } catch (e) {
         console.error('[Download local]', e.message);
+        // Se falhar, continua pro switch original
       }
     }
 
