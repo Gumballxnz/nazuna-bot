@@ -37,7 +37,7 @@ import * as ia from './funcs/private/ia.js';
 import * as vipCommandsManager from './utils/vipCommandsManager.js';
 import { notifyOwnerAboutApiKey, isApiKeyError } from './funcs/utils/apiKeyNotifier.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
-import baixarVideoLocal from './utils/baixarVideo.js';
+import baixarVideoLocal, { playAudio, playVideo } from './utils/baixarVideo.js';
 import fsPromises from 'fs/promises';
 import {
   formatUptime,
@@ -846,16 +846,27 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   async function handleAutoDownload(nazu, from, url, info) {
     try {
       const urlLower = url.toLowerCase();
-      // Apenas plataformas 100% funcionais com download local
-      const localSites = ['tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com', 'twitter.com', 'x.com'];
+      // Todas as plataformas suportadas pelo download local
+      const supportedSites = [
+        'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
+        'twitter.com', 'x.com',
+        'instagram.com', 'instagr.am',
+        'youtube.com', 'youtu.be',
+        'facebook.com', 'fb.watch', 'fb.com',
+        'reddit.com', 'redd.it',
+        'pinterest.com', 'pin.it',
+        'spotify.com', 'soundcloud.com',
+        'vimeo.com', 'dailymotion.com', 'dai.ly',
+        'streamable.com', 'twitch.tv', 'bandcamp.com'
+      ];
       
-      if (localSites.some(site => urlLower.includes(site))) {
+      if (supportedSites.some(site => urlLower.includes(site))) {
          await baixarVideoLocal(nazu, from, info, url, (msg) => {});
          return true;
       }
       return false;
     } catch (e) {
-      console.error('Erro no autodl:', e);
+      console.error('Erro no autodl:', e.message);
       return false;
     }
   }
@@ -4626,16 +4637,46 @@ Entre em contato com o dono do bot:
       }
     }
 
-    // --- DOWNLOAD LOCAL GRATUITO (sem API) ---
-    // Apenas plataformas 100% confirmadas são interceptadas
-    const cmdDownloadLocal = ['tiktok', 'tk', 'tt', 'ttk', 'tkk', 'twitter', 'tw', 'x', 'twitterdl'];
-    if (cmdDownloadLocal.includes(command) && q && (q.includes('tiktok.com') || q.includes('twitter.com') || q.includes('x.com'))) {
+    // --- DOWNLOAD LOCAL 100% GRATUITO (sem APIs pagas) ---
+    // Comandos que recebem URL direta → baixarVideoLocal
+    const cmdDownloadURL = [
+      'tiktok', 'tk', 'tt', 'ttk', 'tkk', 'tiktokvideo', 'tiktokaudio', 'tiktoks',
+      'instagram', 'ig', 'igdl', 'instavideo', 'igstory',
+      'facebook', 'fb', 'fbdl',
+      'twitter', 'tw', 'x', 'twitterdl',
+      'youtube', 'yt', 'ytdl',
+      'pinterest', 'pin',
+      'reddit', 'redditvideo',
+      'vimeo', 'dailymotion', 'dailymotiondl', 'streamable', 'streamabledl',
+      'spotify', 'soundcloud', 'bandcamp',
+      'twitch',
+      'alldl', 'dl', 'down', 'baixar', 'video'
+    ];
+    
+    if (cmdDownloadURL.includes(command) && q) {
       try {
         await baixarVideoLocal(nazu, from, info, q, reply);
         return;
       } catch (e) {
-        console.error('[Download local fallback]', e.message);
-        // Se falhar, continua pro switch original
+        console.error('[Download local]', e.message);
+      }
+    }
+
+    // Comandos de pesquisa + download (play = áudio, playvid = vídeo)
+    if ((command === 'play' || command === 'play2') && q) {
+      try {
+        await playAudio(nazu, from, info, q, reply);
+        return;
+      } catch (e) {
+        console.error('[Play local]', e.message);
+      }
+    }
+    if (command === 'playvid' && q) {
+      try {
+        await playVideo(nazu, from, info, q, reply);
+        return;
+      } catch (e) {
+        console.error('[PlayVid local]', e.message);
       }
     }
     // --- FIM DOWNLOAD LOCAL ---
