@@ -104,25 +104,43 @@ async function baixarTiktok(url) {
 
 // ==================== INSTAGRAM ====================
 async function baixarInstagram(url) {
-    // Método 1: instagram-url-direct
+    // Método 1: Cobalt V11 API
+    try {
+        const { data } = await axios.post('https://api.cobalt.tools/', { url }, {
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'User-Agent': UA }, timeout: 15000
+        });
+        if (data?.url) return { type: 'video', url: data.url, desc: 'Instagram' };
+    } catch {}
+
+    // Método 2: instagram-url-direct
     try {
         const igMod = await import('instagram-url-direct');
         const igFn = igMod.instagramGetUrl || igMod.default;
         if (igFn) {
             const result = await igFn(url);
-            if (result?.url_list?.length > 0) {
-                return { type: 'video', url: result.url_list[0], desc: 'Instagram' };
-            }
+            if (result?.url_list?.length > 0) return { type: 'video', url: result.url_list[0], desc: 'Instagram' };
         }
-    } catch (e) { console.error('[Instagram npm]', e.message); }
+    } catch {}
 
-    // Método 2: yt-dlp como fallback
+    // Método 3: yt-dlp 
     try {
         const result = await ytdlpBaixar(url);
         if (result) return result;
-    } catch (e) { console.error('[Instagram yt-dlp]', e.message); }
+    } catch {}
 
-    throw new Error('Instagram: todos os métodos falharam');
+    // Método 4: btch-downloader
+    try {
+        const btch = await import('btch-downloader');
+        const res = await btch.igdl(url);
+        if (res && res.status && res.result?.length > 0) {
+            const urlItem = res.result[0].url || res.result[0].video || res.result[0].image || res.result[0];
+            if (urlItem && typeof urlItem === 'string') {
+                return { type: urlItem.includes('.mp4') ? 'video' : 'image', url: urlItem, desc: 'Instagram' };
+            }
+        }
+    } catch {}
+
+    throw new Error('Todos os métodos do Instagram falharam (possível bloqueio da AWS)');
 }
 
 // ==================== YOUTUBE ====================
@@ -220,26 +238,35 @@ async function baixarTwitter(url) {
 
 // ==================== PINTEREST ====================
 async function baixarPinterest(url) {
-    try {
-        // Resolver URL curta
-        let finalUrl = url;
-        if (url.includes('pin.it')) {
+    // Resolver URL curta primeiro
+    let finalUrl = url;
+    if (url.includes('pin.it')) {
+        try {
             const resp = await axios.head(url, { maxRedirects: 5, timeout: 10000 });
             finalUrl = resp.request?.res?.responseUrl || url;
-        }
-        const { data: html } = await axios.get(finalUrl, {
-            headers: { 'User-Agent': UA }, timeout: 15000
-        });
-        // Buscar vídeo
-        const videoMatch = html.match(/"url":"(https:[^"]*\.mp4[^"]*)"/);
+        } catch {}
+    }
+
+    try {
+        const { data: html } = await axios.get(finalUrl, { headers: { 'User-Agent': UA }, timeout: 15000 });
+        const videoMatch = html.match(/"url":"(https:\/\/[^"]*\.mp4[^"]*)"/);
+        // O Pinterest coloca vídeos e imagens no og:image se não logado
         if (videoMatch) return { type: 'video', url: videoMatch[1].replace(/\\/g, ''), desc: 'Pinterest' };
-        // Buscar imagem de alta resolução
+        
         const imgMatch = html.match(/property="og:image"\s+content="([^"]+)"/);
         if (imgMatch) return { type: 'image', url: imgMatch[1], desc: 'Pinterest' };
     } catch {}
 
-    // Fallback yt-dlp
-    try { const r = await ytdlpBaixar(url); if (r) return r; } catch {}
+    // btch-downloader fallback
+    try {
+        const btch = await import('btch-downloader');
+        const res = await btch.pindl(finalUrl);
+        if (res && res.result) {
+            return { type: res.result.includes('.mp4') ? 'video' : 'image', url: res.result, desc: 'Pinterest' };
+        }
+    } catch {}
+
+    try { const r = await ytdlpBaixar(finalUrl); if (r) return r; } catch {}
     throw new Error('Pinterest: falhou');
 }
 
@@ -422,8 +449,8 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
         // Reagir com loading
         if (m.key) await nazu.sendMessage(from, { react: { text: '⏳', key: m.key } }).catch(() => {});
 
-        // Mensagem de status (como o outro bot faz)
-        await nazu.sendMessage(from, { text: `📥 Baixando o vídeo do ${plataforma}...` }, { quoted: m }).catch(() => {});
+        // Mensagem de status progressiva para evitar que ele declare ser "vídeo" indiscriminadamente
+        await nazu.sendMessage(from, { text: `📥 Processando mídia do ${plataforma}...` }, { quoted: m }).catch(() => {});
 
         let resultado;
         try {
@@ -468,18 +495,35 @@ export async function playAudio(nazu, from, m, q, reply) {
 
         if (m.key) await nazu.sendMessage(from, { react: { text: '🎵', key: m.key } }).catch(() => {});
 
-        // Buscar no YouTube
-        const ytsr = await import('youtube-sr');
-        const YouTube = ytsr.default || ytsr;
-        const results = await YouTube.search(q, { limit: 1, type: 'video' });
+        // Buscar no YouTube (tentando 2 métodos)
+        let video = null;
+        try {
+            const yts = await import('yt-search');
+            const searchFn = yts.default || yts;
+            const res = await searchFn(q);
+            if (res && res.videos && res.videos.length > 0) {
+                video = res.videos[0];
+                video.id = video.videoId; // Padronizar API
+            }
+        } catch (e) { console.error('[yt-search error]', e.message); }
+
+        if (!video) {
+            try {
+                const btch = await import('btch-downloader');
+                const bFn = btch.default || btch;
+                const res = await bFn.yts(q);
+                if (res && res.result && res.result.length > 0) {
+                    video = res.result[0];
+                }
+            } catch (e) { console.error('[btch-yts error]', e.message); }
+        }
         
-        if (!results || results.length === 0) {
+        if (!video) {
             if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
             return reply('❌ Nenhum resultado encontrado.');
         }
 
-        const video = results[0];
-        const ytUrl = `https://youtube.com/watch?v=${video.id}`;
+        const ytUrl = video.url || `https://youtube.com/watch?v=${video.id}`;
 
         // Tentar baixar áudio
         try {
@@ -505,17 +549,35 @@ export async function playVideo(nazu, from, m, q, reply) {
 
         if (m.key) await nazu.sendMessage(from, { react: { text: '🎬', key: m.key } }).catch(() => {});
 
-        const ytsr = await import('youtube-sr');
-        const YouTube = ytsr.default || ytsr;
-        const results = await YouTube.search(q, { limit: 1, type: 'video' });
+        // Buscar no YouTube (tentando 2 métodos)
+        let video = null;
+        try {
+            const yts = await import('yt-search');
+            const searchFn = yts.default || yts;
+            const res = await searchFn(q);
+            if (res && res.videos && res.videos.length > 0) {
+                video = res.videos[0];
+                video.id = video.videoId;
+            }
+        } catch (e) { console.error('[yt-search error]', e.message); }
+
+        if (!video) {
+            try {
+                const btch = await import('btch-downloader');
+                const bFn = btch.default || btch;
+                const res = await bFn.yts(q);
+                if (res && res.result && res.result.length > 0) {
+                    video = res.result[0];
+                }
+            } catch (e) { console.error('[btch-yts error]', e.message); }
+        }
         
-        if (!results || results.length === 0) {
+        if (!video) {
             if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
             return reply('❌ Nenhum resultado encontrado.');
         }
 
-        const video = results[0];
-        const ytUrl = `https://youtube.com/watch?v=${video.id}`;
+        const ytUrl = video.url || `https://youtube.com/watch?v=${video.id}`;
 
         try {
             const resultado = await baixarYoutube(ytUrl, 'video');
