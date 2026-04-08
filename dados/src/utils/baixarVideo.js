@@ -146,13 +146,31 @@ async function baixarInstagram(url) {
 // ==================== YOUTUBE ====================
 async function baixarYoutube(url, formato = 'video') {
     // YouTube de IPs AWS é muito restritivo
-    // Método 1: yt-dlp (pode funcionar com algumas configurações)
+    // Método 1: yt-dlp
     try {
         const result = await ytdlpBaixar(url, formato);
         if (result) return result;
     } catch (e) { console.error('[YouTube yt-dlp]', e.message); }
 
-    // Método 2: ytdl-core como fallback
+    // Método 2: btch-downloader (Contorna o block da AWS)
+    try {
+        const btch = await import('btch-downloader');
+        const bFn = btch.default || btch;
+        
+        if (formato === 'audio') {
+            const res = await bFn.ytmp3(url);
+            if (res && res.status && res.result) {
+                return { type: 'audio', url: res.result, desc: 'YouTube Áudio', isStream: false, formato };
+            }
+        } else {
+            const res = await bFn.ytmp4(url);
+            if (res && res.status && res.result) {
+                return { type: 'video', url: res.result, desc: 'YouTube Vídeo', isStream: false, formato };
+            }
+        }
+    } catch (e) { console.error('[YouTube btch-dl]', e.message); }
+
+    // Método 3: ytdl-core como fallback
     try {
         const ytdl = await import('@distube/ytdl-core');
         const ytdlCore = ytdl.default || ytdl;
@@ -167,7 +185,7 @@ async function baixarYoutube(url, formato = 'video') {
         }
     } catch (e) { console.error('[YouTube ytdl-core]', e.message); }
 
-    throw new Error('YouTube: não acessível deste servidor');
+    throw new Error('YouTube bloqueado no Datacenter. Todos os métodos falharam.');
 }
 
 // ==================== FACEBOOK ====================
