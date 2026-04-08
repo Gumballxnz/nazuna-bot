@@ -422,6 +422,9 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
         // Reagir com loading
         if (m.key) await nazu.sendMessage(from, { react: { text: '⏳', key: m.key } }).catch(() => {});
 
+        // Mensagem de status (como o outro bot faz)
+        await nazu.sendMessage(from, { text: `📥 Baixando o vídeo do ${plataforma}...` }, { quoted: m }).catch(() => {});
+
         let resultado;
         try {
             switch (plataforma) {

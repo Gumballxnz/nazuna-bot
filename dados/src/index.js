@@ -3217,10 +3217,12 @@ Código: *${roleCode}*`,
       }
     }
 
-    if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
+    // Auto-download: detecta URLs sem comando e baixa automaticamente
+    // Funciona no privado (sempre) e em grupos (se autodl estiver ativo)
+    const autodlAtivo = isGroup ? groupData.autodl : true;
+    if (autodlAtivo && budy2.includes('http') && !isCmd) {
       const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
       if (urlMatch && urlMatch.length > 0) {
-        // Processa apenas o primeiro link encontrado
         try {
           await handleAutoDownload(nazu, from, urlMatch[0], info);
         } catch (e) {
