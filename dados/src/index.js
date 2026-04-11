@@ -889,7 +889,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     menuBuscas,
     menuBrawlStars
   } = menus;
-  const prefix = prefixo;
+  let prefix = prefixo;
   const numerodonoStr = String(numerodono);
   const modules = await import('./funcs/exports.js');
   const {
@@ -1546,6 +1546,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       return userWhitelist.antis.includes(antiType);
     };
     const groupPrefix = groupData.customPrefix || prefixo;
+    prefix = groupPrefix;
     var isCmd = body.trim().startsWith(groupPrefix);
 
     // Suporte para "! comando" (com espaço após o prefixo)
@@ -33639,17 +33640,19 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
       case 'msgprefix':
         try {
-          if (!isOwner) return reply('Apenas o dono pode configurar isso.');
-          if (!q) return reply('Uso: ' + prefix + 'msgprefix off ou ' + prefix + 'msgprefix texto aqui #prefixo#');
-          const newMsg = q.trim().toLowerCase() === 'off' ? false : q;
-          if (saveMsgPrefix(newMsg)) {
-            await reply(newMsg ? `✅ Mensagem prefix configurada: ${newMsg.replace('#prefixo#', prefix)}` : '✅ Mensagem prefix desativada.');
+          if (!isOwner) return reply('🚫 Apenas o dono pode configurar a resposta de prefixo.');
+          
+          if (!q) return reply(`Uso: ${prefix}msgprefix on/off\n\n💡 Isso liga ou desliga a resposta automática quando alguém digita a palavra "prefixo" sozinha.`);
+          
+          const newStatus = q.trim().toLowerCase() === 'on';
+          if (saveMsgPrefix(newStatus)) {
+            await reply(`✅ Resposta de prefixo ${newStatus ? 'ativada' : 'desativada'} com sucesso!`);
           } else {
-            await reply('Erro ao salvar.');
+            await reply('❌ Erro ao salvar configuração.');
           }
         } catch (e) {
           console.error('Erro no msgprefix:', e);
-          await reply('Ocorreu um erro 💔');
+          await reply('Ocorreu um erro ao configurar o prefixo.');
         }
         break;
 
@@ -34130,11 +34133,14 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
             });
           }
         }
+
         const msgPrefix = loadMsgPrefix();
         if (['prefix', 'prefixo'].includes(budy2) && msgPrefix) {
-          const displayPrefix = groupData?.customPrefix || prefix;
-          await reply(msgPrefix.replace('#prefixo#', displayPrefix));
+          const type = isGroup ? 'grupo' : 'chat';
+          const standardizedMessage = `✨ O prefixo atual deste ${type} é: *${prefix}*`;
+          await reply(standardizedMessage);
         };
+
         const customReacts = loadCustomReacts();
         for (const react of customReacts) {
           if (budy2.includes(react.trigger)) {
