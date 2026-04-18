@@ -279,8 +279,8 @@ function ytdlpBaixar(url, formato = 'video') {
         if (formato === 'audio') {
             formatArg = '-x --audio-format mp3 --audio-quality 0';
         } else {
-            // Regra exata recomendada para contornar AV1 e Facebook Blobs
-            formatArg = `-f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4`;
+            // Regra de alta qualidade: Prioriza 1080p/720p H.264
+            formatArg = `-f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4`;
         }
 
         const cmd = `export PATH=/home/ubuntu/.deno/bin:/usr/bin:/usr/local/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate --extractor-args 'youtube:player_client=android,web' --user-agent '${UA}' --sleep-requests 1 --retries 3 --socket-timeout 30 -q ${formatArg} -o '${filePath}' '${url}'`;
@@ -353,6 +353,21 @@ async function verificarEConverterCodec(filePath) {
         }
     } catch (e) {
         console.error(`[Codec Sniffer] Ignorado devido a erro:`, e.message);
+        return filePath;
+    }
+}
+
+// ==================== O REFINADOR DE ÁUDIO (Garante compatibilidade) ====================
+async function refinarAudio(filePath) {
+    if (!filePath) return filePath;
+    try {
+        const finalPath = filePath.replace('.mp3', '_ready.mp3');
+        // Força re-encoding para MP3 128k constante para garantir que o WhatsApp aceite
+        await execPromise(`ffmpeg -i "${filePath}" -vn -ar 44100 -ac 2 -b:a 128k -y "${finalPath}"`);
+        try { fs.unlinkSync(filePath); } catch {}
+        return finalPath;
+    } catch (e) {
+        console.error(`[Audio Refiner] Erro ao refinar áudio:`, e.message);
         return filePath;
     }
 }
@@ -654,10 +669,13 @@ export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
         const dl = await downloadYT(pending.url, type);
 
         if (type === 'audio') {
+            let finalPath = dl.filePath;
+            finalPath = await refinarAudio(finalPath);
             await nazu.sendMessage(from, {
-                audio: { url: dl.filePath },
+                audio: { url: finalPath },
                 mimetype: 'audio/mpeg',
             }, { quoted: m });
+            try { fs.unlinkSync(finalPath); } catch {}
         } else {
             // Vídeo passa pelo codec sniffer
             let finalPath = dl.filePath;
