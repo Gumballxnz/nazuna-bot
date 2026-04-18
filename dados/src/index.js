@@ -21021,22 +21021,45 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           reply('❌ Ocorreu um erro na pesquisa. Tente novamente.');
         }
         break;
-            case 'app':
+                  case 'app':
       case 'apk':
         try {
           const { downloadAPK } = await import('./utils/extraDl.js');
           const appRes = await downloadAPK(q);
-          await reply(`📦 *App:* ${appRes.name}
-⚖️ *Tamanho:* ${appRes.size} MB
-⏳ Enviando...`);
+          const caption = `📱 *APK Downloader (Aptoide)*
+
+` +
+                          `📦 *Nome:* ${appRes.name}
+` +
+                          `🆔 *Package:* ${appRes.package}
+` +
+                          `👨‍💻 *Dev:* ${appRes.developer}
+` +
+                          `🔢 *Versão:* ${appRes.version}
+` +
+                          `📥 *Downloads:* ${appRes.downloads}
+` +
+                          `⚖️ *Tamanho:* ${appRes.size} MB
+
+` +
+                          `⏳ Enviando arquivo, aguarde...`;
+
+          // Envia o ícone com os detalhes primeiro
+          await nazu.sendMessage(from, { 
+              image: { url: appRes.icon }, 
+              caption 
+          }, { quoted: info });
+
+          // Envia o arquivo real
           await nazu.sendMessage(from, { 
               document: { url: appRes.dlUrl }, 
               mimetype: 'application/vnd.android.package-archive',
               fileName: `${appRes.name}.apk`,
-              caption: `✅ ${appRes.name}`
+              caption: `✅ *${appRes.name}*`
           }, { quoted: info });
         } catch (e) { reply('❌ Erro no APK.'); }
         break;
+
 
       case 'pinterest':
       case 'pin':

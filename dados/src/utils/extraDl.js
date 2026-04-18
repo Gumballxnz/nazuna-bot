@@ -34,6 +34,10 @@ export async function downloadAPK(query) {
         name: app.name,
         package: app.package,
         size: (app.size / 1024 / 1024).toFixed(2),
+        icon: app.icon,
+        developer: app.developer?.name || 'N/A',
+        version: app.file?.vername || 'N/A',
+        downloads: app.stats?.downloads?.toLocaleString() || 'N/A',
         dlUrl: app.file.path
     };
 }
