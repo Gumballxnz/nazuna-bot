@@ -38,6 +38,7 @@ import * as vipCommandsManager from './utils/vipCommandsManager.js';
 import { notifyOwnerAboutApiKey, isApiKeyError } from './funcs/utils/apiKeyNotifier.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
 import baixarVideoLocal, { playAudio, playVideo, handlePlayConfirmation } from './utils/baixarVideo.js';
+import { downloadTwitter, downloadAPK } from './utils/extraDl.js';
 import fsPromises from 'fs/promises';
 import {
   formatUptime,
@@ -1009,6 +1010,30 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const isGroup = from?.endsWith('@g.us') || false;
     if (!info.key.participant && !info.key.remoteJid) return;
     let sender;
+    
+    // --- AUTO DOWNLOAD TWITTER (Arquitetura Senna) ---
+    try {
+      if (body && /(twitter\.com|x\.com)\/.+\/status\/\d+/i.test(body)) {
+        const twitterLink = body.match(/https?:\/\/[^\s]+/i)?.[0];
+        if (twitterLink) {
+           (async () => {
+              try {
+                 const { downloadTwitter } = await import('./utils/extraDl.js');
+                 const twtRes = await downloadTwitter(twitterLink);
+                 const caption = `🐦 *AutoDownload Twitter*\n👤 *Autor:* ${twtRes.author}`;
+                 for (const item of twtRes.media) {
+                     if (item.type === 'video' || item.type === 'gif') {
+                         await nazu.sendMessage(from, { video: { url: item.url }, caption }, { quoted: info });
+                     } else {
+                         await nazu.sendMessage(from, { image: { url: item.url }, caption }, { quoted: info });
+                     }
+                 }
+              } catch (e) {}
+           })();
+        }
+      }
+    } catch (e) {}
+
     if (isGroup) {
       // Prioriza participant, depois busca por LID, com fallback para JID
       sender = info.key.participant || info.message?.participant;
@@ -20887,99 +20912,24 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           reply('❌ Ocorreu um erro ao baixar o arquivo. Verifique se o link está correto e tente novamente.');
         }
         break;
-      case 'twitter':
-      case 'twitterdl':
+            case 'twitter':
       case 'twt':
       case 'x':
-      case 'xdl':
         try {
-          if (!q) return reply(`🐦 *Twitter/X Download*\n\n❌ Por favor, envie o link do tweet.\n\n📝 *Uso:* ${prefix}${command} <link>\n\n📌 *Formatos suportados:*\n• https://twitter.com/user/status/ID\n• https://x.com/user/status/ID`);
-
-          // Validar se é um link do Twitter/X
-          const twitterRegex = /(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/(?:\w+\/status|i\/status)\/(\d+)/i;
-          if (!twitterRegex.test(q)) {
-            return reply('❌ Link inválido! Por favor, envie um link válido do Twitter/X.');
-          }
-
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          await reply('⏳ Buscando informações do tweet...');
-
-          // Fazer requisição para a API
-          const twtResponse = await axios.get('https://cog.api.br/api/v1/twitter/info', {
-            params: { url: q },
-            headers: { 'X-API-Key': KeyCog },
-            timeout: 120000
-          });
-
-          if (!twtResponse.data.success || !twtResponse.data.data) {
-            return reply('❌ Não foi possível obter informações do tweet. Verifique se o link está correto.');
-          }
-
-          const tweetData = twtResponse.data.data;
-          const { text, author, stats, media, hasMedia, type } = tweetData;
-
-          // Formatar caption
-          const caption = `🐦 *Twitter/X Download*\n\n👤 *${author?.name || 'Usuário'}* (@${author?.username || 'unknown'})\n\n💬 ${text || ''}\n\n❤️ ${stats?.likes || 0} • 🔁 ${stats?.retweets || 0} • 💬 ${stats?.replies || 0}`;
-
-          if (!hasMedia || !media || media.length === 0) {
-            return reply(`${caption}\n\n⚠️ Este tweet não contém mídia para download.`);
-          }
-
-          // Enviar cada mídia
-          for (const item of media) {
-            try {
-              if (item.type === 'video') {
-                // Usar a melhor qualidade disponível
-                const videoUrl = item.bestQuality?.url || item.url;
-
-                await nazu.sendMessage(from, {
-                  video: { url: videoUrl },
-                  caption: caption,
-                  mimetype: 'video/mp4'
-                }, { quoted: info });
-
-              } else if (item.type === 'photo' || item.type === 'image') {
-                await nazu.sendMessage(from, {
-                  image: { url: item.url },
-                  caption: caption
-                }, { quoted: info });
-
-              } else if (item.type === 'gif' || item.type === 'animated_gif') {
-                await nazu.sendMessage(from, {
-                  video: { url: item.url },
-                  caption: caption,
-                  gifPlayback: true
-                }, { quoted: info });
+          const { downloadTwitter } = await import('./utils/extraDl.js');
+          const twtRes = await downloadTwitter(q);
+          const caption = `🐦 *Twitter/X*
+👤 *Autor:* ${twtRes.author}`;
+          for (const item of twtRes.media) {
+              if (item.type === 'video' || item.type === 'gif') {
+                  await nazu.sendMessage(from, { video: { url: item.url }, caption }, { quoted: info });
+              } else {
+                  await nazu.sendMessage(from, { image: { url: item.url }, caption }, { quoted: info });
               }
-            } catch (mediaError) {
-              console.error('Erro ao enviar mídia do Twitter:', mediaError);
-            }
           }
-
-          reply('✅ Download concluído!');
-        } catch (e) {
-          console.error('Erro no comando twitter:', e);
-
-          if (e.response?.status === 401 || (e.message && e.message.includes('API key'))) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida ou expirada');
-            return reply('🤖 *Sistema temporariamente indisponível*\n\n😅 Estou com problemas técnicos. O administrador já foi notificado!');
-          }
-
-          if (e.response?.status === 404) {
-            return reply('❌ Tweet não encontrado ou foi deletado.');
-          }
-
-          if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-            return reply('⏰ Tempo esgotado! Tente novamente.');
-          }
-
-          reply('❌ Ocorreu um erro ao baixar o tweet. Verifique se o link está correto e tente novamente.');
-        }
+        } catch (e) { reply('❌ Erro no Twitter.'); }
         break;
+
       case 'google':
       case 'pesquisar':
       case 'buscar':
@@ -21071,74 +21021,23 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           reply('❌ Ocorreu um erro na pesquisa. Tente novamente.');
         }
         break;
-      case 'app':
-      case 'apps':
-      case 'playstore':
-      case 'appstore':
-      case 'buscarapp':
+            case 'app':
+      case 'apk':
         try {
-          if (!q) return reply(`📱 *Pesquisa de Apps*\n\n❌ Digite o nome do aplicativo.\n\n📝 *Uso:* ${prefix}${command} <nome do app>\n\n📌 *Exemplo:*\n${prefix}${command} whatsapp`);
-
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          await reply('📱 Buscando aplicativos...');
-
-          const appResponse = await axios.get('https://cog.api.br/api/v1/apps/search', {
-            params: { q: q, num: 5, country: 'br', lang: 'pt' },
-            headers: { 'X-API-Key': KeyCog },
-            timeout: 120000
-          });
-
-          if (!appResponse.data.success || !appResponse.data.data) {
-            return reply('❌ Nenhum aplicativo encontrado.');
-          }
-
-          const { playStore, appStore } = appResponse.data.data;
-
-          let appText = `📱 *Resultados para:* "${q}"\n\n`;
-
-          // Play Store
-          if (playStore && playStore.length > 0) {
-            appText += `🤖 *Google Play Store*\n\n`;
-            playStore.slice(0, 3).forEach((app, index) => {
-              appText += `*${index + 1}. ${app.title}*\n`;
-              appText += `👨‍💻 ${app.developer}\n`;
-              appText += `⭐ ${app.score?.toFixed(1) || 'N/A'} • ${app.price || 'Grátis'}\n`;
-              appText += `📥 ${app.installs || 'N/A'}\n`;
-              appText += `🔗 ${app.url}\n\n`;
-            });
-          }
-
-          // App Store
-          if (appStore && appStore.length > 0) {
-            appText += `🍎 *Apple App Store*\n\n`;
-            appStore.slice(0, 3).forEach((app, index) => {
-              appText += `*${index + 1}. ${app.title}*\n`;
-              appText += `👨‍💻 ${app.developer}\n`;
-              appText += `⭐ ${app.score?.toFixed(1) || 'N/A'} • ${app.free ? 'Grátis' : `R$ ${app.price}`}\n`;
-              appText += `🔗 ${app.url}\n\n`;
-            });
-          }
-
-          if ((!playStore || playStore.length === 0) && (!appStore || appStore.length === 0)) {
-            return reply('❌ Nenhum aplicativo encontrado com esse nome.');
-          }
-
-          reply(appText.trim());
-        } catch (e) {
-          console.error('Erro no comando apps:', e);
-
-          if (e.response?.status === 401) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida');
-            return reply('🤖 *Sistema temporariamente indisponível*');
-          }
-
-          reply('❌ Ocorreu um erro na pesquisa. Tente novamente.');
-        }
+          const { downloadAPK } = await import('./utils/extraDl.js');
+          const appRes = await downloadAPK(q);
+          await reply(`📦 *App:* ${appRes.name}
+⚖️ *Tamanho:* ${appRes.size} MB
+⏳ Enviando...`);
+          await nazu.sendMessage(from, { 
+              document: { url: appRes.dlUrl }, 
+              mimetype: 'application/vnd.android.package-archive',
+              fileName: `${appRes.name}.apk`,
+              caption: `✅ ${appRes.name}`
+          }, { quoted: info });
+        } catch (e) { reply('❌ Erro no APK.'); }
         break;
+
       case 'pinterest':
       case 'pin':
         try {
