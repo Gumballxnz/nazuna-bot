@@ -245,7 +245,7 @@ class MessageQueue {
     }
 }
 
-const messageQueue = new MessageQueue(8, 10, 2); // 8 workers, 10 lotes, 2 mensagens por lote
+const messageQueue = new MessageQueue(1, 1, 1); // 1 worker, 1 lote, 1 msg (Sequencial estrito como o Senna)
 
 const configPath = path.join(__dirname, "config.json");
 let config;
@@ -332,6 +332,8 @@ async function initializeOptimizedCaches() {
     }
 }
 const codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE === '1';
+// Suporte a --phone=NUMERO para evitar readline interativo (ex: node connect.js --code --phone=258858148698)
+const phoneArg = (process.argv.find(a => a.startsWith('--phone=')) || '').replace('--phone=', '').replace(/\D/g, '');
 
 // Cleanup otimizado do cache de mensagens
 let cacheCleanupInterval = null;
@@ -1001,67 +1003,8 @@ const MAX_428_CONSECUTIVE = 5; // Máximo de 428 consecutivos antes de parar
 const RECONNECT_DELAY_BASE = 5000; // 5 segundos base
 const MAX_RECONNECT_DELAY = 120000; // Máximo 2 minutos de delay
 
-// === WATCHDOG ANTI-FANTASMA ===
-// Detecta quando o bot fica "mudo" (nenhum evento recebido) e força reconexão
-let lastActivityTimestamp = Date.now();
-let watchdogInterval = null;
-const WATCHDOG_CHECK_INTERVAL = 30_000; // Verifica a cada 30 segundos
-const WATCHDOG_TIMEOUT = 180_000; // Se não há atividade há 3 minutos, força reconexão
 
-function updateWatchdog() {
-    lastActivityTimestamp = Date.now();
-}
 
-function startWatchdog(sock) {
-    if (watchdogInterval) clearInterval(watchdogInterval);
-    lastActivityTimestamp = Date.now();
-    
-    watchdogInterval = setInterval(async () => {
-        const inactiveMs = Date.now() - lastActivityTimestamp;
-        
-        if (inactiveMs > WATCHDOG_TIMEOUT) {
-            console.error(`🐕 WATCHDOG: Bot sem atividade há ${Math.round(inactiveMs/1000)}s! Modo fantasma detectado.`);
-            console.error('🐕 WATCHDOG: Forçando reconexão...');
-            
-            // Tenta enviar um ping primeiro
-            try {
-                const isAlive = await Promise.race([
-                    sock.query({ tag: 'iq', attrs: { to: '@s.whatsapp.net', type: 'get', xmlns: 'w:p' }, content: [{ tag: 'ping', attrs: {} }] }).then(() => true),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), 10000))
-                ]);
-                if (isAlive) {
-                    console.log('🐕 WATCHDOG: Ping bem-sucedido, bot está vivo. Resetando timer.');
-                    updateWatchdog();
-                    return;
-                }
-            } catch {
-                console.error('🐕 WATCHDOG: Ping falhou! Conexão está morta.');
-            }
-            
-            // Força reconexão
-            stopWatchdog();
-            try {
-                sock.end(new Error('Watchdog: inatividade detectada'));
-            } catch {}
-            
-            // Dá tempo pro close handler pegar, senão força restart
-            setTimeout(() => {
-                if (!isReconnecting) {
-                    console.error('🐕 WATCHDOG: Close handler não disparou. Forçando startNazu...');
-                    startNazu();
-                }
-            }, 5000);
-        }
-    }, WATCHDOG_CHECK_INTERVAL);
-}
-
-function stopWatchdog() {
-    if (watchdogInterval) {
-        clearInterval(watchdogInterval);
-        watchdogInterval = null;
-    }
-}
-// === FIM WATCHDOG ===
 
 async function createBotSocket(authDir) {
     try {
@@ -1079,6 +1022,7 @@ async function createBotSocket(authDir) {
 
         const NazunaSock = makeWASocket({
             version,
+            browser: Browsers.ubuntu('Chrome'),
             emitOwnEvents: true,
             fireInitQueries: false,
             generateHighQualityLinkPreview: false,
@@ -1095,20 +1039,34 @@ async function createBotSocket(authDir) {
             logger
         });
 
+        // Registra os listeners ANTES de pedir o pairing code
+        // para que creds.update salve as credenciais corretamente
+        NazunaSock.ev.on('creds.update', saveCreds);
+
         if (codeMode && !NazunaSock.authState.creds.registered) {
-            console.log('📱 Insira o número de telefone (com código de país, ex: +14155552671 ou +551199999999): ');
-            let phoneNumber = await ask('--> ');
-            phoneNumber = phoneNumber.replace(/\D/g, '');
-            if (!/^\d{10,15}$/.test(phoneNumber)) {
-                console.log('⚠️ Número inválido! Use um número válido com código de país (ex: +14155552671 ou +551199999999).');
-                process.exit(1);
+            let phoneNumber;
+            if (phoneArg && /^\d{10,15}$/.test(phoneArg)) {
+                phoneNumber = phoneArg;
+                console.log(`📱 Usando número via argumento: +${phoneNumber}`);
+            } else {
+                console.log('📱 Insira o número de telefone (com código de país, ex: +14155552671 ou +551199999999): ');
+                phoneNumber = await ask('--> ');
+                phoneNumber = phoneNumber.replace(/\D/g, '');
+                if (!/^\d{10,15}$/.test(phoneNumber)) {
+                    console.log('⚠️ Número inválido! Use um número válido com código de país (ex: +14155552671 ou +551199999999).');
+                    process.exit(1);
+                }
             }
+            // Espera 5s para o WebSocket estabilizar antes de pedir o código
+            console.log('⏳ Aguardando estabilização da conexão (5s)...');
+            await new Promise(r => setTimeout(r, 5000));
             const code = await NazunaSock.requestPairingCode(phoneNumber.replaceAll('+', '').replaceAll(' ', '').replaceAll('-', ''));
             console.log(`🔑 Código de pareamento: ${code}`);
             console.log('📲 Envie este código no WhatsApp para autenticar o bot.');
+            console.log('⏳ Aguardando autenticação... Não feche o terminal.');
         }
 
-        NazunaSock.ev.on('creds.update', saveCreds);
+
 
         NazunaSock.ev.on('groups.update', async (updates) => {
             if (!Array.isArray(updates) || updates.length === 0) return;
@@ -1241,6 +1199,8 @@ async function createBotSocket(authDir) {
 
             NazunaSock.ev.on('messages.upsert', async (m) => {
                 if (!m.messages || !Array.isArray(m.messages)) return;
+                
+                console.log(`[MSG-DEBUG] Upsert received: type=${m.type}, msgCount=${m.messages.length}`);
 
                 // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
                 if (m.type === 'append') {
@@ -1254,8 +1214,7 @@ async function createBotSocket(authDir) {
                 try {
 
                     const messageProcessingPromises = m.messages.map(info => {
-                        // Atualiza watchdog a cada mensagem recebida
-                        updateWatchdog();
+                        // Watchdog removido
                         return messageQueue.add(info, processMessage).catch(err => {
                             console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
                         });
@@ -1343,9 +1302,7 @@ async function createBotSocket(authDir) {
                 forbidden403Attempts = 0;
                 consecutive428Count = 0; // Só reseta 428 quando REALMENTE conecta
 
-                // Inicia watchdog anti-fantasma
-                startWatchdog(NazunaSock);
-                console.log('🐕 WATCHDOG: Sistema anti-fantasma ativado (timeout: 3min)');
+                // Watchdog removido
 
                 await initializeOptimizedCaches();
 
@@ -1384,6 +1341,10 @@ async function createBotSocket(authDir) {
 
                 // Inicializa sub-bots automaticamente
                 try {
+                    if (typeof indexModule === 'function') {
+                        await indexModule(NazunaSock, { isStartup: true, key: { remoteJid: 'status@broadcast', id: 'fake_123' }, message: { conversation: 'fake_startup_event' } }, null, messagesCache, rentalExpirationManager);
+                    }
+                    
                     const subBotManagerModule = await import('./utils/subBotManager.js');
                     const subBotManager = subBotManagerModule.default ?? subBotManagerModule;
                     console.log('🤖 Verificando sub-bots cadastrados...');
@@ -1414,7 +1375,7 @@ async function createBotSocket(authDir) {
                 console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage} | Tentativa: ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
 
                 // Limpa recursos antes de reconectar
-                stopWatchdog(); // Para watchdog anti-fantasma
+                // Watchdog removido
                 if (cacheCleanupInterval) {
                     clearInterval(cacheCleanupInterval);
                     cacheCleanupInterval = null;
@@ -1427,6 +1388,15 @@ async function createBotSocket(authDir) {
                 if (reason === 428) {
                     consecutive428Count++;
                     console.log(`⚠️ Erro 428 consecutivo #${consecutive428Count}/${MAX_428_CONSECUTIVE}`);
+
+                    // Em codeMode: para imediatamente no 1º 428 — o código já foi exibido,
+                    // se reconectar gera outro código invalidando o anterior.
+                    if (codeMode) {
+                        console.log('⏸️ Rate limit do WhatsApp (428) em modo pareamento. O código acima ainda é válido por ~3 min.');
+                        console.log('📲 Insira o código no WhatsApp AGORA. O bot aguarda a conexão.');
+                        // Espera em silêncio a conexão ser feita — não reconecta!
+                        return;
+                    }
 
                     if (consecutive428Count >= MAX_428_CONSECUTIVE) {
                         console.log('🛑 Loop de 428 detectado! O WhatsApp está recusando esta sessão repetidamente.');
@@ -1492,8 +1462,16 @@ async function createBotSocket(authDir) {
                     // badSession: NÃO apaga, apenas loga. A sessão pode se recuperar.
                     console.log('⚠️ Sessão reportada como inválida. Tentando reconectar sem apagar credenciais...');
                 } else if (reason === 401) {
-                    // 401 (sessão expirada): NÃO apaga automaticamente
-                    console.log('⚠️ Sessão expirada (401). Tentando reconectar sem apagar credenciais...');
+                    if (codeMode) {
+                        // Em modo pairing, 401 = sessão corrompida. Apaga e para para evitar loop.
+                        console.log('❌ Sessão inválida em modo de pareamento (401). Limpando sessão...');
+                        await clearAuthDir();
+                        console.log('🗑️ Sessão apagada. Reinicie o bot e tente parear novamente.');
+                        process.exit(0);
+                    } else {
+                        // 401 fora do codeMode: NÃO apaga automaticamente
+                        console.log('⚠️ Sessão expirada (401). Tentando reconectar sem apagar credenciais...');
+                    }
                 }
 
                 // Não reconecta se conexão foi substituída (outra instância assumiu)

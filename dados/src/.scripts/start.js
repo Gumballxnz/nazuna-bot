@@ -185,7 +185,7 @@ function startBot(codeMode = false) {
 
   info(`📷 Iniciando com ${codeMode ? 'código de pareamento' : 'QR Code'}`);
 
-  botProcess = spawn('node', args, {
+  botProcess = spawn('node', ['--max-old-space-size=512', ...args], {
     stdio: 'inherit',
     env: { ...process.env, FORCE_COLOR: '1' },
   });

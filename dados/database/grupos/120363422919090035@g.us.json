@@ -1,6 +1,6 @@
 {
   "mark": {},
-  "createdAt": "2026-02-08T20:10:10.068Z",
+  "createdAt": "2026-01-14T22:45:35.733Z",
   "groupName": "Nazuna bot",
   "modorpg": false,
   "minMessage": null,
@@ -15,12 +15,12 @@
   "contador": [
     {
       "id": "159034049044504@lid",
-      "msg": 3,
-      "cmd": 2,
+      "msg": 9,
+      "cmd": 17,
       "figu": 0,
       "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
-      "firstSeen": "2026-02-08T20:10:10.072Z",
-      "lastActivity": "2026-02-08T20:15:15.389Z"
+      "firstSeen": "2026-01-14T22:45:35.734Z",
+      "lastActivity": "2026-02-08T21:51:41.763Z"
     }
   ]
 }

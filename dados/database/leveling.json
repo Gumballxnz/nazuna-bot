@@ -93,5 +93,10 @@
       "name": "Infinito",
       "minLevel": 300
     }
-  ]
+  ],
+  "settings": {
+    "xpPerMessage": 10,
+    "xpCooldown": 30000,
+    "levelUpNotification": true
+  }
 }

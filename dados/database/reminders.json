@@ -1,3 +1,15 @@
 {
-  "reminders": []
+  "reminders": [
+    {
+      "id": "f61241c9533a",
+      "userId": "107980410368238@lid",
+      "chatId": "120363425648131271@g.us",
+      "createdByName": "✧⃟༒Arna Flow༒✧⃟",
+      "createdAt": "2026-01-22T10:46:46.796Z",
+      "at": 1769078926795,
+      "message": "iniciar chat o bot será responsável e irá responder messages",
+      "status": "sent",
+      "sentAt": "2026-01-24T03:09:05.934Z"
+    }
+  ]
 }

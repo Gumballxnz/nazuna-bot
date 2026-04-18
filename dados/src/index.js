@@ -2971,6 +2971,7 @@ Código: *${roleCode}*`,
     };
 
     startAutoMensagensWorker(nazu);
+    if (info?.isStartup) { console.log('✅ Workers de background ativados na subida do bot! Sessões cron armadas!'); return; }
 
     const getFileBuffer = async (mediakey, mediaType, options = {}) => {
       try {
