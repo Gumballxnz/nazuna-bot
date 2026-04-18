@@ -37,7 +37,7 @@ import * as ia from './funcs/private/ia.js';
 import * as vipCommandsManager from './utils/vipCommandsManager.js';
 import { notifyOwnerAboutApiKey, isApiKeyError } from './funcs/utils/apiKeyNotifier.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
-import baixarVideoLocal, { playAudio, playVideo } from './utils/baixarVideo.js';
+import baixarVideoLocal, { playAudio, playVideo, handlePlayConfirmation } from './utils/baixarVideo.js';
 import fsPromises from 'fs/promises';
 import {
   formatUptime,
@@ -3520,6 +3520,16 @@ Código: *${roleCode}*`,
     } catch (error) {
       console.error('┃ 🚨 Erro ao gerar logs:', error, '');
     }
+    // --- SISTEMA DE CONFIRMAÇÃO PLAY (1 ou 2) ---
+    try {
+      if (body && (body === '1' || body === '2')) {
+        const processed = await handlePlayConfirmation(nazu, from, info, body, sender);
+        if (processed) return; 
+      }
+    } catch (e) {
+      console.error('Erro no handlePlayConfirmation:', e.message);
+    }
+
     if (isGroup) {
       try {
         if (relationshipManager && relationshipManager.hasPendingRequest && relationshipManager.processResponse) {

@@ -531,67 +531,27 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
     }
 }
 
-// ==================== PLAY (BUSCA + DOWNLOAD ÁUDIO) ====================
-export async function playAudio(nazu, from, m, q, reply) {
-    try {
-        if (!q) return reply('❌ Digite o nome da música.\nEx: !play Imagine Dragons');
+// ==================== SISTEMA DE CONFIRMAÇÃO PLAY (Estilo Senna) ====================
+const playConfirmations = new Map();
 
-        if (m.key) await nazu.sendMessage(from, { react: { text: '🎵', key: m.key } }).catch(() => {});
-
-        // Buscar no YouTube usando yt-search (mais rápido)
-        let video = null;
-        try {
-            const yts = await import('yt-search');
-            const searchFn = yts.default || yts;
-            const res = await searchFn(q);
-            if (res && res.videos && res.videos.length > 0) {
-                video = res.videos[0];
-            }
-        } catch (e) { console.error('[yt-search error]', e.message); }
-
-        if (!video) {
-            if (m.key) nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
-            return nazu.sendMessage(from, { text: '❌ Nenhum resultado encontrado.' }, { quoted: m });
-        }
-
-        const ytUrl = video.url;
-
-        try {
-            await nazu.sendMessage(from, { text: `📥 Baixando áudio: *${video.title}*...` }, { quoted: m });
-
-            const dl = await downloadYT(ytUrl, 'audio');
-            const resultado = {
-                type: 'audio',
-                url: dl.filePath,
-                desc: video.title || 'Música',
-                thumbnail: video.image || video.thumbnail,
-                sourceUrl: ytUrl,
-                isFile: true // Indicar que é um arquivo local
-            };
-            
-            await enviarMidia(nazu, from, m, resultado, 'YouTube');
-            if (m.key) await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(() => {});
-            
-            // Limpar arquivo temporário
-            if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath);
-        } catch (err) {
-            console.error('Erro no downloadYT:', err.message);
-            if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
-            nazu.sendMessage(from, { text: `❌ Não consegui baixar: ${video.title}. Tente novamente mais tarde.` }, { quoted: m });
-        }
-    } catch (err) {
-        console.error('Erro no play:', err);
-        if (m?.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
-        reply('❌ Erro ao processar o comando.');
-    }
+export function getPlayConfirmations() {
+    return playConfirmations;
 }
 
-// ==================== PLAYVID (BUSCA + DOWNLOAD VÍDEO) ====================
-export async function playVideo(nazu, from, m, q, reply) {
+// ==================== PLAY (BUSCA + MENU DE ESCOLHA) ====================
+export async function playAudio(nazu, from, m, q, reply) {
     try {
-        if (!q) return reply('❌ Digite o nome do vídeo.\nEx: !playvid tutorial javascript');
+        if (!q) return reply(`╭━━━⊱ 🎵 *PLAY* 🎵 ⊱━━━╮
+│
+│ 📝 Digite o nome da música ou vídeo
+│
+│  *Exemplos:*
+│  !play Imagine Dragons
+│  !play https://youtube.com/...
+│
+╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
 
-        if (m.key) await nazu.sendMessage(from, { react: { text: '🎬', key: m.key } }).catch(() => {});
+        if (m.key) await nazu.sendMessage(from, { react: { text: '🔍', key: m.key } }).catch(() => {});
 
         // Buscar no YouTube
         let video = null;
@@ -606,35 +566,133 @@ export async function playVideo(nazu, from, m, q, reply) {
 
         if (!video) {
             if (m.key) nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
-            return nazu.sendMessage(from, { text: '❌ Nenhum resultado encontrado.' }, { quoted: m });
+            return reply('❌ Nenhum resultado encontrado.');
         }
 
-        const ytUrl = video.url;
+        // Predição de peso (igual Senna)
+        const seconds = video.seconds || 0;
+        const audioSize = (seconds * 0.016).toFixed(1);
+        const videoSize = (seconds * 0.1).toFixed(1);
 
-        try {
-            await nazu.sendMessage(from, { text: `📥 Baixando vídeo: *${video.title}*...` }, { quoted: m });
+        if (m.key) await nazu.sendMessage(from, { react: { text: '🎧', key: m.key } }).catch(() => {});
 
-            const dl = await downloadYT(ytUrl, 'video');
-            const resultado = {
-                type: 'video',
-                url: dl.filePath,
-                desc: video.title || 'Vídeo',
-                isFile: true
-            };
-            
-            await enviarMidia(nazu, from, m, resultado, 'YouTube');
-            if (m.key) nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(() => {});
-            
-            // Limpar arquivo temporário
-            if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath);
-        } catch (err) {
-            console.error('Erro no downloadYT (video):', err.message);
-            if (m.key) nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
-            nazu.sendMessage(from, { text: `❌ Não consegui baixar: ${video.title}. Tente novamente mais tarde.` }, { quoted: m });
+        const msg = `╭━━━⊱ 🎵 *NAZUNA PLAY* 🎵 ⊱━━━╮
+│
+│ 📌 *Título:* ${video.title}
+│ 📆 *Postado:* ${video.ago || 'N/A'}
+│ ⌚ *Duração:* ${video.timestamp || 'N/A'}
+│ 👀 *Vistas:* ${(video.views || 0).toLocaleString()}
+│
+│ ━━━━━━━━━━━━━━━━━━━━━━━
+│ Responda com *1* ou *2*:
+│
+│ 1️⃣ = MP3 (Áudio)  ~ ${audioSize} MB 🎵
+│ 2️⃣ = MP4 (Vídeo)  ~ ${videoSize} MB 🎬
+│
+╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`;
+
+        // Enviar thumbnail do vídeo se disponível
+        const thumb = video.image || video.thumbnail;
+        if (thumb) {
+            await nazu.sendMessage(from, {
+                image: { url: thumb },
+                caption: msg
+            }, { quoted: m });
+        } else {
+            await nazu.sendMessage(from, { text: msg }, { quoted: m });
         }
+
+        // Salvar pendência de confirmação (expira em 60s)
+        const senderJid = m.key?.participant || m.key?.remoteJid || from;
+        const confirmKey = `${senderJid}_${from}`;
+        
+        // Limpar timer anterior se existir
+        if (playConfirmations.has(confirmKey)) {
+            clearTimeout(playConfirmations.get(confirmKey).timeout);
+        }
+
+        playConfirmations.set(confirmKey, {
+            url: video.url,
+            title: video.title,
+            thumb: thumb,
+            from: from,
+            m: m,
+            timeout: setTimeout(() => {
+                playConfirmations.delete(confirmKey);
+            }, 60000) // 1 minuto para responder
+        });
+
     } catch (err) {
-        console.error('Erro no playvid:', err);
+        console.error('Erro no play:', err);
         if (m?.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
-        reply('❌ Erro ao buscar vídeo.');
+        reply('❌ Erro ao processar o comando.');
     }
 }
+
+// ==================== HANDLER DE CONFIRMAÇÃO (1 ou 2) ====================
+export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
+    const confirmKey = `${senderJid}_${from}`;
+    const pending = playConfirmations.get(confirmKey);
+    if (!pending) return false; // Não há pendência
+
+    const choice = text.trim();
+    if (choice !== '1' && choice !== '2') return false;
+
+    // Consumir a confirmação
+    clearTimeout(pending.timeout);
+    playConfirmations.delete(confirmKey);
+
+    if (m.key) await nazu.sendMessage(from, { react: { text: '⏳', key: m.key } }).catch(() => {});
+
+    const type = choice === '1' ? 'audio' : 'video';
+
+    try {
+        await nazu.sendMessage(from, { 
+            text: `📥 Baixando ${type === 'audio' ? 'áudio' : 'vídeo'}: *${pending.title}*...` 
+        }, { quoted: m });
+
+        const dl = await downloadYT(pending.url, type);
+
+        if (type === 'audio') {
+            await nazu.sendMessage(from, {
+                audio: { url: dl.filePath },
+                mimetype: 'audio/mpeg',
+            }, { quoted: m });
+        } else {
+            // Vídeo passa pelo codec sniffer
+            let finalPath = dl.filePath;
+            finalPath = await verificarEConverterCodec(finalPath);
+            
+            await nazu.sendMessage(from, {
+                video: { url: finalPath },
+                mimetype: 'video/mp4',
+                caption: `✅ *${pending.title}*`
+            }, { quoted: m });
+            
+            // Limpar arquivo convertido se diferente
+            if (finalPath !== dl.filePath) {
+                try { fs.unlinkSync(finalPath); } catch {}
+            }
+        }
+
+        // Limpar arquivo original
+        try { if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath); } catch {}
+        
+        if (m.key) await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(() => {});
+    } catch (err) {
+        console.error(`[play-${type}] Erro:`, err.message);
+        if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
+        await nazu.sendMessage(from, { 
+            text: `❌ Não consegui baixar: ${pending.title}. Tente novamente.` 
+        }, { quoted: m });
+    }
+
+    return true; // Confirmação processada
+}
+
+// ==================== PLAYVID (ATALHO DIRETO PARA VÍDEO) ====================
+export async function playVideo(nazu, from, m, q, reply) {
+    // playVideo agora redireciona para o mesmo play com escolha
+    return playAudio(nazu, from, m, q, reply);
+}
+
