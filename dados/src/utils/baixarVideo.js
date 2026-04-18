@@ -19,7 +19,6 @@ import { exec } from 'child_process';
 import util from 'util';
 const execPromise = util.promisify(exec);
 import fg from 'fg-senna';
-import axios from 'axios';
 import { pipeline } from 'stream/promises';
 import { downloadYT, getYTInfo } from './ytHelper.js';
 
