@@ -662,10 +662,6 @@ export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
     const type = choice === '1' ? 'audio' : 'video';
 
     try {
-        await nazu.sendMessage(from, { 
-            text: `📥 Baixando ${type === 'audio' ? 'áudio' : 'vídeo'}: *${pending.title}*...` 
-        }, { quoted: m });
-
         const dl = await downloadYT(pending.url, type);
 
         if (type === 'audio') {
