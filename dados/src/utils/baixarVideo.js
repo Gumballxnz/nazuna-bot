@@ -648,12 +648,12 @@ export async function playAudio(nazu, from, m, q, reply) {
 export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
     const confirmKey = `${senderJid}_${from}`;
     const pending = playConfirmations.get(confirmKey);
-    if (!pending) return false; // Não há pendência
+    if (!pending) return false;
 
     const choice = text.trim();
     if (choice !== '1' && choice !== '2') return false;
 
-    // Consumir a confirmação
+    // Consumir a confirmação imediatamente para liberar o estado
     clearTimeout(pending.timeout);
     playConfirmations.delete(confirmKey);
 
@@ -661,48 +661,48 @@ export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
 
     const type = choice === '1' ? 'audio' : 'video';
 
-    try {
-        const dl = await downloadYT(pending.url, type);
+    // EXECUTAR EM SEGUNDO PLANO (Não usar await no fluxo principal)
+    (async () => {
+        try {
+            const dl = await downloadYT(pending.url, type);
 
-        if (type === 'audio') {
-            let finalPath = dl.filePath;
-            finalPath = await refinarAudio(finalPath);
-            await nazu.sendMessage(from, {
-                audio: { url: finalPath },
-                mimetype: 'audio/mpeg',
-            }, { quoted: m });
-            try { fs.unlinkSync(finalPath); } catch {}
-        } else {
-            // Vídeo passa pelo codec sniffer
-            let finalPath = dl.filePath;
-            finalPath = await verificarEConverterCodec(finalPath);
-            
-            await nazu.sendMessage(from, {
-                video: { url: finalPath },
-                mimetype: 'video/mp4',
-                caption: `✅ *${pending.title}*`
-            }, { quoted: m });
-            
-            // Limpar arquivo convertido se diferente
-            if (finalPath !== dl.filePath) {
+            if (type === 'audio') {
+                let finalPath = dl.filePath;
+                finalPath = await refinarAudio(finalPath);
+                await nazu.sendMessage(from, {
+                    audio: { url: finalPath },
+                    mimetype: 'audio/mpeg',
+                }, { quoted: m });
                 try { fs.unlinkSync(finalPath); } catch {}
+            } else {
+                // Vídeo passa pelo codec sniffer
+                let finalPath = dl.filePath;
+                finalPath = await verificarEConverterCodec(finalPath);
+                
+                await nazu.sendMessage(from, {
+                    video: { url: finalPath },
+                    mimetype: 'video/mp4',
+                    caption: `✅ *${pending.title}*`
+                }, { quoted: m });
+                
+                if (finalPath !== dl.filePath) {
+                    try { fs.unlinkSync(finalPath); } catch {}
+                }
             }
+            try { if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath); } catch {}
+            if (m.key) await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(() => {});
+        } catch (err) {
+            console.error(`[play-${type}] Erro:`, err.message);
+            if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
+            await nazu.sendMessage(from, { 
+                text: `❌ Erro no download (${type}): ${pending.title}` 
+            }, { quoted: m });
         }
+    })();
 
-        // Limpar arquivo original
-        try { if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath); } catch {}
-        
-        if (m.key) await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(() => {});
-    } catch (err) {
-        console.error(`[play-${type}] Erro:`, err.message);
-        if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
-        await nazu.sendMessage(from, { 
-            text: `❌ Não consegui baixar: ${pending.title}. Tente novamente.` 
-        }, { quoted: m });
-    }
-
-    return true; // Confirmação processada
+    return true; // Indica que o comando foi capturado e processado (em background)
 }
+
 
 // ==================== PLAYVID (ATALHO DIRETO PARA VÍDEO) ====================
 export async function playVideo(nazu, from, m, q, reply) {
