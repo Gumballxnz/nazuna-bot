@@ -1,0 +1,44 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-23T21:23:57.544Z",
+  "groupName": "Mando Megabytes",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "258561863090409@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ㅤㅤ",
+      "firstSeen": "2026-01-23T21:23:57.546Z",
+      "lastActivity": "2026-01-23T21:27:31.175Z"
+    },
+    {
+      "id": "223124255719585@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "°BOT SKY-404 BAN°",
+      "firstSeen": "2026-01-23T21:24:07.810Z",
+      "lastActivity": "2026-01-23T21:24:07.810Z"
+    },
+    {
+      "id": "62195454992491@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~ZE",
+      "firstSeen": "2026-01-23T21:27:18.291Z",
+      "lastActivity": "2026-01-23T21:27:18.291Z"
+    }
+  ]
+}

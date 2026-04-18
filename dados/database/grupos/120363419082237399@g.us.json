@@ -1,0 +1,62 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-19T10:52:32.271Z",
+  "groupName": "💲Marketing Place 💹💱",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "159034049044504@lid",
+      "msg": 30,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-01-19T10:52:32.274Z",
+      "lastActivity": "2026-02-17T10:00:37.347Z"
+    },
+    {
+      "id": "25108932485151@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ＧＨＯＳＴ ＢＯＴ",
+      "firstSeen": "2026-01-19T10:52:50.365Z",
+      "lastActivity": "2026-01-19T10:53:21.702Z"
+    },
+    {
+      "id": "34248757141694@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-21T08:54:31.741Z",
+      "lastActivity": "2026-01-23T11:32:54.816Z"
+    },
+    {
+      "id": "41107551477779@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "Drago",
+      "firstSeen": "2026-01-28T20:54:15.819Z",
+      "lastActivity": "2026-01-28T20:56:54.604Z"
+    },
+    {
+      "id": "76305093660751@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 2,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-29T12:22:45.307Z",
+      "lastActivity": "2026-02-10T18:38:35.680Z"
+    }
+  ]
+}

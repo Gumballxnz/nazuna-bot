@@ -1,0 +1,71 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-23T19:42:53.055Z",
+  "groupName": "Networking milionário",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "186466642702501@lid",
+      "msg": 13,
+      "cmd": 4,
+      "figu": 0,
+      "pushname": "MegaShop MZ",
+      "firstSeen": "2026-01-23T19:42:53.056Z",
+      "lastActivity": "2026-01-29T18:59:46.770Z"
+    },
+    {
+      "id": "42661977296919@lid",
+      "msg": 7,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Silvana Jacobe Morgado",
+      "firstSeen": "2026-01-23T19:42:56.884Z",
+      "lastActivity": "2026-01-23T19:57:31.899Z"
+    },
+    {
+      "id": "86316444307653@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Hortência Ngovene",
+      "firstSeen": "2026-01-23T19:59:26.804Z",
+      "lastActivity": "2026-01-23T19:59:26.804Z"
+    },
+    {
+      "id": "32783854485649@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Bak",
+      "firstSeen": "2026-02-22T17:49:00.301Z",
+      "lastActivity": "2026-02-22T17:49:00.301Z"
+    }
+  ],
+  "schedule": {
+    "closeTime": "17:00",
+    "openTime": "03:00",
+    "lastRun": {
+      "close": {
+        "date": "2026-03-19",
+        "time": "17:00"
+      },
+      "open": {
+        "date": "2026-03-20",
+        "time": "03:00"
+      }
+    }
+  },
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  }
+}

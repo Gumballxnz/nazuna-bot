@@ -1,0 +1,180 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-23T08:53:00.571Z",
+  "groupName": "#2 CHEGADA DO GUERREIRO",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "264321598779532@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "nazuna bot",
+      "firstSeen": "2026-02-23T08:53:00.572Z",
+      "lastActivity": "2026-02-23T08:53:00.572Z"
+    },
+    {
+      "id": "41107551477779@lid",
+      "msg": 11,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "Drago",
+      "firstSeen": "2026-02-23T11:24:17.520Z",
+      "lastActivity": "2026-03-07T09:24:32.562Z"
+    },
+    {
+      "id": "159034049044504@lid",
+      "msg": 2,
+      "cmd": 1,
+      "figu": 0,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-02-23T12:08:45.626Z",
+      "lastActivity": "2026-03-06T06:57:41.589Z"
+    },
+    {
+      "id": "273044375380178@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Drip Fashion",
+      "firstSeen": "2026-03-04T18:17:46.059Z",
+      "lastActivity": "2026-03-04T18:17:46.059Z"
+    },
+    {
+      "id": "43697668374616@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~~€~¢¥€£€",
+      "firstSeen": "2026-03-05T16:01:51.504Z",
+      "lastActivity": "2026-03-05T16:01:51.504Z"
+    },
+    {
+      "id": "114289750855866@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Neves",
+      "firstSeen": "2026-03-05T19:23:02.571Z",
+      "lastActivity": "2026-03-05T19:23:02.571Z"
+    },
+    {
+      "id": "73552069972132@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Belmiro Arlindo",
+      "firstSeen": "2026-03-05T20:49:51.455Z",
+      "lastActivity": "2026-03-05T20:50:08.150Z"
+    },
+    {
+      "id": "76305093660751@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-03-06T18:51:45.259Z",
+      "lastActivity": "2026-03-06T18:51:45.259Z"
+    },
+    {
+      "id": "42980459213045@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-03-06T21:24:36.316Z",
+      "lastActivity": "2026-03-07T04:35:49.251Z"
+    },
+    {
+      "id": "153472318066864@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "salvadorcumbi25",
+      "firstSeen": "2026-03-07T05:07:00.716Z",
+      "lastActivity": "2026-03-07T05:07:00.717Z"
+    },
+    {
+      "id": "23365125468222@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Edio Investimentos",
+      "firstSeen": "2026-03-07T09:22:05.854Z",
+      "lastActivity": "2026-03-07T09:22:05.854Z"
+    },
+    {
+      "id": "277652707475618@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ᴋᴇɴᴇʀ¹¹",
+      "firstSeen": "2026-03-07T12:46:29.771Z",
+      "lastActivity": "2026-03-07T12:46:29.771Z"
+    },
+    {
+      "id": "84491066433741@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Nayro🇺🇲",
+      "firstSeen": "2026-03-11T11:49:46.972Z",
+      "lastActivity": "2026-03-11T11:49:46.972Z"
+    },
+    {
+      "id": "130275501691033@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Júnior Ligonha Jaime",
+      "firstSeen": "2026-03-14T21:29:05.320Z",
+      "lastActivity": "2026-03-14T21:29:05.320Z"
+    },
+    {
+      "id": "145934952489090@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Eu",
+      "firstSeen": "2026-03-15T13:55:00.809Z",
+      "lastActivity": "2026-03-15T17:25:42.499Z"
+    },
+    {
+      "id": "55629070745660@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "Drago",
+      "firstSeen": "2026-03-15T14:01:14.420Z",
+      "lastActivity": "2026-03-15T14:01:14.420Z"
+    },
+    {
+      "id": "100193651454052@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Belton Januário",
+      "firstSeen": "2026-03-15T15:40:35.883Z",
+      "lastActivity": "2026-03-15T15:40:35.883Z"
+    },
+    {
+      "id": "33462627127507@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "SKHeY",
+      "firstSeen": "2026-03-16T08:18:21.719Z",
+      "lastActivity": "2026-03-16T08:18:21.719Z"
+    }
+  ],
+  "antistatus": true
+}

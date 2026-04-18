@@ -1,0 +1,58 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-21T08:40:35.434Z",
+  "groupName": "VICIADOS🎮🥇",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "88472635363434@lid",
+      "msg": 10,
+      "cmd": 44,
+      "figu": 0,
+      "pushname": "VINDLEY 🥷🏽🏀🔫",
+      "firstSeen": "2026-01-21T08:40:35.435Z",
+      "lastActivity": "2026-01-24T10:39:45.352Z"
+    },
+    {
+      "id": "16166458241036@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~Valter~",
+      "firstSeen": "2026-01-21T10:32:50.449Z",
+      "lastActivity": "2026-01-21T10:32:50.449Z"
+    },
+    {
+      "id": "264321598779532@lid",
+      "msg": 1,
+      "cmd": 1,
+      "figu": 0,
+      "pushname": "nazuna",
+      "firstSeen": "2026-01-21T11:57:14.389Z",
+      "lastActivity": "2026-01-21T14:41:56.855Z"
+    },
+    {
+      "id": "248253941588034@lid",
+      "msg": 0,
+      "cmd": 1,
+      "figu": 0,
+      "pushname": "Edwin_Shaydon",
+      "firstSeen": "2026-01-21T15:55:57.551Z",
+      "lastActivity": "2026-01-21T15:55:57.551Z"
+    }
+  ],
+  "autodl": true,
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "mark": {},
+  "createdAt": "2026-03-12T00:03:32.146Z",
+  "groupName": "KEYGRAM HELP GROUP",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "275462693613639@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": ".",
+      "firstSeen": "2026-03-12T00:03:32.152Z",
+      "lastActivity": "2026-03-12T00:03:32.152Z"
+    }
+  ]
+}

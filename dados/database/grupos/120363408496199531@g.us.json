@@ -1,0 +1,26 @@
+{
+  "mark": {},
+  "createdAt": "2026-03-11T07:19:21.774Z",
+  "groupName": "GRUPO DE VENDAS💰💸",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "95829880774868@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ألفارو",
+      "firstSeen": "2026-03-11T07:19:21.776Z",
+      "lastActivity": "2026-03-11T07:19:21.776Z"
+    }
+  ]
+}

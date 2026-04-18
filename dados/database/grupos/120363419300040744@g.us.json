@@ -1,0 +1,167 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-22T10:59:04.012Z",
+  "groupName": "CHANGE USD TO MZN 💹💹💹",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "34248757141694@lid",
+      "msg": 3,
+      "cmd": 11,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-22T10:59:04.013Z",
+      "lastActivity": "2026-01-22T23:51:10.540Z"
+    },
+    {
+      "id": "186466642702501@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "MegaShop MZ",
+      "firstSeen": "2026-01-22T17:22:39.311Z",
+      "lastActivity": "2026-01-22T17:22:39.311Z"
+    },
+    {
+      "id": "95984633831541@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "BlackMask",
+      "firstSeen": "2026-01-22T18:12:43.759Z",
+      "lastActivity": "2026-01-22T19:24:29.017Z"
+    },
+    {
+      "id": "159034049044504@lid",
+      "msg": 18,
+      "cmd": 7,
+      "figu": 1,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-01-22T23:55:43.283Z",
+      "lastActivity": "2026-03-14T15:43:12.789Z"
+    },
+    {
+      "id": "76305093660751@lid",
+      "msg": 2,
+      "cmd": 2,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-29T19:06:10.936Z",
+      "lastActivity": "2026-02-09T00:31:14.063Z"
+    },
+    {
+      "id": "232397173997656@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "👑.",
+      "firstSeen": "2026-02-10T18:46:07.601Z",
+      "lastActivity": "2026-02-10T18:46:07.601Z"
+    },
+    {
+      "id": "108139391221959@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Francisco",
+      "firstSeen": "2026-03-05T10:07:17.025Z",
+      "lastActivity": "2026-03-05T10:07:17.025Z"
+    },
+    {
+      "id": "252750755582095@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "IbRa JM",
+      "firstSeen": "2026-03-05T10:36:37.747Z",
+      "lastActivity": "2026-03-05T10:36:37.747Z"
+    },
+    {
+      "id": "274942566359163@lid",
+      "msg": 6,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "NICHEL",
+      "firstSeen": "2026-03-05T10:45:24.949Z",
+      "lastActivity": "2026-03-05T11:13:21.275Z"
+    },
+    {
+      "id": "245423809802448@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~GG",
+      "firstSeen": "2026-03-05T17:15:40.303Z",
+      "lastActivity": "2026-03-05T17:16:38.956Z"
+    },
+    {
+      "id": "87459006271546@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🦎",
+      "firstSeen": "2026-03-05T17:15:55.618Z",
+      "lastActivity": "2026-03-05T17:36:31.213Z"
+    },
+    {
+      "id": "42980459213045@lid",
+      "msg": 7,
+      "cmd": 6,
+      "figu": 1,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-03-07T04:36:31.154Z",
+      "lastActivity": "2026-03-14T15:41:31.868Z"
+    },
+    {
+      "id": "172846949093587@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Juscelino Macovela",
+      "firstSeen": "2026-03-09T22:25:30.621Z",
+      "lastActivity": "2026-03-09T22:25:30.621Z"
+    },
+    {
+      "id": "35678914089059@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "catia",
+      "firstSeen": "2026-03-14T17:56:20.004Z",
+      "lastActivity": "2026-03-14T17:56:20.004Z"
+    }
+  ],
+  "antilinkhard": true,
+  "antistatus": true,
+  "soadm": true,
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  },
+  "antiporn": true,
+  "schedule": {
+    "openTime": "08:00",
+    "closeTime": "01:00",
+    "lastRun": {
+      "close": {
+        "date": "2026-03-20",
+        "time": "01:00"
+      },
+      "open": {
+        "date": "2026-03-20",
+        "time": "08:00"
+      }
+    }
+  },
+  "antilinksoft": true,
+  "textbv": "Bem-vindo(a) #numerodele# ao grupo *#nomedogp#*! Agora somos #membros# membros. Leia a descrição: #desc#"
+}

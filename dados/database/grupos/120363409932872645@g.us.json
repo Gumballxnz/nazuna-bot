@@ -1,0 +1,44 @@
+{
+  "mark": {},
+  "createdAt": "2026-03-07T09:09:09.874Z",
+  "groupName": "NICHO HOT COMMUNITY 💀",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "42980459213045@lid",
+      "msg": 5,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-03-07T09:09:09.876Z",
+      "lastActivity": "2026-03-11T07:34:35.019Z"
+    },
+    {
+      "id": "231190120390775@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "PLAYBOY SALES",
+      "firstSeen": "2026-03-08T07:08:19.190Z",
+      "lastActivity": "2026-03-08T07:08:19.190Z"
+    },
+    {
+      "id": "244925409009721@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Darwinツ (dario Ivan)",
+      "firstSeen": "2026-03-11T10:00:22.260Z",
+      "lastActivity": "2026-03-11T10:00:22.260Z"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-05T18:09:39.984Z",
+  "groupName": "B",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "46347579347106@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Isaias Fernando Mata",
+      "firstSeen": "2026-02-05T18:09:39.988Z",
+      "lastActivity": "2026-02-05T18:10:38.867Z"
+    },
+    {
+      "id": "194395169136880@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🫟Tumelo-Phala....",
+      "firstSeen": "2026-02-05T20:02:59.202Z",
+      "lastActivity": "2026-02-05T20:02:59.202Z"
+    }
+  ]
+}

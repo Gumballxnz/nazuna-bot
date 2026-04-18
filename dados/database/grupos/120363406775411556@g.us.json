@@ -1,0 +1,96 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-21T15:44:11.940Z",
+  "groupName": "Explosão do século XXI (feira de ciências)🤫💨🦠",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "107980410368238@lid",
+      "msg": 28,
+      "cmd": 36,
+      "figu": 0,
+      "pushname": "✧⃟༒Arna Flow༒✧⃟",
+      "firstSeen": "2026-01-21T15:44:11.941Z",
+      "lastActivity": "2026-03-14T11:57:22.517Z"
+    },
+    {
+      "id": "160602433572987@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "FENlAS",
+      "firstSeen": "2026-01-31T23:17:58.442Z",
+      "lastActivity": "2026-02-15T19:41:31.875Z"
+    },
+    {
+      "id": "250968411242721@lid",
+      "msg": 370,
+      "cmd": 36,
+      "figu": 1,
+      "pushname": "Amor",
+      "firstSeen": "2026-02-18T07:01:52.160Z",
+      "lastActivity": "2026-03-19T15:21:46.829Z"
+    },
+    {
+      "id": "232753505259676@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Saíra 🥰😍",
+      "firstSeen": "2026-02-19T07:02:36.056Z",
+      "lastActivity": "2026-02-19T07:02:36.056Z"
+    },
+    {
+      "id": "77421768351989@lid",
+      "msg": 31,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "Samson ♥️🥹",
+      "firstSeen": "2026-03-06T11:18:36.887Z",
+      "lastActivity": "2026-03-14T10:30:56.855Z"
+    },
+    {
+      "id": "27488143024298@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "JADENY",
+      "firstSeen": "2026-03-06T16:54:05.929Z",
+      "lastActivity": "2026-03-06T19:25:35.232Z"
+    },
+    {
+      "id": "56488080982061@lid",
+      "msg": 34,
+      "cmd": 20,
+      "figu": 3,
+      "pushname": "😱",
+      "firstSeen": "2026-03-06T19:16:20.794Z",
+      "lastActivity": "2026-03-14T10:39:09.773Z"
+    },
+    {
+      "id": "264321598779532@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "nazuna bot",
+      "firstSeen": "2026-03-09T19:13:32.691Z",
+      "lastActivity": "2026-03-10T19:26:44.642Z"
+    }
+  ],
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  },
+  "customPrefix": ",",
+  "autorepo": true,
+  "modobrincadeira": true
+}

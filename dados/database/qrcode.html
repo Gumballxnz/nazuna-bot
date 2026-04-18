@@ -1,0 +1,36 @@
+
+                    <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta http-equiv="refresh" content="2">
+                            <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+                            <meta http-equiv="Pragma" content="no-cache">
+                            <meta http-equiv="Expires" content="0">
+                            <title>Nazuna Bot - QR Code</title>
+                            <style>
+                                body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; background-color: #f0f2f5; }
+                                .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+                                h1 { color: #333; margin-bottom: 20px; }
+                                p { color: #666; margin-top: 20px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h1>🤖 Escaneie o QR Code</h1>
+                                <div id="qrcode"></div>
+                                <p>Atualiza automaticamente a cada 2 segundos...</p>
+                            </div>
+                            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                            <script>
+                                new QRCode(document.getElementById("qrcode"), {
+                                    text: "2@/YliGwmKDcLG9dA1PP86oY0FlKUQf/bKpAyaEK1ek/cr3SYRpLU98SDXIizBlfQKrS7RP6ojXEsVqtd5qrx3XVgvc7dCrXrlGOA=,x9T5um5kT8QN3LGEPcP+b6UtpjPGJSzp8XI29sc5Ixc=,Tq5tEkWkTODZQuKxd34rgBjOB9z4JQhwVY7Kx+jYzB0=,+aq0HkpCYfzIR25FDpfPo+iDRstTTIU1iNfCz0YvPO4=",
+                                    width: 256,
+                                    height: 256,
+                                    colorDark : "#000000",
+                                    colorLight : "#ffffff",
+                                    correctLevel : QRCode.CorrectLevel.H
+                                });
+                            </script>
+                        </body>
+                    </html>
+                

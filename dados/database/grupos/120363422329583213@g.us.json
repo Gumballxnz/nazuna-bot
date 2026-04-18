@@ -1,0 +1,80 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-18T13:24:30.315Z",
+  "groupName": "ORGANIZAÇÃO X",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "34248757141694@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-18T13:24:30.316Z",
+      "lastActivity": "2026-01-18T13:24:45.378Z"
+    },
+    {
+      "id": "41107551477779@lid",
+      "msg": 5,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "Drago",
+      "firstSeen": "2026-01-18T13:36:27.502Z",
+      "lastActivity": "2026-02-16T10:34:42.922Z"
+    },
+    {
+      "id": "231314741563557@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Max",
+      "firstSeen": "2026-01-22T19:07:38.500Z",
+      "lastActivity": "2026-01-22T19:07:38.500Z"
+    },
+    {
+      "id": "76305093660751@lid",
+      "msg": 10,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-28T13:15:21.308Z",
+      "lastActivity": "2026-03-05T18:00:13.671Z"
+    },
+    {
+      "id": "138551954002160@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "ᗪᗩÚᗪO ᗷՏՏ",
+      "firstSeen": "2026-01-28T13:16:29.353Z",
+      "lastActivity": "2026-01-28T13:16:29.353Z"
+    },
+    {
+      "id": "42980459213045@lid",
+      "msg": 6,
+      "cmd": 0,
+      "figu": 2,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-28T21:02:58.961Z",
+      "lastActivity": "2026-03-08T07:39:38.437Z"
+    },
+    {
+      "id": "198161419235496@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "WhatsApp",
+      "firstSeen": "2026-02-07T06:37:20.825Z",
+      "lastActivity": "2026-02-07T06:37:20.825Z"
+    }
+  ]
+}

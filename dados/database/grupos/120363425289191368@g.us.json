@@ -1,0 +1,80 @@
+{
+  "mark": {},
+  "createdAt": "2026-03-11T18:49:44.044Z",
+  "groupName": "MINDERPAY MARKETPLACE",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "215543537770542@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Lama S🧠",
+      "firstSeen": "2026-03-11T18:49:44.046Z",
+      "lastActivity": "2026-03-11T20:04:24.406Z"
+    },
+    {
+      "id": "4299899858992@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Shadow_boy☘️🤤",
+      "firstSeen": "2026-03-14T09:08:06.373Z",
+      "lastActivity": "2026-03-14T09:08:06.374Z"
+    },
+    {
+      "id": "183486002503873@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Eric",
+      "firstSeen": "2026-03-15T07:44:36.116Z",
+      "lastActivity": "2026-03-15T07:44:36.116Z"
+    },
+    {
+      "id": "36241571619017@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Jackson Henriques Inguane",
+      "firstSeen": "2026-03-15T08:56:00.947Z",
+      "lastActivity": "2026-03-15T08:56:20.156Z"
+    },
+    {
+      "id": "29708926333126@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Minderads",
+      "firstSeen": "2026-03-15T15:57:53.820Z",
+      "lastActivity": "2026-03-15T20:07:38.478Z"
+    },
+    {
+      "id": "151823134527575@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ㅤ",
+      "firstSeen": "2026-03-15T23:11:22.754Z",
+      "lastActivity": "2026-03-15T23:11:22.754Z"
+    },
+    {
+      "id": "33488413716695@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Yurizx 7",
+      "firstSeen": "2026-03-15T23:14:45.600Z",
+      "lastActivity": "2026-03-15T23:14:45.600Z"
+    }
+  ]
+}

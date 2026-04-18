@@ -1,0 +1,74 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-27T18:29:22.572Z",
+  "groupName": "DOMÍNIO 10K",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {
+    "264321598779532@lid": true
+  },
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "76305093660751@lid",
+      "msg": 17,
+      "cmd": 12,
+      "figu": 1,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-27T18:29:22.575Z",
+      "lastActivity": "2026-02-17T08:58:06.641Z"
+    },
+    {
+      "id": "42980459213045@lid",
+      "msg": 26,
+      "cmd": 3,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-27T18:36:11.441Z",
+      "lastActivity": "2026-03-07T21:03:13.050Z"
+    },
+    {
+      "id": "147807440793734@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "PLAYBOY ACC",
+      "firstSeen": "2026-02-02T16:18:05.847Z",
+      "lastActivity": "2026-02-02T16:18:05.847Z"
+    },
+    {
+      "id": "181862404219109@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Boy",
+      "firstSeen": "2026-02-02T17:45:54.480Z",
+      "lastActivity": "2026-02-02T17:45:54.480Z"
+    },
+    {
+      "id": "41107551477779@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Drago",
+      "firstSeen": "2026-02-03T10:01:38.349Z",
+      "lastActivity": "2026-02-03T10:01:38.349Z"
+    },
+    {
+      "id": "148185448222967@lid",
+      "msg": 18,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Pequeno Cee🔞🔑",
+      "firstSeen": "2026-02-07T14:38:12.929Z",
+      "lastActivity": "2026-02-07T14:38:21.168Z"
+    }
+  ],
+  "autoSticker": false
+}

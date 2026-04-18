@@ -1,0 +1,36 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-21T08:35:03.847Z",
+  "groupName": "DIVULGAÇÃO 🇪🇸🇺🇸☑️",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "34248757141694@lid",
+      "msg": 1,
+      "cmd": 3,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-21T08:35:03.848Z",
+      "lastActivity": "2026-01-21T08:35:47.314Z"
+    },
+    {
+      "id": "271365227716858@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Uane",
+      "firstSeen": "2026-01-21T08:35:15.863Z",
+      "lastActivity": "2026-01-21T08:35:34.394Z"
+    }
+  ],
+  "antistatus": true
+}

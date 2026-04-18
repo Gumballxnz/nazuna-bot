@@ -1,0 +1,84 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-21T08:27:07.371Z",
+  "groupName": "Hot academy",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "147807440793734@lid",
+      "msg": 4,
+      "cmd": 6,
+      "figu": 0,
+      "pushname": "PLAYBOY ACC",
+      "firstSeen": "2026-01-21T08:27:07.372Z",
+      "lastActivity": "2026-01-21T08:56:53.470Z"
+    },
+    {
+      "id": "23678825803918@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 2,
+      "pushname": "SPWADAO ACC",
+      "firstSeen": "2026-01-21T08:36:19.515Z",
+      "lastActivity": "2026-01-21T08:57:05.810Z"
+    },
+    {
+      "id": "131997750013955@lid",
+      "msg": 8,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Melvin Zimba",
+      "firstSeen": "2026-01-21T08:37:03.413Z",
+      "lastActivity": "2026-01-21T08:44:30.016Z"
+    },
+    {
+      "id": "271365227716858@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Uane",
+      "firstSeen": "2026-01-21T08:39:53.686Z",
+      "lastActivity": "2026-01-21T08:45:33.459Z"
+    },
+    {
+      "id": "181218276597782@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "DarkMask",
+      "firstSeen": "2026-01-21T08:40:15.372Z",
+      "lastActivity": "2026-01-21T08:40:15.372Z"
+    },
+    {
+      "id": "34248757141694@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-21T08:45:30.964Z",
+      "lastActivity": "2026-01-21T08:45:30.964Z"
+    },
+    {
+      "id": "159034049044504@lid",
+      "msg": 0,
+      "cmd": 1,
+      "figu": 0,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-01-21T08:59:07.438Z",
+      "lastActivity": "2026-01-21T08:59:07.438Z"
+    }
+  ],
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-13T17:09:17.515Z",
+  "groupName": "FARUKZIN FF🧸🤓",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "264321598779532@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "nazuna",
+      "firstSeen": "2026-02-13T17:09:17.534Z",
+      "lastActivity": "2026-02-13T17:09:17.534Z"
+    },
+    {
+      "id": "147807440793734@lid",
+      "msg": 3,
+      "cmd": 6,
+      "figu": 0,
+      "pushname": "PLAYBOY ACC",
+      "firstSeen": "2026-02-13T17:09:21.180Z",
+      "lastActivity": "2026-02-13T17:12:34.988Z"
+    }
+  ]
+}

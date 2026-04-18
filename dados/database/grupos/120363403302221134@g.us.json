@@ -1,0 +1,64 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-21T18:55:48.864Z",
+  "groupName": "Flow bots",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "107980410368238@lid",
+      "msg": 10,
+      "cmd": 73,
+      "figu": 1,
+      "pushname": "✧⃟༒Arna Flow༒✧⃟",
+      "firstSeen": "2026-01-21T18:55:48.865Z",
+      "lastActivity": "2026-01-29T21:00:10.195Z"
+    },
+    {
+      "id": "160602433572987@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "FENlAS",
+      "firstSeen": "2026-01-31T23:17:46.563Z",
+      "lastActivity": "2026-01-31T23:17:46.563Z"
+    }
+  ],
+  "bemvindo": true,
+  "welcome": {
+    "image": "https://raw.githubusercontent.com/nazuninha/uploads/main/fotos/1769173427181_9arzns.png"
+  },
+  "preservarContador": true,
+  "customPrefix": ".",
+  "autorepo": true,
+  "blockedUsers": {
+    "114938223808621@lid": {
+      "reason": "Não informado",
+      "timestamp": 1769170132688
+    }
+  },
+  "antilinksoft": true,
+  "antiporn": true,
+  "messageLimit": {
+    "enabled": true,
+    "limit": 999,
+    "interval": 1800,
+    "action": "ban",
+    "warnings": {},
+    "users": {
+      "160602433572987@lid": {
+        "count": 1,
+        "lastReset": 1769901466564
+      }
+    }
+  },
+  "antibtn": true
+}

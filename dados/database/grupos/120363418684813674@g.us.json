@@ -1,0 +1,79 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-23T05:47:58.371Z",
+  "groupName": "🇲🇿 Importadores em Ação - Grupo Oficial🇨🇳",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "186466642702501@lid",
+      "msg": 8,
+      "cmd": 2,
+      "figu": 0,
+      "pushname": "MegaShop MZ",
+      "firstSeen": "2026-01-23T05:47:58.372Z",
+      "lastActivity": "2026-01-29T18:59:13.207Z"
+    },
+    {
+      "id": "199660882931758@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Revelations",
+      "firstSeen": "2026-01-30T04:46:51.348Z",
+      "lastActivity": "2026-01-30T04:46:51.348Z"
+    },
+    {
+      "id": "53648956600462@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Mísia",
+      "firstSeen": "2026-03-08T12:01:44.640Z",
+      "lastActivity": "2026-03-08T12:01:44.640Z"
+    },
+    {
+      "id": "241837310763081@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Ayakha",
+      "firstSeen": "2026-03-08T12:07:48.371Z",
+      "lastActivity": "2026-03-08T12:07:48.371Z"
+    },
+    {
+      "id": "264321598779532@lid",
+      "msg": 1,
+      "cmd": 7,
+      "figu": 0,
+      "pushname": "nazuna bot",
+      "firstSeen": "2026-03-08T12:35:39.338Z",
+      "lastActivity": "2026-03-08T12:36:15.137Z"
+    }
+  ],
+  "schedule": {
+    "openTime": "03:00",
+    "closeTime": "13:00",
+    "lastRun": {
+      "open": {
+        "date": "2026-03-20",
+        "time": "03:00"
+      },
+      "close": {
+        "date": "2026-03-20",
+        "time": "13:00"
+      }
+    }
+  },
+  "antilinksoft": true,
+  "antilinkhard": true,
+  "antilinkgp": true
+}

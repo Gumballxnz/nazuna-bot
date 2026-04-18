@@ -1,0 +1,29 @@
+{
+  "groups": {
+    "120363393437035442@g.us": {
+      "enabled": true,
+      "action": "avisar",
+      "threshold": 70,
+      "enabledAt": "2026-03-07T09:26:06.229Z",
+      "stats": {
+        "detected": 0,
+        "warned": 0,
+        "deleted": 0,
+        "muted": 0
+      }
+    },
+    "120363403302221134@g.us": {
+      "enabled": true,
+      "action": "avisar",
+      "threshold": 70,
+      "enabledAt": "2026-01-23T13:06:50.927Z",
+      "stats": {
+        "detected": 0,
+        "warned": 0,
+        "deleted": 0,
+        "muted": 0
+      }
+    }
+  },
+  "userWarnings": {}
+}

@@ -1,0 +1,44 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-12T18:36:26.547Z",
+  "groupName": "💸Bot aviator placard  VIP✈️",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "159034049044504@lid",
+      "msg": 0,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "null",
+      "firstSeen": "2026-03-06T07:35:13.870Z",
+      "lastActivity": "2026-03-06T07:35:13.870Z"
+    },
+    {
+      "id": "252390095753323@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "87 346 0719",
+      "firstSeen": "2026-01-14T07:10:29.261Z",
+      "lastActivity": "2026-01-30T11:22:16.370Z"
+    },
+    {
+      "id": "264321598779532@lid",
+      "msg": 6,
+      "cmd": 3,
+      "figu": 0,
+      "pushname": "nazuna bot",
+      "firstSeen": "2026-01-14T00:34:02.583Z",
+      "lastActivity": "2026-03-06T07:35:13.867Z"
+    }
+  ]
+}

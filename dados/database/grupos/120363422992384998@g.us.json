@@ -1,0 +1,62 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-21T13:39:14.916Z",
+  "groupName": "Hot academy",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "147807440793734@lid",
+      "msg": 6,
+      "cmd": 4,
+      "figu": 0,
+      "pushname": "PLAYBOY ACC",
+      "firstSeen": "2026-01-21T13:39:14.917Z",
+      "lastActivity": "2026-01-21T20:44:54.173Z"
+    },
+    {
+      "id": "159034049044504@lid",
+      "msg": 1,
+      "cmd": 5,
+      "figu": 0,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-01-21T20:16:21.305Z",
+      "lastActivity": "2026-01-24T03:21:49.909Z"
+    },
+    {
+      "id": "111364861370555@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "John Dh Luz Mouane",
+      "firstSeen": "2026-02-03T13:08:38.569Z",
+      "lastActivity": "2026-02-03T13:08:38.569Z"
+    }
+  ],
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  },
+  "schedule": {
+    "closeTime": "01:00",
+    "openTime": "08:00",
+    "lastRun": {
+      "close": {
+        "date": "2026-03-20",
+        "time": "01:00"
+      },
+      "open": {
+        "date": "2026-03-20",
+        "time": "08:00"
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-23T05:13:14.368Z",
+  "groupName": "BELMIRO EXPERT | Shop 🛍️",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "186466642702501@lid",
+      "msg": 24,
+      "cmd": 6,
+      "figu": 0,
+      "pushname": "MegaShop MZ",
+      "firstSeen": "2026-01-23T05:13:14.370Z",
+      "lastActivity": "2026-01-27T06:53:33.232Z"
+    }
+  ],
+  "schedule": {
+    "openTime": "13:00",
+    "lastRun": {
+      "open": {
+        "date": "2026-03-20",
+        "time": "13:00"
+      }
+    }
+  },
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  }
+}

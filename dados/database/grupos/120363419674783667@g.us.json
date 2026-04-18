@@ -1,0 +1,41 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-21T18:55:35.655Z",
+  "groupName": "GEN-Z conecta ",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "107980410368238@lid",
+      "msg": 2,
+      "cmd": 3,
+      "figu": 0,
+      "pushname": "✧⃟༒Arna Flow༒✧⃟",
+      "firstSeen": "2026-01-21T18:55:35.656Z",
+      "lastActivity": "2026-01-29T21:00:15.125Z"
+    },
+    {
+      "id": "160602433572987@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "FENlAS",
+      "firstSeen": "2026-01-31T23:18:16.699Z",
+      "lastActivity": "2026-01-31T23:18:16.699Z"
+    }
+  ],
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  },
+  "customPrefix": ".",
+  "autorepo": true
+}

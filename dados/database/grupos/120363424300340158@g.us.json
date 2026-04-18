@@ -1,0 +1,47 @@
+{
+  "mark": {},
+  "createdAt": "2026-03-15T15:11:38.721Z",
+  "groupName": "Suporte Botway🤖",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "159034049044504@lid",
+      "msg": 0,
+      "cmd": 2,
+      "figu": 0,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-03-15T15:11:38.725Z",
+      "lastActivity": "2026-03-15T15:11:49.505Z"
+    },
+    {
+      "id": "130451628941517@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "MANUEL ELIAS +258",
+      "firstSeen": "2026-03-15T20:41:11.724Z",
+      "lastActivity": "2026-03-15T20:41:11.724Z"
+    },
+    {
+      "id": "88756136722601@lid",
+      "msg": 1,
+      "cmd": 2,
+      "figu": 0,
+      "pushname": "Zacarias Thequimo",
+      "firstSeen": "2026-03-15T22:16:55.978Z",
+      "lastActivity": "2026-03-15T22:18:35.667Z"
+    }
+  ],
+  "antistatus": true,
+  "soadm": true,
+  "antilinkhard": true
+}

@@ -1,0 +1,107 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-12T15:52:08.904Z",
+  "groupName": "PayJSR Recrutamento",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "234712043905270@lid",
+      "msg": 6,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Suporte",
+      "firstSeen": "2026-02-12T15:52:08.906Z",
+      "lastActivity": "2026-02-15T14:59:00.067Z"
+    },
+    {
+      "id": "37830826979547@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Alívio Natural",
+      "firstSeen": "2026-02-12T16:35:44.993Z",
+      "lastActivity": "2026-02-12T16:35:44.993Z"
+    },
+    {
+      "id": "128664754745451@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Elblue Artist",
+      "firstSeen": "2026-02-12T17:11:42.463Z",
+      "lastActivity": "2026-02-12T17:12:30.064Z"
+    },
+    {
+      "id": "140110909726887@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Yun",
+      "firstSeen": "2026-02-12T19:26:59.310Z",
+      "lastActivity": "2026-02-12T19:26:59.310Z"
+    },
+    {
+      "id": "200906339533007@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Mbusi",
+      "firstSeen": "2026-02-15T15:01:50.941Z",
+      "lastActivity": "2026-02-15T15:01:50.941Z"
+    },
+    {
+      "id": "245994419687607@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Barreto Trader",
+      "firstSeen": "2026-02-15T15:31:42.034Z",
+      "lastActivity": "2026-02-15T15:31:42.034Z"
+    },
+    {
+      "id": "55671936569434@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Zuneid Cangy",
+      "firstSeen": "2026-02-15T18:25:14.448Z",
+      "lastActivity": "2026-02-15T18:25:14.448Z"
+    },
+    {
+      "id": "68801685102834@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "MMCC",
+      "firstSeen": "2026-02-15T21:48:44.573Z",
+      "lastActivity": "2026-02-15T21:48:51.513Z"
+    },
+    {
+      "id": "51406463574114@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Nairoo",
+      "firstSeen": "2026-02-15T23:07:56.245Z",
+      "lastActivity": "2026-02-15T23:07:56.245Z"
+    },
+    {
+      "id": "195592861012088@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Uamusse Tecnologia e Serviços",
+      "firstSeen": "2026-03-09T04:32:47.433Z",
+      "lastActivity": "2026-03-09T04:32:47.433Z"
+    }
+  ]
+}

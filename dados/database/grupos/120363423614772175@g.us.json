@@ -1,0 +1,26 @@
+{
+  "mark": {},
+  "createdAt": "2026-02-06T07:14:04.829Z",
+  "groupName": "H",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "46347579347106@lid",
+      "msg": 3,
+      "cmd": 7,
+      "figu": 0,
+      "pushname": "Isaias Fernando Mata",
+      "firstSeen": "2026-02-06T07:14:04.833Z",
+      "lastActivity": "2026-02-06T07:27:41.638Z"
+    }
+  ]
+}

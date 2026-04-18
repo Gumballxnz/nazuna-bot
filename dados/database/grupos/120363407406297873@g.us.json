@@ -1,0 +1,26 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-12T19:23:17.847Z",
+  "groupName": "Digital💲🔥📈",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "233633772208183@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Nelito",
+      "firstSeen": "2026-01-12T19:23:17.848Z",
+      "lastActivity": "2026-01-12T19:23:17.848Z"
+    }
+  ]
+}

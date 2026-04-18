@@ -1,0 +1,71 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-23T22:46:29.632Z",
+  "groupName": "NEW  STRATEGY",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "34248757141694@lid",
+      "msg": 1,
+      "cmd": 4,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-23T22:46:29.633Z",
+      "lastActivity": "2026-01-23T22:47:29.191Z"
+    },
+    {
+      "id": "215685103878168@lid",
+      "msg": 6,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "SADJO CALU YT",
+      "firstSeen": "2026-01-23T22:49:33.589Z",
+      "lastActivity": "2026-01-27T16:05:29.268Z"
+    },
+    {
+      "id": "96488084471894@lid",
+      "msg": 2,
+      "cmd": 3,
+      "figu": 0,
+      "pushname": "Real J4",
+      "firstSeen": "2026-01-24T06:02:19.432Z",
+      "lastActivity": "2026-01-27T14:30:11.886Z"
+    },
+    {
+      "id": "148185448222967@lid",
+      "msg": 17,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Pequeno Cee🔞🔑",
+      "firstSeen": "2026-01-24T06:43:14.544Z",
+      "lastActivity": "2026-01-26T05:51:48.345Z"
+    },
+    {
+      "id": "115827231711440@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "DÕM",
+      "firstSeen": "2026-01-24T19:07:08.240Z",
+      "lastActivity": "2026-01-27T14:32:01.182Z"
+    },
+    {
+      "id": "264321598779532@lid",
+      "msg": 0,
+      "cmd": 1,
+      "figu": 0,
+      "pushname": "nazuna",
+      "firstSeen": "2026-01-27T18:57:33.030Z",
+      "lastActivity": "2026-01-27T18:57:33.030Z"
+    }
+  ]
+}

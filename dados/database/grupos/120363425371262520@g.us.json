@@ -1,0 +1,120 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-25T14:10:31.368Z",
+  "groupName": "Suporte Clientes  bot Vodacom ✅",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "159034049044504@lid",
+      "msg": 167,
+      "cmd": 10,
+      "figu": 9,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-01-25T14:10:31.370Z",
+      "lastActivity": "2026-03-06T10:35:58.670Z"
+    },
+    {
+      "id": "88472635363434@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "VINDLEY 🥷🏽🏀🔫",
+      "firstSeen": "2026-01-25T14:17:29.015Z",
+      "lastActivity": "2026-01-25T14:17:29.015Z"
+    },
+    {
+      "id": "155955077611678@lid",
+      "msg": 14,
+      "cmd": 0,
+      "figu": 1,
+      "pushname": "G.O.A.T",
+      "firstSeen": "2026-01-25T14:30:25.486Z",
+      "lastActivity": "2026-02-13T11:27:36.176Z"
+    },
+    {
+      "id": "189142474428585@lid",
+      "msg": 24,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "VINIZIN NET",
+      "firstSeen": "2026-01-25T22:56:11.779Z",
+      "lastActivity": "2026-02-16T16:05:00.965Z"
+    },
+    {
+      "id": "146119686389834@lid",
+      "msg": 13,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Eduardo",
+      "firstSeen": "2026-01-26T13:13:34.612Z",
+      "lastActivity": "2026-01-28T04:48:39.676Z"
+    },
+    {
+      "id": "38801204342926@lid",
+      "msg": 6,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "blessingmocha8",
+      "firstSeen": "2026-01-26T19:17:28.599Z",
+      "lastActivity": "2026-01-28T21:28:16.212Z"
+    },
+    {
+      "id": "112649090150637@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Gagaleyz",
+      "firstSeen": "2026-01-27T04:33:50.789Z",
+      "lastActivity": "2026-02-16T10:17:00.506Z"
+    },
+    {
+      "id": "107980410368238@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "✧⃟༒Arna Flow༒✧⃟",
+      "firstSeen": "2026-01-27T19:45:05.684Z",
+      "lastActivity": "2026-02-03T19:14:23.769Z"
+    },
+    {
+      "id": "169003389591793@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Haider",
+      "firstSeen": "2026-02-02T09:56:49.206Z",
+      "lastActivity": "2026-02-02T09:56:49.206Z"
+    },
+    {
+      "id": "10059450957867@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Net Trapp +258",
+      "firstSeen": "2026-02-15T08:54:21.543Z",
+      "lastActivity": "2026-02-15T08:54:21.543Z"
+    },
+    {
+      "id": "25096131489798@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Haider Ismael",
+      "firstSeen": "2026-03-06T09:46:29.403Z",
+      "lastActivity": "2026-03-08T05:30:01.769Z"
+    }
+  ],
+  "bemvindo": true,
+  "welcome": {
+    "image": "banner"
+  }
+}

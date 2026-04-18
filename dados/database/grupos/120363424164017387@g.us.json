@@ -1,0 +1,112 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-22T14:46:37.684Z",
+  "groupName": "Hot academy",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "181218276597782@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "DarkMask",
+      "firstSeen": "2026-01-22T14:46:37.685Z",
+      "lastActivity": "2026-01-22T14:46:37.685Z"
+    },
+    {
+      "id": "74707265134799@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Saúde e educação",
+      "firstSeen": "2026-01-22T20:56:33.552Z",
+      "lastActivity": "2026-01-22T20:56:33.552Z"
+    },
+    {
+      "id": "159034049044504@lid",
+      "msg": 0,
+      "cmd": 6,
+      "figu": 0,
+      "pushname": "🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯",
+      "firstSeen": "2026-01-22T23:52:01.708Z",
+      "lastActivity": "2026-01-24T03:21:37.372Z"
+    },
+    {
+      "id": "34248757141694@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-22T23:52:18.391Z",
+      "lastActivity": "2026-01-22T23:52:18.391Z"
+    },
+    {
+      "id": "76305093660751@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sidney's Max",
+      "firstSeen": "2026-01-29T12:14:48.879Z",
+      "lastActivity": "2026-01-29T12:14:48.879Z"
+    },
+    {
+      "id": "131997750013955@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Melvin Zimba",
+      "firstSeen": "2026-01-29T12:23:34.087Z",
+      "lastActivity": "2026-01-29T12:23:34.087Z"
+    },
+    {
+      "id": "87578929791131@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Eugafar",
+      "firstSeen": "2026-02-02T10:46:53.627Z",
+      "lastActivity": "2026-02-09T11:09:14.544Z"
+    },
+    {
+      "id": "111364861370555@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "John Dh Luz Mouane",
+      "firstSeen": "2026-02-03T13:08:50.468Z",
+      "lastActivity": "2026-02-03T13:08:50.468Z"
+    },
+    {
+      "id": "224288208638019@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Dáram",
+      "firstSeen": "2026-02-04T22:43:25.611Z",
+      "lastActivity": "2026-02-09T11:11:56.141Z"
+    }
+  ],
+  "schedule": {
+    "closeTime": "01:00",
+    "openTime": "08:00",
+    "lastRun": {
+      "close": {
+        "date": "2026-03-20",
+        "time": "01:00"
+      },
+      "open": {
+        "date": "2026-03-20",
+        "time": "08:00"
+      }
+    }
+  }
+}

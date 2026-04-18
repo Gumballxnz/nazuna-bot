@@ -1,0 +1,1538 @@
+{
+  "mark": {},
+  "createdAt": "2026-01-30T04:50:48.590Z",
+  "groupName": "📣❤️MEGAS BARTO  ON RAPIDO",
+  "modorpg": false,
+  "minMessage": null,
+  "moderators": [],
+  "allowedModCommands": [],
+  "mutedUsers": {},
+  "mutedUsers2": {},
+  "levelingEnabled": false,
+  "adminWhitelist": {},
+  "roles": {},
+  "roleMessages": {},
+  "contador": [
+    {
+      "id": "264321598779532@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "nazuna",
+      "firstSeen": "2026-01-30T04:50:48.592Z",
+      "lastActivity": "2026-01-31T11:00:26.406Z"
+    },
+    {
+      "id": "251032533737504@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Mr Durst",
+      "firstSeen": "2026-01-30T04:51:26.851Z",
+      "lastActivity": "2026-01-31T04:36:29.606Z"
+    },
+    {
+      "id": "27544246067383@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Bibliotecaria Jamillo",
+      "firstSeen": "2026-01-30T04:53:27.380Z",
+      "lastActivity": "2026-01-30T04:53:27.380Z"
+    },
+    {
+      "id": "59395773829344@lid",
+      "msg": 158,
+      "cmd": 0,
+      "figu": 68,
+      "pushname": "Dk",
+      "firstSeen": "2026-01-30T04:53:53.189Z",
+      "lastActivity": "2026-01-31T13:19:16.480Z"
+    },
+    {
+      "id": "26135480013055@lid",
+      "msg": 21,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ds graça",
+      "firstSeen": "2026-01-30T04:55:18.414Z",
+      "lastActivity": "2026-01-31T07:40:05.645Z"
+    },
+    {
+      "id": "260400125853808@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Aida Flor 🌹",
+      "firstSeen": "2026-01-30T05:05:19.086Z",
+      "lastActivity": "2026-01-31T05:31:55.662Z"
+    },
+    {
+      "id": "11193070710817@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "WILD.JS",
+      "firstSeen": "2026-01-30T05:05:19.547Z",
+      "lastActivity": "2026-01-30T05:05:19.547Z"
+    },
+    {
+      "id": "183399851544664@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Minito Jaones",
+      "firstSeen": "2026-01-30T05:05:19.730Z",
+      "lastActivity": "2026-01-31T09:26:41.649Z"
+    },
+    {
+      "id": "121561113710674@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "chissiuaalbertomadrugaalbertom",
+      "firstSeen": "2026-01-30T05:05:22.908Z",
+      "lastActivity": "2026-01-31T10:30:30.595Z"
+    },
+    {
+      "id": "172713553428646@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Júlia Kaprixada 🥰",
+      "firstSeen": "2026-01-30T05:05:23.489Z",
+      "lastActivity": "2026-01-31T06:24:20.542Z"
+    },
+    {
+      "id": "79779218862257@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Maria Fernando",
+      "firstSeen": "2026-01-30T05:05:28.753Z",
+      "lastActivity": "2026-01-31T06:32:34.982Z"
+    },
+    {
+      "id": "79534825164866@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Trepado Doideira",
+      "firstSeen": "2026-01-30T05:05:29.639Z",
+      "lastActivity": "2026-01-31T05:19:04.157Z"
+    },
+    {
+      "id": "227942739271934@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Tofel",
+      "firstSeen": "2026-01-30T05:05:32.684Z",
+      "lastActivity": "2026-01-31T05:13:03.689Z"
+    },
+    {
+      "id": "123459455729770@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Rosa",
+      "firstSeen": "2026-01-30T05:05:34.130Z",
+      "lastActivity": "2026-01-31T05:01:05.166Z"
+    },
+    {
+      "id": "161126436327599@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Pedro Ernesto",
+      "firstSeen": "2026-01-30T05:05:35.315Z",
+      "lastActivity": "2026-01-31T04:36:03.482Z"
+    },
+    {
+      "id": "222750341894356@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "paty",
+      "firstSeen": "2026-01-30T05:05:36.905Z",
+      "lastActivity": "2026-01-31T10:30:36.296Z"
+    },
+    {
+      "id": "177524084613284@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "CHIR'S",
+      "firstSeen": "2026-01-30T05:05:46.816Z",
+      "lastActivity": "2026-01-31T06:20:25.948Z"
+    },
+    {
+      "id": "167813129961678@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Azélio Nassone",
+      "firstSeen": "2026-01-30T05:06:48.607Z",
+      "lastActivity": "2026-01-31T05:12:48.434Z"
+    },
+    {
+      "id": "171876773048409@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "silviaetelvino31",
+      "firstSeen": "2026-01-30T05:21:10.080Z",
+      "lastActivity": "2026-01-31T05:43:40.207Z"
+    },
+    {
+      "id": "72692472524877@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "suraj 1515",
+      "firstSeen": "2026-01-30T05:30:13.846Z",
+      "lastActivity": "2026-01-30T05:30:13.846Z"
+    },
+    {
+      "id": "89726849708281@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Suraya",
+      "firstSeen": "2026-01-30T05:50:50.614Z",
+      "lastActivity": "2026-01-30T05:50:50.614Z"
+    },
+    {
+      "id": "1860358402098@lid",
+      "msg": 5,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Felismina",
+      "firstSeen": "2026-01-30T06:47:51.926Z",
+      "lastActivity": "2026-02-01T17:33:31.575Z"
+    },
+    {
+      "id": "280827107749895@lid",
+      "msg": 13,
+      "cmd": 0,
+      "figu": 7,
+      "pushname": "megaa",
+      "firstSeen": "2026-01-30T07:01:27.496Z",
+      "lastActivity": "2026-01-31T06:24:38.590Z"
+    },
+    {
+      "id": "172009682149445@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Helena ❣️",
+      "firstSeen": "2026-01-30T07:12:35.693Z",
+      "lastActivity": "2026-01-30T07:23:02.921Z"
+    },
+    {
+      "id": "50419208319036@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Joana Rui",
+      "firstSeen": "2026-01-30T07:23:27.664Z",
+      "lastActivity": "2026-01-31T07:42:12.496Z"
+    },
+    {
+      "id": "121346298236931@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "cati patrek",
+      "firstSeen": "2026-01-30T08:57:33.576Z",
+      "lastActivity": "2026-01-31T05:08:14.774Z"
+    },
+    {
+      "id": "17635186053199@lid",
+      "msg": 10,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Giannis Classic Fashion",
+      "firstSeen": "2026-01-30T09:02:39.643Z",
+      "lastActivity": "2026-01-31T13:17:02.202Z"
+    },
+    {
+      "id": "66426450759694@lid",
+      "msg": 6,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "leonardo",
+      "firstSeen": "2026-01-30T09:13:32.746Z",
+      "lastActivity": "2026-01-31T06:28:43.359Z"
+    },
+    {
+      "id": "127393477963868@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "phorecord",
+      "firstSeen": "2026-01-30T09:15:04.931Z",
+      "lastActivity": "2026-01-31T05:39:08.443Z"
+    },
+    {
+      "id": "8487308378345@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "HELTON INFLUENCEER 🎖️🎖️",
+      "firstSeen": "2026-01-30T09:19:21.651Z",
+      "lastActivity": "2026-01-30T09:20:15.897Z"
+    },
+    {
+      "id": "246892319510678@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Daniel Pedro Massinguile",
+      "firstSeen": "2026-01-30T09:19:43.609Z",
+      "lastActivity": "2026-01-30T09:26:14.294Z"
+    },
+    {
+      "id": "49048560083066@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Txuzen Binez🎧🎤",
+      "firstSeen": "2026-01-30T09:42:06.455Z",
+      "lastActivity": "2026-01-30T09:42:06.455Z"
+    },
+    {
+      "id": "89932521599108@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Assane",
+      "firstSeen": "2026-01-30T09:42:09.352Z",
+      "lastActivity": "2026-01-30T09:42:09.352Z"
+    },
+    {
+      "id": "132212548714528@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": ".",
+      "firstSeen": "2026-01-30T10:12:12.470Z",
+      "lastActivity": "2026-01-31T06:52:06.790Z"
+    },
+    {
+      "id": "76111669104863@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "andersonvilanculo",
+      "firstSeen": "2026-01-30T10:35:03.945Z",
+      "lastActivity": "2026-01-30T10:35:03.945Z"
+    },
+    {
+      "id": "149388173307920@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "tomaschicuamba63",
+      "firstSeen": "2026-01-30T10:41:05.420Z",
+      "lastActivity": "2026-01-30T10:41:05.420Z"
+    },
+    {
+      "id": "7383115931742@lid",
+      "msg": 7,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Marta Moisés Zandamela",
+      "firstSeen": "2026-01-30T11:07:11.687Z",
+      "lastActivity": "2026-01-31T06:27:22.635Z"
+    },
+    {
+      "id": "277953657196597@lid",
+      "msg": 8,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Rosa Chico",
+      "firstSeen": "2026-01-30T11:58:27.745Z",
+      "lastActivity": "2026-01-31T05:46:57.402Z"
+    },
+    {
+      "id": "20204180496492@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Suzete 🥰🫀🫶",
+      "firstSeen": "2026-01-30T12:01:04.403Z",
+      "lastActivity": "2026-01-30T12:01:05.211Z"
+    },
+    {
+      "id": "25315191554150@lid",
+      "msg": 7,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Edgar Aderito",
+      "firstSeen": "2026-01-30T12:18:00.595Z",
+      "lastActivity": "2026-01-31T13:05:49.331Z"
+    },
+    {
+      "id": "199269889888261@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 3,
+      "pushname": "ALONE",
+      "firstSeen": "2026-01-30T13:36:00.383Z",
+      "lastActivity": "2026-01-30T19:18:24.481Z"
+    },
+    {
+      "id": "158433407950952@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "mvilankulo29",
+      "firstSeen": "2026-01-30T14:35:08.757Z",
+      "lastActivity": "2026-01-30T14:35:08.757Z"
+    },
+    {
+      "id": "221354662088909@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Amade Moisés Guenzi",
+      "firstSeen": "2026-01-30T15:04:44.941Z",
+      "lastActivity": "2026-01-30T15:04:44.941Z"
+    },
+    {
+      "id": "80569979416800@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Leyton",
+      "firstSeen": "2026-01-30T15:08:12.365Z",
+      "lastActivity": "2026-01-31T05:41:31.358Z"
+    },
+    {
+      "id": "271476880085055@lid",
+      "msg": 5,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Ernesto Vlk Vilankulo",
+      "firstSeen": "2026-01-30T16:14:37.578Z",
+      "lastActivity": "2026-01-31T10:55:34.399Z"
+    },
+    {
+      "id": "211042311348314@lid",
+      "msg": 11,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Erca🥰",
+      "firstSeen": "2026-01-30T17:40:38.418Z",
+      "lastActivity": "2026-01-31T10:59:00.919Z"
+    },
+    {
+      "id": "173869537190089@lid",
+      "msg": 4,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "SOFIAH",
+      "firstSeen": "2026-01-30T17:54:15.134Z",
+      "lastActivity": "2026-01-31T06:39:43.275Z"
+    },
+    {
+      "id": "246634705367079@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "我叫凯尔🍃",
+      "firstSeen": "2026-01-30T18:16:48.786Z",
+      "lastActivity": "2026-01-31T07:09:11.279Z"
+    },
+    {
+      "id": "82665873133751@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Alexandre lavenencia",
+      "firstSeen": "2026-01-30T18:37:17.373Z",
+      "lastActivity": "2026-01-31T04:36:05.741Z"
+    },
+    {
+      "id": "206889161883859@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "100%José🎶❤️‍🩹",
+      "firstSeen": "2026-01-30T18:38:40.567Z",
+      "lastActivity": "2026-01-30T18:38:40.772Z"
+    },
+    {
+      "id": "82515012411593@lid",
+      "msg": 10,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Julio Abel Huo",
+      "firstSeen": "2026-01-30T18:47:11.286Z",
+      "lastActivity": "2026-01-31T15:48:42.718Z"
+    },
+    {
+      "id": "49212456738823@lid",
+      "msg": 12,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Jefton TSB007🇧🇷",
+      "firstSeen": "2026-01-30T19:36:34.399Z",
+      "lastActivity": "2026-01-31T05:36:59.268Z"
+    },
+    {
+      "id": "5957824332007@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Belucha pá 💖",
+      "firstSeen": "2026-01-30T19:54:56.651Z",
+      "lastActivity": "2026-01-30T19:54:56.651Z"
+    },
+    {
+      "id": "11184581398678@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Starkiller On The Beat",
+      "firstSeen": "2026-01-30T20:09:41.087Z",
+      "lastActivity": "2026-01-30T20:09:41.087Z"
+    },
+    {
+      "id": "88966506250321@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Jäi Më",
+      "firstSeen": "2026-01-30T20:17:18.762Z",
+      "lastActivity": "2026-01-31T05:36:06.257Z"
+    },
+    {
+      "id": "208220685639760@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Pastor Zacarias",
+      "firstSeen": "2026-01-31T04:36:02.194Z",
+      "lastActivity": "2026-01-31T04:36:02.194Z"
+    },
+    {
+      "id": "277275119464645@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "imildo orlando",
+      "firstSeen": "2026-01-31T04:36:05.516Z",
+      "lastActivity": "2026-01-31T04:36:05.516Z"
+    },
+    {
+      "id": "190130249838840@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "paxtom955",
+      "firstSeen": "2026-01-31T04:36:06.598Z",
+      "lastActivity": "2026-01-31T04:36:06.598Z"
+    },
+    {
+      "id": "17351751770152@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Armando Bape",
+      "firstSeen": "2026-01-31T04:36:07.219Z",
+      "lastActivity": "2026-01-31T04:36:07.219Z"
+    },
+    {
+      "id": "270596495638766@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Albertø⚽️📖🎧",
+      "firstSeen": "2026-01-31T04:36:07.345Z",
+      "lastActivity": "2026-01-31T04:36:07.345Z"
+    },
+    {
+      "id": "58760034816204@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Victor taímo",
+      "firstSeen": "2026-01-31T04:36:07.511Z",
+      "lastActivity": "2026-01-31T04:36:07.511Z"
+    },
+    {
+      "id": "21140433043710@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Didy",
+      "firstSeen": "2026-01-31T04:36:07.761Z",
+      "lastActivity": "2026-01-31T04:36:07.761Z"
+    },
+    {
+      "id": "223759608868986@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "HOT GAN",
+      "firstSeen": "2026-01-31T04:36:08.103Z",
+      "lastActivity": "2026-01-31T04:36:08.103Z"
+    },
+    {
+      "id": "79130712350897@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Wolf Microsoft",
+      "firstSeen": "2026-01-31T04:36:10.159Z",
+      "lastActivity": "2026-01-31T04:36:10.159Z"
+    },
+    {
+      "id": "37890620973112@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Elton Bernardo Tsane",
+      "firstSeen": "2026-01-31T04:36:13.289Z",
+      "lastActivity": "2026-01-31T04:36:13.289Z"
+    },
+    {
+      "id": "10037607018592@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Spidergirl🕷️ ♥️",
+      "firstSeen": "2026-01-31T04:36:15.096Z",
+      "lastActivity": "2026-01-31T04:36:15.096Z"
+    },
+    {
+      "id": "215719732064412@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Mussa Vathela",
+      "firstSeen": "2026-01-31T04:36:15.776Z",
+      "lastActivity": "2026-01-31T04:36:15.776Z"
+    },
+    {
+      "id": "179585853460562@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "bata7968",
+      "firstSeen": "2026-01-31T04:36:17.006Z",
+      "lastActivity": "2026-01-31T04:36:19.604Z"
+    },
+    {
+      "id": "156625159639111@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "sequestrador",
+      "firstSeen": "2026-01-31T04:36:17.347Z",
+      "lastActivity": "2026-01-31T04:36:17.347Z"
+    },
+    {
+      "id": "61367180607664@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "vestuario",
+      "firstSeen": "2026-01-31T04:36:18.338Z",
+      "lastActivity": "2026-01-31T04:36:18.338Z"
+    },
+    {
+      "id": "125435123863791@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Loxxh 🖤❤️",
+      "firstSeen": "2026-01-31T04:36:19.452Z",
+      "lastActivity": "2026-01-31T04:36:19.452Z"
+    },
+    {
+      "id": "64102688940267@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Arone",
+      "firstSeen": "2026-01-31T04:36:21.396Z",
+      "lastActivity": "2026-01-31T04:36:21.396Z"
+    },
+    {
+      "id": "79358211399821@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Mãe Leoa🦁",
+      "firstSeen": "2026-01-31T04:36:21.925Z",
+      "lastActivity": "2026-01-31T04:36:21.925Z"
+    },
+    {
+      "id": "80934867042415@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Jü Bå🤡",
+      "firstSeen": "2026-01-31T04:36:23.891Z",
+      "lastActivity": "2026-01-31T04:36:23.891Z"
+    },
+    {
+      "id": "35253813018713@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~ Edmilson Armando🤍",
+      "firstSeen": "2026-01-31T04:36:24.390Z",
+      "lastActivity": "2026-01-31T04:36:24.390Z"
+    },
+    {
+      "id": "104991247351966@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Tony",
+      "firstSeen": "2026-01-31T04:36:34.258Z",
+      "lastActivity": "2026-01-31T04:36:34.258Z"
+    },
+    {
+      "id": "102976773480557@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Olga ❤",
+      "firstSeen": "2026-01-31T04:36:38.286Z",
+      "lastActivity": "2026-01-31T04:36:38.286Z"
+    },
+    {
+      "id": "102220892770416@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Pércia",
+      "firstSeen": "2026-01-31T04:41:03.844Z",
+      "lastActivity": "2026-01-31T04:41:03.844Z"
+    },
+    {
+      "id": "172619500372144@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Amílcar Mapanga O Jornalista",
+      "firstSeen": "2026-01-31T04:45:07.068Z",
+      "lastActivity": "2026-01-31T04:45:07.068Z"
+    },
+    {
+      "id": "31228791132276@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "heltonvaldemar",
+      "firstSeen": "2026-01-31T04:46:33.775Z",
+      "lastActivity": "2026-01-31T04:46:33.775Z"
+    },
+    {
+      "id": "209113854263551@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Djivas",
+      "firstSeen": "2026-01-31T04:48:40.007Z",
+      "lastActivity": "2026-01-31T04:48:40.007Z"
+    },
+    {
+      "id": "5644241367258@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Raylin 008",
+      "firstSeen": "2026-01-31T04:50:51.813Z",
+      "lastActivity": "2026-01-31T04:50:51.813Z"
+    },
+    {
+      "id": "24688143143097@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Dös Negrös André Zuculas",
+      "firstSeen": "2026-01-31T04:53:22.671Z",
+      "lastActivity": "2026-01-31T04:53:22.671Z"
+    },
+    {
+      "id": "17983648825425@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Lu",
+      "firstSeen": "2026-01-31T04:54:47.426Z",
+      "lastActivity": "2026-01-31T04:54:47.426Z"
+    },
+    {
+      "id": "100249452458112@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "??",
+      "firstSeen": "2026-01-31T04:55:04.691Z",
+      "lastActivity": "2026-01-31T04:55:04.691Z"
+    },
+    {
+      "id": "10076647588013@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Maria",
+      "firstSeen": "2026-01-31T04:55:12.257Z",
+      "lastActivity": "2026-01-31T04:55:12.257Z"
+    },
+    {
+      "id": "207571944214703@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Jennifer Massango💚",
+      "firstSeen": "2026-01-31T05:05:16.387Z",
+      "lastActivity": "2026-01-31T05:05:16.387Z"
+    },
+    {
+      "id": "106455663411211@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "rijakeys65@gmail.com",
+      "firstSeen": "2026-01-31T05:10:01.703Z",
+      "lastActivity": "2026-01-31T05:10:01.703Z"
+    },
+    {
+      "id": "84611442946154@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Ciloca Safo",
+      "firstSeen": "2026-01-31T05:11:20.537Z",
+      "lastActivity": "2026-01-31T05:11:20.537Z"
+    },
+    {
+      "id": "65782356680911@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "constantino david gimo",
+      "firstSeen": "2026-01-31T05:13:34.438Z",
+      "lastActivity": "2026-01-31T05:13:34.438Z"
+    },
+    {
+      "id": "151694553948343@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Beth",
+      "firstSeen": "2026-01-31T05:17:14.688Z",
+      "lastActivity": "2026-01-31T05:17:14.688Z"
+    },
+    {
+      "id": "77477334519884@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Bill❤️",
+      "firstSeen": "2026-01-31T05:17:56.009Z",
+      "lastActivity": "2026-01-31T05:17:56.009Z"
+    },
+    {
+      "id": "52682689613936@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~❤️‍🩹❤️‍🩹",
+      "firstSeen": "2026-01-31T05:25:14.627Z",
+      "lastActivity": "2026-01-31T05:25:14.627Z"
+    },
+    {
+      "id": "264858385809472@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "neloide",
+      "firstSeen": "2026-01-31T05:27:20.887Z",
+      "lastActivity": "2026-01-31T05:27:20.887Z"
+    },
+    {
+      "id": "191916922667130@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "A'D ☘️❤️",
+      "firstSeen": "2026-01-31T05:28:38.629Z",
+      "lastActivity": "2026-01-31T05:28:38.629Z"
+    },
+    {
+      "id": "14474224345332@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "J-L❤️‍🩹",
+      "firstSeen": "2026-01-31T05:31:52.660Z",
+      "lastActivity": "2026-01-31T05:31:52.660Z"
+    },
+    {
+      "id": "117858617016453@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Valenti👌🏼✨",
+      "firstSeen": "2026-01-31T05:34:07.631Z",
+      "lastActivity": "2026-01-31T05:34:07.631Z"
+    },
+    {
+      "id": "65146315628724@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Santos  Sande",
+      "firstSeen": "2026-01-31T05:36:04.496Z",
+      "lastActivity": "2026-01-31T05:36:04.496Z"
+    },
+    {
+      "id": "92037508526290@lid",
+      "msg": 7,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "???❤️❤️❤️",
+      "firstSeen": "2026-01-31T05:36:33.463Z",
+      "lastActivity": "2026-01-31T06:53:49.896Z"
+    },
+    {
+      "id": "75669472055535@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Silva João Bene",
+      "firstSeen": "2026-01-31T05:38:08.764Z",
+      "lastActivity": "2026-01-31T06:15:45.377Z"
+    },
+    {
+      "id": "94365347278936@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Azarias Adelino",
+      "firstSeen": "2026-01-31T05:41:30.143Z",
+      "lastActivity": "2026-01-31T05:41:30.143Z"
+    },
+    {
+      "id": "141030116581472@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "onil",
+      "firstSeen": "2026-01-31T05:46:18.424Z",
+      "lastActivity": "2026-01-31T05:46:18.424Z"
+    },
+    {
+      "id": "190723005648990@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Cristiano Sitoe",
+      "firstSeen": "2026-01-31T05:48:37.050Z",
+      "lastActivity": "2026-01-31T05:50:49.957Z"
+    },
+    {
+      "id": "27389174239437@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "João Luís",
+      "firstSeen": "2026-01-31T05:50:34.442Z",
+      "lastActivity": "2026-01-31T05:50:34.442Z"
+    },
+    {
+      "id": "146703785148469@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "quisaaugustoa",
+      "firstSeen": "2026-01-31T05:54:24.283Z",
+      "lastActivity": "2026-01-31T05:54:24.283Z"
+    },
+    {
+      "id": "124872499925118@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "jossefachilengue016",
+      "firstSeen": "2026-01-31T05:57:07.814Z",
+      "lastActivity": "2026-01-31T05:57:07.814Z"
+    },
+    {
+      "id": "118700598390859@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "leylizzy☠️",
+      "firstSeen": "2026-01-31T06:04:13.178Z",
+      "lastActivity": "2026-01-31T06:04:13.178Z"
+    },
+    {
+      "id": "223411968196794@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Real Belmiro",
+      "firstSeen": "2026-01-31T06:13:04.642Z",
+      "lastActivity": "2026-01-31T06:13:04.642Z"
+    },
+    {
+      "id": "33952387621104@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🔥◉⁠‿⁠◉France (⁠✷⁠‿⁠✷⁠)🔥",
+      "firstSeen": "2026-01-31T06:13:53.268Z",
+      "lastActivity": "2026-01-31T06:13:53.268Z"
+    },
+    {
+      "id": "109294620004385@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Laura",
+      "firstSeen": "2026-01-31T06:15:18.339Z",
+      "lastActivity": "2026-01-31T06:15:18.339Z"
+    },
+    {
+      "id": "263621401665719@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "SOBRINHO",
+      "firstSeen": "2026-01-31T06:17:15.260Z",
+      "lastActivity": "2026-01-31T06:17:15.260Z"
+    },
+    {
+      "id": "73809365336242@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Herminia",
+      "firstSeen": "2026-01-31T06:17:57.208Z",
+      "lastActivity": "2026-01-31T06:17:57.208Z"
+    },
+    {
+      "id": "187239686512859@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Júlio 🤐🍷",
+      "firstSeen": "2026-01-31T06:19:26.581Z",
+      "lastActivity": "2026-01-31T06:19:26.581Z"
+    },
+    {
+      "id": "43547361321046@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Råphåėl Phër",
+      "firstSeen": "2026-01-31T06:20:12.309Z",
+      "lastActivity": "2026-01-31T06:20:12.309Z"
+    },
+    {
+      "id": "229759778832429@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "claudiostonio97",
+      "firstSeen": "2026-01-31T06:25:49.936Z",
+      "lastActivity": "2026-01-31T06:25:49.936Z"
+    },
+    {
+      "id": "81373138297017@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Bento Bento 😃😃",
+      "firstSeen": "2026-01-31T06:30:03.789Z",
+      "lastActivity": "2026-01-31T06:30:03.789Z"
+    },
+    {
+      "id": "249503928045812@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Melany",
+      "firstSeen": "2026-01-31T06:31:54.266Z",
+      "lastActivity": "2026-01-31T06:31:54.266Z"
+    },
+    {
+      "id": "17412015567076@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Salifu",
+      "firstSeen": "2026-01-31T06:31:54.410Z",
+      "lastActivity": "2026-01-31T06:31:54.410Z"
+    },
+    {
+      "id": "20805475893439@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Chongo💸",
+      "firstSeen": "2026-01-31T06:33:13.652Z",
+      "lastActivity": "2026-01-31T06:33:13.652Z"
+    },
+    {
+      "id": "60091306930292@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Lisa Aurélio. ❤🥹🌹",
+      "firstSeen": "2026-01-31T06:38:44.333Z",
+      "lastActivity": "2026-01-31T06:38:44.333Z"
+    },
+    {
+      "id": "186861561598002@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "vinamachacule",
+      "firstSeen": "2026-01-31T06:40:13.422Z",
+      "lastActivity": "2026-01-31T06:40:13.422Z"
+    },
+    {
+      "id": "15874702454921@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "José Félix Armando",
+      "firstSeen": "2026-01-31T06:41:15.139Z",
+      "lastActivity": "2026-01-31T06:41:15.139Z"
+    },
+    {
+      "id": "84692896333867@lid",
+      "msg": 3,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "SHELTON ❤️GOSTOSO💙♥️😎😎",
+      "firstSeen": "2026-01-31T06:54:38.590Z",
+      "lastActivity": "2026-01-31T06:56:37.202Z"
+    },
+    {
+      "id": "261701651931387@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Cléo",
+      "firstSeen": "2026-01-31T06:55:49.556Z",
+      "lastActivity": "2026-01-31T06:55:49.556Z"
+    },
+    {
+      "id": "241721145307266@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "adelly",
+      "firstSeen": "2026-01-31T06:58:49.267Z",
+      "lastActivity": "2026-01-31T06:58:49.267Z"
+    },
+    {
+      "id": "188244792737805@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "😍 pai da futura🥰",
+      "firstSeen": "2026-01-31T07:01:52.743Z",
+      "lastActivity": "2026-01-31T07:01:52.743Z"
+    },
+    {
+      "id": "90551433080915@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "꧁ᴿᴳ₭ɆɎ฿ØɎ꧂",
+      "firstSeen": "2026-01-31T07:06:28.444Z",
+      "lastActivity": "2026-01-31T07:06:28.444Z"
+    },
+    {
+      "id": "220774589849806@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Daniel Jr",
+      "firstSeen": "2026-01-31T07:17:32.413Z",
+      "lastActivity": "2026-01-31T07:17:32.413Z"
+    },
+    {
+      "id": "266816588902533@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Dabí da Erce",
+      "firstSeen": "2026-01-31T07:21:38.392Z",
+      "lastActivity": "2026-01-31T07:21:38.392Z"
+    },
+    {
+      "id": "6541855948951@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🥹Denïlsøn🤎🤫",
+      "firstSeen": "2026-01-31T07:23:13.056Z",
+      "lastActivity": "2026-01-31T07:23:13.056Z"
+    },
+    {
+      "id": "87918517440581@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Dileriozinho ☠️💀",
+      "firstSeen": "2026-01-31T07:33:54.148Z",
+      "lastActivity": "2026-01-31T07:34:05.354Z"
+    },
+    {
+      "id": "274028090663154@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~Quidinha🖤~",
+      "firstSeen": "2026-01-31T07:35:34.190Z",
+      "lastActivity": "2026-01-31T07:35:34.190Z"
+    },
+    {
+      "id": "266335804248090@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Chanaia😍",
+      "firstSeen": "2026-01-31T07:37:40.471Z",
+      "lastActivity": "2026-01-31T07:37:40.471Z"
+    },
+    {
+      "id": "31040215249044@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Winna",
+      "firstSeen": "2026-01-31T07:39:55.857Z",
+      "lastActivity": "2026-01-31T07:39:55.857Z"
+    },
+    {
+      "id": "10149678862371@lid",
+      "msg": 7,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Dionisio Lucas💕",
+      "firstSeen": "2026-01-31T07:44:06.948Z",
+      "lastActivity": "2026-01-31T07:48:30.883Z"
+    },
+    {
+      "id": "20397437223105@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Digital Speed Up",
+      "firstSeen": "2026-01-31T07:46:41.442Z",
+      "lastActivity": "2026-01-31T07:46:41.442Z"
+    },
+    {
+      "id": "208559719588038@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "ㅤㅤㅤᴘʀɪɴᴄᴇsᴀ⚡",
+      "firstSeen": "2026-01-31T07:50:36.293Z",
+      "lastActivity": "2026-01-31T07:50:36.293Z"
+    },
+    {
+      "id": "244547284111463@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Benety-Madlisa🇧🇷🇧🇷",
+      "firstSeen": "2026-01-31T07:58:58.392Z",
+      "lastActivity": "2026-01-31T07:58:58.392Z"
+    },
+    {
+      "id": "32551775297669@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Manú",
+      "firstSeen": "2026-01-31T08:00:58.933Z",
+      "lastActivity": "2026-01-31T08:00:58.933Z"
+    },
+    {
+      "id": "19654391136285@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Diana¡",
+      "firstSeen": "2026-01-31T08:03:49.491Z",
+      "lastActivity": "2026-01-31T08:03:49.491Z"
+    },
+    {
+      "id": "189433894711397@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Clé",
+      "firstSeen": "2026-01-31T08:06:16.086Z",
+      "lastActivity": "2026-01-31T08:06:16.086Z"
+    },
+    {
+      "id": "78254958461018@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "€‰¥¢u¢o",
+      "firstSeen": "2026-01-31T08:07:09.457Z",
+      "lastActivity": "2026-01-31T08:07:09.457Z"
+    },
+    {
+      "id": "212464180445342@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "~Dércïø~🥷🏾",
+      "firstSeen": "2026-01-31T08:13:11.226Z",
+      "lastActivity": "2026-01-31T08:13:11.226Z"
+    },
+    {
+      "id": "152587756130337@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Kathy ♡",
+      "firstSeen": "2026-01-31T08:13:45.501Z",
+      "lastActivity": "2026-01-31T08:13:45.501Z"
+    },
+    {
+      "id": "275784866521326@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "juniorjustinocossa",
+      "firstSeen": "2026-01-31T08:14:50.463Z",
+      "lastActivity": "2026-01-31T08:14:50.463Z"
+    },
+    {
+      "id": "240226815500518@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "judicealbertochirindza",
+      "firstSeen": "2026-01-31T08:24:52.824Z",
+      "lastActivity": "2026-01-31T08:24:52.824Z"
+    },
+    {
+      "id": "245956301820145@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "𝗟𝗘𝗡𝗗𝗔̊↠🪺🩵",
+      "firstSeen": "2026-01-31T08:29:14.371Z",
+      "lastActivity": "2026-01-31T08:29:14.371Z"
+    },
+    {
+      "id": "67908331933764@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "madina",
+      "firstSeen": "2026-01-31T08:35:14.333Z",
+      "lastActivity": "2026-01-31T08:35:14.333Z"
+    },
+    {
+      "id": "140312706031828@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🇲🇿🥋🇰🇷",
+      "firstSeen": "2026-01-31T08:52:24.020Z",
+      "lastActivity": "2026-01-31T08:52:24.020Z"
+    },
+    {
+      "id": "225181243027551@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "DøN MyZtRø 🎧🎚️🎹",
+      "firstSeen": "2026-01-31T09:00:36.771Z",
+      "lastActivity": "2026-01-31T09:00:36.771Z"
+    },
+    {
+      "id": "47339800662095@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "♠ Lourino RJ ♠",
+      "firstSeen": "2026-01-31T09:07:31.031Z",
+      "lastActivity": "2026-01-31T09:07:31.031Z"
+    },
+    {
+      "id": "271331002188020@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Vanessa Nelson Ndloze",
+      "firstSeen": "2026-01-31T09:23:18.658Z",
+      "lastActivity": "2026-01-31T09:23:18.658Z"
+    },
+    {
+      "id": "40218744860771@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Aywan ACC",
+      "firstSeen": "2026-01-31T09:26:11.597Z",
+      "lastActivity": "2026-01-31T09:26:11.597Z"
+    },
+    {
+      "id": "171661873643637@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "suleimana aiubaj",
+      "firstSeen": "2026-01-31T09:40:49.623Z",
+      "lastActivity": "2026-01-31T09:40:49.623Z"
+    },
+    {
+      "id": "153897268162719@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Cally",
+      "firstSeen": "2026-01-31T09:49:06.679Z",
+      "lastActivity": "2026-01-31T09:49:06.679Z"
+    },
+    {
+      "id": "38736695963874@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "🐾",
+      "firstSeen": "2026-01-31T09:50:26.122Z",
+      "lastActivity": "2026-01-31T09:50:26.122Z"
+    },
+    {
+      "id": "33106178351125@lid",
+      "msg": 6,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Lúcia Machine 💜✨️",
+      "firstSeen": "2026-01-31T09:53:52.240Z",
+      "lastActivity": "2026-01-31T10:59:23.322Z"
+    },
+    {
+      "id": "49890944151686@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "FILIPE",
+      "firstSeen": "2026-01-31T10:01:10.612Z",
+      "lastActivity": "2026-01-31T10:01:10.612Z"
+    },
+    {
+      "id": "77052099223692@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Iyasmim",
+      "firstSeen": "2026-01-31T10:18:05.978Z",
+      "lastActivity": "2026-01-31T10:18:05.978Z"
+    },
+    {
+      "id": "68088804454572@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Tomocene",
+      "firstSeen": "2026-01-31T10:26:26.979Z",
+      "lastActivity": "2026-01-31T10:26:26.979Z"
+    },
+    {
+      "id": "202087220666394@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "vania",
+      "firstSeen": "2026-01-31T10:29:52.514Z",
+      "lastActivity": "2026-01-31T10:29:52.514Z"
+    },
+    {
+      "id": "3732829904901@lid",
+      "msg": 2,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Américo Nhalungo",
+      "firstSeen": "2026-01-31T10:49:30.512Z",
+      "lastActivity": "2026-01-31T11:59:24.383Z"
+    },
+    {
+      "id": "237494545166553@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Vicente Jinoia",
+      "firstSeen": "2026-01-31T11:18:21.036Z",
+      "lastActivity": "2026-01-31T11:18:21.036Z"
+    },
+    {
+      "id": "63561774715098@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Mira",
+      "firstSeen": "2026-01-31T11:20:06.021Z",
+      "lastActivity": "2026-01-31T11:20:06.021Z"
+    },
+    {
+      "id": "37022685241592@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "airjoaquimamir2",
+      "firstSeen": "2026-01-31T11:24:42.803Z",
+      "lastActivity": "2026-01-31T11:24:42.803Z"
+    },
+    {
+      "id": "185706500624628@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Ângelo",
+      "firstSeen": "2026-01-31T11:26:48.475Z",
+      "lastActivity": "2026-01-31T11:26:48.475Z"
+    },
+    {
+      "id": "215448830390456@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Almeida😄",
+      "firstSeen": "2026-01-31T11:27:49.494Z",
+      "lastActivity": "2026-01-31T11:27:49.494Z"
+    },
+    {
+      "id": "235983186432247@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Keizel",
+      "firstSeen": "2026-01-31T11:46:23.248Z",
+      "lastActivity": "2026-01-31T11:46:23.248Z"
+    },
+    {
+      "id": "42413506699401@lid",
+      "msg": 1,
+      "cmd": 0,
+      "figu": 0,
+      "pushname": "Sônia",
+      "firstSeen": "2026-01-31T13:21:19.651Z",
+      "lastActivity": "2026-01-31T13:21:19.651Z"
+    }
+  ]
+}
