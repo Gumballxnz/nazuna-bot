@@ -15163,7 +15163,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         }
         reply("📔 Procurando no dicionário... Aguarde um pouquinho! ⏳").then(() => {
           const palavra = q.trim().toLowerCase();
-          axios.get(`https://significado.herokuapp.com/${encodeURIComponent(palavra)}`).then((resp) => {
+          axios.get(`https://dicio-api-ten.vercel.app/v2/${encodeURIComponent(palavra)}`).then((resp) => {
             if (resp.data && resp.data.length > 0 && resp.data[0].meanings) {
               const significados = resp.data[0];
               let mensagem = `📘✨ *Significado de "${palavra.toUpperCase()}":*\n\n`;
@@ -15187,8 +15187,8 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           }).catch(() => {
             console.log("API primária do dicionário falhou, tentando IA...");
             const prompt = `Defina a palavra "${palavra}" em português de forma completa e fofa. Inclua a classe gramatical, os principais significados e um exemplo de uso em uma frase curta e bonitinha.`;
-            ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((bahz) => {
-              reply(formatAIResponse(bahz.data.choices[0].message.content));
+            axios.get(`https://api.ryzendesu.vip/api/ai/chatgpt?text=${encodeURIComponent(prompt)}`).then((bahz) => {
+              reply(formatAIResponse(bahz.data?.response || bahz.data || 'Erro ao processar.'));
             }).catch((e) => {
               console.error("Erro geral ao buscar no dicionário:", e);
               reply("❌ Palavra não encontrada. Verifique a ortografia e tente novamente.");
@@ -19070,158 +19070,10 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
       case 'play':
       case 'ytmp3':
         try {
-          if (!q) {
-            return reply(`╭━━━⊱ 🎵 *YOUTUBE MP3* 🎵 ⊱━━━╮
-│
-│ 📝 Digite o nome da música ou
-│     um link do YouTube
-│
-│  *Exemplos:*
-│  ${prefix + command} Back to Black
-│  ${prefix + command} https://youtube.com/...
-│
-╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
-          }
-
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          let videoUrl;
-          let videoInfo;
-
-          if (q.includes('youtube.com') || q.includes('youtu.be')) {
-            videoUrl = q;
-            await reply('Aguarde um momentinho... ☀️');
-
-            youtube.mp3(videoUrl, 128, KeyCog)
-              .then(async (dlRes) => {
-                if (!dlRes.ok)
-                  return nazu.sendMessage(from, { text: `❌ Erro ao baixar o áudio: ${dlRes.msg}` }, { quoted: info });
-
-                try {
-                  await nazu.sendMessage(from, {
-                    audio: dlRes.buffer,
-                    mimetype: 'audio/mpeg'
-                  }, { quoted: info });
-                } catch (audioError) {
-                  if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
-                    await nazu.sendMessage(from, { text: '📦 Arquivo muito grande para enviar como áudio, enviando como documento...' }, { quoted: info });
-                    await nazu.sendMessage(from, {
-                      document: dlRes.buffer,
-                      fileName: `${dlRes.filename}`,
-                      mimetype: 'audio/mpeg'
-                    }, { quoted: info });
-                  } else {
-                    console.error('Erro ao enviar áudio (link direto):', audioError);
-                    nazu.sendMessage(from, { text: '❌ Ocorreu um erro ao enviar o áudio.' }, { quoted: info });
-                  }
-                }
-              })
-              .catch((downloadError) => {
-                console.error('Erro no download (link direto):', downloadError);
-                if (downloadError.message?.includes('API key inválida')) {
-                  notifyOwnerAboutApiKey(nazu, nmrdn, downloadError.message, "YouTube", prefix);
-                  nazu.sendMessage(from, { text: '🤖 *Sistema de YouTube temporariamente indisponível*' }, { quoted: info });
-                } else if (String(downloadError).includes("age")) {
-                  nazu.sendMessage(from, { text: `🔞 Este conteúdo possui restrição de idade e não pode ser baixado.` }, { quoted: info });
-                } else {
-                  nazu.sendMessage(from, { text: `❌ Ocorreu um erro ao baixar o áudio: ${downloadError.message}` }, { quoted: info });
-                }
-              });
-
-            return;
-          }
-
-          if (!youtube || typeof youtube.search !== 'function') {
-            console.warn('[YOUTUBE] search function not available');
-            return reply(`❌ Sistema de busca do YouTube não está disponível no momento.`);
-          }
-
-          // Mensagem de pesquisa
-          await reply(`🔍 *Pesquisando no YouTube...*\n\n🎵 Música: *${q}*\n\n⏳ Aguarde um momento...`);
-
-          // Usando .then em vez de await para a pesquisa do YouTube
-          youtube.search(q, KeyCog)
-            .then((result) => {
-              if (!result.ok) return reply(`❌ Erro na pesquisa: ${result.msg}`);
-              videoInfo = result;
-              videoUrl = result.data.url;
-
-              if (videoInfo.data.seconds > 1800) return reply(`⚠️ Este vídeo é muito longo (${videoInfo.data.timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`);
-
-              const views = typeof videoInfo.data.views === 'number'
-                ? videoInfo.data.views.toLocaleString('pt-BR')
-                : videoInfo.data.views;
-
-              const description = videoInfo.data.description
-                ? videoInfo.data.description.slice(0, 100) + (videoInfo.data.description.length > 100 ? '...' : '')
-                : 'Sem descrição disponível';
-
-              const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n👀 *Visualizações:* ${views}\n📅 *Publicado:* ${videoInfo.data.ago}\n📜 *Descrição:* ${description}\n🔗 *Link:* ${videoInfo.data.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
-
-              nazu.sendMessage(from, {
-                image: { url: videoInfo.data.thumbnail },
-                caption,
-                footer: `${nomebot} • Versão ${botVersion}`
-              }, { quoted: info }).catch((sendErr) => console.error('Erro ao enviar mensagem de resultado (busca):', sendErr));
-
-              youtube.mp3(videoUrl, 128, KeyCog)
-                .then(async (dlRes) => {
-                  if (!dlRes.ok) return nazu.sendMessage(from, { text: `❌ Erro ao baixar o áudio: ${dlRes.msg}` }, { quoted: info });
-
-                  try {
-                    await nazu.sendMessage(from, {
-                      audio: dlRes.buffer,
-                      mimetype: 'audio/mpeg'
-                    }, { quoted: info });
-                  } catch (audioError) {
-                    if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
-                      await nazu.sendMessage(from, { text: '📦 Arquivo muito grande para enviar como áudio, enviando como documento...' }, { quoted: info });
-                      await nazu.sendMessage(from, {
-                        document: dlRes.buffer,
-                        fileName: `${dlRes.filename}`,
-                        mimetype: 'audio/mpeg'
-                      }, { quoted: info });
-                    } else {
-                      console.error('Erro ao enviar áudio (busca):', audioError);
-                      nazu.sendMessage(from, { text: '❌ Ocorreu um erro ao enviar o áudio.' }, { quoted: info });
-                    }
-                  }
-                })
-                .catch((downloadError) => {
-                  console.error('Erro no download (busca):', downloadError);
-                  if (downloadError.message?.includes('API key inválida')) {
-                    notifyOwnerAboutApiKey(nazu, nmrdn, downloadError.message, "YouTube", prefix);
-                    nazu.sendMessage(from, { text: '🤖 *Sistema de YouTube temporariamente indisponível*' }, { quoted: info });
-                  } else if (String(downloadError).includes("age")) {
-                    nazu.sendMessage(from, { text: `🔞 Este conteúdo possui restrição de idade e não pode ser baixado.` }, { quoted: info });
-                  } else {
-                    nazu.sendMessage(from, { text: `❌ Ocorreu um erro ao baixar o áudio: ${downloadError.message}` }, { quoted: info });
-                  }
-                });
-            })
-            .catch((error) => {
-              console.error('Erro ao buscar vídeo no YouTube:', error);
-              return reply(`❌ Erro ao buscar vídeo: ${error.message}`);
-            });
-
-          // Retornar após iniciar a pesquisa em modo promisse para não continuar executando o bloco
-          return;
-
-        } catch (error) {
-          console.error('Erro no comando play/ytmp3 (bloco principal):', error);
-
-          if (error.message?.includes('API key inválida')) {
-            await notifyOwnerAboutApiKey(nazu, nmrdn, error.message, "YouTube", prefix);
-            return reply('🤖 *Sistema de YouTube temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-          }
-
-          if (String(error).includes("age"))
-            return reply(`🔞 Este conteúdo possui restrição de idade e não pode ser processado.`);
-
-          reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
+          await playAudio(nazu, from, info, q, reply);
+        } catch (e) {
+          console.error('Erro no play:', e.message);
+          reply('❌ Erro ao processar o comando play.');
         }
         break;
 
@@ -19604,120 +19456,12 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
       case 'playvid':
       case 'ytmp4':
         try {
-          if (!q) return reply(`Digite o nome do vídeo ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
-
-          // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          let videoUrl;
-
-          if (q.includes('youtube.com') || q.includes('youtu.be')) {
-            videoUrl = q;
-            reply('Aguarde um momentinho... ☀️');
-            youtube.mp4(videoUrl, 360, KeyCog)
-              .then(async (dlRes) => {
-                if (!dlRes.ok) return reply(dlRes.msg);
-
-                try {
-                  await nazu.sendMessage(from, {
-                    video: dlRes.buffer,
-                    fileName: `${dlRes.filename}`,
-                    mimetype: 'video/mp4'
-                  }, {
-                    quoted: info
-                  });
-                } catch (videoError) {
-                  if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
-                    await reply('Arquivo muito grande, enviando como documento...');
-                    await nazu.sendMessage(from, {
-                      document: dlRes.buffer,
-                      fileName: `${dlRes.filename}`,
-                      mimetype: 'video/mp4'
-                    }, {
-                      quoted: info
-                    });
-                  } else {
-                    throw videoError;
-                  }
-                }
-              })
-              .catch((e) => {
-                console.error('Erro ao baixar/enviar vídeo direto (promise):', e);
-                if (e.message?.includes('API key inválida')) {
-                  notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "YouTube", prefix);
-                  return reply('🤖 *Sistema de YouTube temporariamente indisponível*');
-                }
-                reply('❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-              });
-            return;
-          } else {
-            // Use Promise .then for search
-            youtube.search(q, KeyCog)
-              .then((videoInfo) => {
-                if (!videoInfo.ok) return reply(videoInfo.msg);
-                videoUrl = videoInfo.data.url;
-
-                const caption = `\n🎬 *Vídeo Encontrado* 🎬\n\n📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n👀 *Visualizações:* ${videoInfo.data.views.toLocaleString()}\n📅 *Publicado:* ${videoInfo.data.ago}\n📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}\n🔗 *Link:* ${videoInfo.data.url}\n\n📹 *Enviando seu vídeo, aguarde!*`;
-
-                nazu.sendMessage(from, {
-                  image: { url: videoInfo.data.thumbnail },
-                  caption: caption,
-                  footer: `By: ${nomebot}`
-                }, { quoted: info }).catch((sendErr) => console.error('Erro ao enviar mensagem de resultado (playvid):', sendErr));
-
-                return youtube.mp4(videoUrl, 360, KeyCog);
-              })
-              .then(async (dlRes) => {
-                if (!dlRes.ok) return reply(dlRes.msg);
-
-                try {
-                  await nazu.sendMessage(from, {
-                    video: dlRes.buffer,
-                    fileName: `${dlRes.filename}`,
-                    mimetype: 'video/mp4'
-                  }, { quoted: info });
-                } catch (videoError) {
-                  if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
-                    await reply('Arquivo muito grande, enviando como documento...');
-                    await nazu.sendMessage(from, {
-                      document: dlRes.buffer,
-                      fileName: `${dlRes.filename}`,
-                      mimetype: 'video/mp4'
-                    }, { quoted: info });
-                  } else {
-                    throw videoError;
-                  }
-                }
-              })
-              .catch((e) => {
-                console.error('Erro no download/playvid:', e);
-                if (e.message && e.message.includes('API key inválida')) {
-                  notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "YouTube", prefix);
-                  return reply('🤖 *Sistema de YouTube temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-                }
-                reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
-              });
-
-            return;
-          }
-
-          // O fluxo de busca/baixar já foi tratado via promessas acima.
+          await playVideo(nazu, from, info, q, reply);
         } catch (e) {
-          console.error('Erro no comando playvid/ytmp4:', e);
-
-          // Verificar se é erro de API key e notificar o dono
-          if (e.message && e.message.includes('API key inválida')) {
-            await notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "YouTube", prefix);
-            return reply('🤖 *Sistema de YouTube temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-          }
-
-          reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
+          console.error('Erro no playvid:', e.message);
+          reply('❌ Erro ao processar o comando playvid.');
         }
         break;
-      case 'letra':
       case 'lyrics':
         try {
           if (!q) return reply('cade o nome da musica?');

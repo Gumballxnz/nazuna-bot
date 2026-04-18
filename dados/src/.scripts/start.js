@@ -185,7 +185,7 @@ function startBot(codeMode = false) {
 
   info(`📷 Iniciando com ${codeMode ? 'código de pareamento' : 'QR Code'}`);
 
-  botProcess = spawn('node', ['--max-old-space-size=512', ...args], {
+  botProcess = spawn('node', ['--max-old-space-size=250', ...args], {
     stdio: 'inherit',
     env: { ...process.env, FORCE_COLOR: '1' },
   });
@@ -260,9 +260,27 @@ async function promptConnectionMethod() {
   }
 }
 
+// Limpeza radical do tmp na inicialização para evitar lixo residual
+function cleanTmpDir() {
+  const tmpPath = path.join(process.cwd(), 'dados', 'src', 'tmp');
+  try {
+    if (fsSync.existsSync(tmpPath)) {
+      const files = fsSync.readdirSync(tmpPath);
+      let count = 0;
+      for (const f of files) {
+        try { fsSync.unlinkSync(path.join(tmpPath, f)); count++; } catch {}
+      }
+      if (count > 0) info(`🗑️ Limpeza: ${count} ficheiros temporários removidos.`);
+    } else {
+      fsSync.mkdirSync(tmpPath, { recursive: true });
+    }
+  } catch {}
+}
+
 async function main() {
   try {
     setupGracefulShutdown();
+    cleanTmpDir();
     await displayHeader();
     await checkPrerequisites();
     await setupTermuxAutostart();

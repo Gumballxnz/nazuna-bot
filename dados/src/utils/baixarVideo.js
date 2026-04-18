@@ -16,7 +16,11 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
+import util from 'util';
+const execPromise = util.promisify(exec);
 import fg from 'fg-senna';
+import axios from 'axios';
+import { pipeline } from 'stream/promises';
 import { downloadYT, getYTInfo } from './ytHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -64,33 +68,59 @@ function detectarPlataforma(url) {
 // ==================== TIKTOK ====================
 async function baixarTiktok(url) {
     try {
+        // Motor 1: Siputzx (API Leve)
+        let sip = await axios.get(`https://api.siputzx.my.id/api/d/tiktok?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        let link1 = sip?.data?.data?.play || sip?.data?.data?.hdplay || sip?.data?.play;
+        if (link1) return { type: 'video', url: link1, desc: sip?.data?.data?.title || sip?.data?.title || 'TikTok (API 1)' };
+        let urls1 = sip?.data?.data?.images || sip?.data?.images;
+        if (urls1 && urls1.length > 0) return { type: 'images', urls: urls1, desc: sip?.data?.data?.title || 'TikTok (API 1)' };
+
+        // Motor 2: Ryzendesu Fallback
+        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/ttdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        let link2 = rz?.data?.play || rz?.data?.hdplay;
+        if (link2) return { type: 'video', url: link2, desc: rz?.data?.title || 'TikTok (API 2)' };
+
+        // Motor 3: fg-senna (Último recurso)
         const res = await fg.tiktok(url);
         if (res && res.result) {
             const d = res.result;
             if (d.type === 'image' && d.images) {
-                return { type: 'images', urls: d.images, desc: d.title || 'TikTok' };
+                return { type: 'images', urls: d.images, desc: d.title || 'TikTok (API 3)' };
             }
             if (d.play) {
-                return { type: 'video', url: d.play, desc: d.title || 'TikTok' };
+                return { type: 'video', url: d.play, desc: d.title || 'TikTok (API 3)' };
             }
         }
     } catch (e) {
-        console.error('[TikTok fg-senna]', e.message);
+        console.error('[TikTok Cascade error]', e.message);
     }
-    throw new Error('TikTok: Falha ao extrair mídia via fg-senna');
+    throw new Error('TikTok: Falha ao extrair mídia em todos os motores.');
 }
 
 // ==================== INSTAGRAM ====================
 async function baixarInstagram(url) {
     try {
-        const res = await fg.igdl(url);
+        // Motor 1: Siputzx (API Leve)
+        let sip = await axios.get(`https://api.siputzx.my.id/api/d/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        if (sip && sip.data && sip.data.length > 0) {
+           return { type: sip.data[0].url.includes('.mp4') ? 'video' : 'image', url: sip.data[0].url, desc: 'Instagram (API 1)' };
+        }
+
+        // Motor 2: Ryzendesu Fallback
+        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        if (rz && rz.data && rz.data.length > 0) {
+           return { type: rz.data[0].url.includes('.mp4') ? 'video' : 'image', url: rz.data[0].url, desc: 'Instagram (API 2)' };
+        }
+
+        // Motor 3: fg-senna (Último recurso)
+        const res = await fg.igdl(url).catch(() => null);
         if (res && res.dl_url) {
-             return { type: 'video', url: res.dl_url, desc: 'Instagram' };
+             return { type: 'video', url: res.dl_url, desc: 'Instagram (API 3)' };
         }
     } catch (e) {
-        console.error('[Instagram fg-senna]', e.message);
+        console.error('[Instagram Cascade Error]', e.message);
     }
-    throw new Error('Instagram: Falha ao extrair mídia via fg-senna');
+    throw new Error('Instagram: Falha ao extrair mídia via APIs.');
 }
 
 // ==================== YOUTUBE ====================
@@ -109,6 +139,17 @@ async function baixarYoutube(url, formato = 'video') {
 // ==================== FACEBOOK ====================
 async function baixarFacebook(url) {
     try {
+        // Fase 1: "A Tentativa de Alto Luxo" (O Motor yt-dlp)
+        try {
+            const ytRes = await ytdlpBaixar(url, 'video');
+            if (ytRes && ytRes.filePath) {
+                 return { type: 'video', url: ytRes.filePath, isFile: true, desc: 'Facebook (YT-DLP)' };
+            }
+        } catch (e) {
+            // Secreção Silenciosa: se falhar (bloqueio), desliza furtivamente para a Fase 2
+        }
+
+        // Fase 2: "O Bypass de IP" (Fallback API Tripla)
         // Motor 1: Siputzx (API Leve)
         let res = await axios.get(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
         let link = res?.data?.url || res?.data?.hd || res?.data?.sd;
@@ -121,7 +162,7 @@ async function baixarFacebook(url) {
 
         if (link) return { type: 'video', url: link, desc: 'Facebook (API 2)' };
 
-        // Motor 3: fg-senna (Último recurso, pode falhar em 1GB RAM se usar Puppeteer)
+        // Motor 3: fg-senna (Último recurso)
         const fgRes = await fg.fbdl(url).catch(() => null);
         if (fgRes && (fgRes.HD || fgRes.SD)) {
              return { type: 'video', url: fgRes.HD || fgRes.SD, desc: 'Facebook (API 3)' };
@@ -150,70 +191,48 @@ async function baixarTwitter(url) {
 
 async function baixarMediafire(url) {
     try {
+        // Motor 1: Siputzx
+        let sip = await axios.get(`https://api.siputzx.my.id/api/d/mediafire?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        if (sip && sip.data && sip.data.url) {
+            return { type: 'document', url: sip.data.url, filename: sip.data.name, ext: sip.data.ext, desc: 'Mediafire (API 1)' };
+        }
+
+        // Motor 2: Ryzendesu
+        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/mediafire?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        if (rz && rz.url) {
+             return { type: 'document', url: rz.url, filename: rz.fileName || rz.nome || 'arquivo', ext: rz.ext || 'bin', desc: 'Mediafire (API 2)' };
+        }
+
+        // Motor 3: fg-senna
         const res = await fg.mediafire(url);
         if (res && res.url) {
-             return { type: 'document', url: res.url, filename: res.filename, ext: res.ext, desc: 'Mediafire' };
+             return { type: 'document', url: res.url, filename: res.filename, ext: res.ext, desc: 'Mediafire (API 3)' };
         }
     } catch (e) {
-        console.error('[Mediafire fg-senna]', e.message);
+        console.error('[Mediafire Cascade]', e.message);
     }
-    throw new Error('Mediafire: Falha ao extrair arquivo via fg-senna');
+    throw new Error('Mediafire: Falha ao extrair arquivo em todos os motores.');
 }
 
 // ==================== PINTEREST ====================
 async function baixarPinterest(url) {
-    // Resolver URL curta primeiro
-    let finalUrl = url;
-    if (url.includes('pin.it')) {
-        try {
-            const resp = await axios.head(url, { maxRedirects: 5, timeout: 10000 });
-            finalUrl = resp.request?.res?.responseUrl || url;
-        } catch {}
-    }
-
-    // Método 1: btch-downloader proxy para Pinterest
     try {
-        const btch = await import('btch-downloader');
-        const bFn = btch.default || btch;
-        const res = await bFn.pinterestdl(finalUrl);
-        if (res && res.result) {
-            return { type: res.result.includes('.mp4') ? 'video' : 'image', url: res.result, desc: 'Pinterest' };
-        }
-    } catch {}
+        // Motor 1: Siputzx
+        let sip = await axios.get(`https://api.siputzx.my.id/api/d/pinterest?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        let link1 = sip?.data?.url;
+        if (link1) return { type: link1.includes('.mp4') ? 'video' : 'image', url: link1, desc: 'Pinterest (API 1)' };
 
-    try {
-        const { data: html } = await axios.get(finalUrl, { 
-            headers: { 
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept-Language': 'en-US,en;q=0.9',
-            }, 
-            timeout: 15000 
-        });
+        // Motor 2: Ryzendesu
+        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/pinterest?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        let link2 = rz?.data?.url || rz?.url;
+        if (link2) return { type: link2.includes('.mp4') ? 'video' : 'image', url: link2, desc: 'Pinterest (API 2)' };
 
-        const regex = /i\.pinimg\.com[A-Za-z0-9\/_\.\-]+(?:\.jpg|\.png|\.mp4|\.m3u8)/gi;
-        const matches = html.match(regex);
-        if (matches && matches.length > 0) {
-            // Procurar preferencialmente por vídeos, se houver
-            const videoMatch = matches.find(m => m.endsWith('.mp4') || m.endsWith('.m3u8'));
-            if (videoMatch) {
-                return { type: 'video', url: 'https://' + videoMatch, desc: 'Pinterest' };
-            }
-            
-            // Procurar por imagem de alta resolução (originals)
-            const imgMatch = matches.find(m => m.includes('/originals/'));
-            if (imgMatch) {
-                return { type: 'image', url: 'https://' + imgMatch, desc: 'Pinterest' };
-            }
-
-            // Fallback para qualquer outro match
-            return { type: matches[0].includes('.mp4') ? 'video' : 'image', url: 'https://' + matches[0], desc: 'Pinterest' };
-        }
     } catch (e) {
-        console.error('[Pinterest native scraper error]', e.message);
+        console.error('[Pinterest Cascade error]', e.message);
     }
 
-    try { const r = await ytdlpBaixar(finalUrl); if (r) return r; } catch {}
-    throw new Error('Pinterest: falhou ao extrair do código fonte');
+    try { const r = await ytdlpBaixar(url); if (r) return r; } catch {}
+    throw new Error('Pinterest: falhou ao extrair mídia em todas as APIs.');
 }
 
 // ==================== REDDIT ====================
@@ -261,13 +280,13 @@ function ytdlpBaixar(url, formato = 'video') {
         if (formato === 'audio') {
             formatArg = '-x --audio-format mp3 --audio-quality 0';
         } else {
-            formatArg = "-f 'best[ext=mp4][filesize<100M]/best[ext=mp4]/best'";
+            // Regra exata recomendada para contornar AV1 e Facebook Blobs
+            formatArg = `-f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4`;
         }
 
-        // Flags anti-bloqueio Oracle: extractor-args android, user-agent rotativo, sleep entre requests
-        const cmd = `export PATH=/home/ubuntu/.deno/bin:/usr/bin:/usr/local/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate --extractor-args 'youtube:player_client=android,web' --user-agent '${UA}' --sleep-requests 1 --retries 3 --socket-timeout 30 -q ${formatArg} --max-filesize 100M -o '${filePath}' '${url}'`;
+        const cmd = `export PATH=/home/ubuntu/.deno/bin:/usr/bin:/usr/local/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate --extractor-args 'youtube:player_client=android,web' --user-agent '${UA}' --sleep-requests 1 --retries 3 --socket-timeout 30 -q ${formatArg} -o '${filePath}' '${url}'`;
         
-        const proc = exec(cmd, { timeout: 45000 }, (error) => {
+        const proc = exec(cmd, { timeout: 120000 }, (error) => {
             if (error) {
                 // Limpar arquivo se existir
                 try { fs.unlinkSync(filePath); } catch {}
@@ -293,15 +312,50 @@ function ytdlpBaixar(url, formato = 'video') {
     });
 }
 
-// ==================== DOWNLOAD DE BUFFER ====================
-async function baixarBuffer(videoUrl) {
-    const response = await axios.get(videoUrl, {
-        responseType: 'arraybuffer',
-        timeout: 60000,
-        maxContentLength: 100 * 1024 * 1024,
+// ==================== DOWNLOAD STREAM SEGURO ====================
+async function baixarStreamLocal(mediaUrl, ext) {
+    const filePath = path.join(tmpDir, `stm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.${ext}`);
+    const dl = await axios({
+        method: 'get',
+        url: mediaUrl,
+        responseType: 'stream',
         headers: { 'User-Agent': UA }
     });
-    return Buffer.from(response.data);
+    if (dl.status !== 200) throw new Error(`Falha no download (Stream): HTTP ${dl.status}`);
+    await pipeline(dl.data, fs.createWriteStream(filePath));
+    return filePath;
+}
+
+// ==================== O DETECTOR DE COLISÕES (Fase 3: FFprobe Sniffer) ====================
+async function verificarEConverterCodec(filePath) {
+    if (!filePath || !filePath.endsWith('.mp4')) return filePath;
+    try {
+        // Usa o ffprobe para extrair o nome do codec oculto nos metadados
+        const cmdProbe = `ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
+        const { stdout } = await execPromise(cmdProbe);
+        const codec = stdout.trim().toLowerCase();
+        
+        console.log(`[Codec Sniffer] Ficheiro detectado com codec: ${codec}`);
+
+        if (codec === 'h264' || codec === 'h264(high)') {
+            // Se já for H264, usamos turbo copy apenas para afinar o faststart
+            const finalPath = filePath.replace('.mp4', '_ready.mp4');
+            await execPromise(`ffmpeg -i "${filePath}" -c copy -movflags +faststart "${finalPath}"`);
+            try { fs.unlinkSync(filePath); } catch {}
+            return finalPath;
+        } else {
+            // Se for VP9, AV1, HEVC, etc, o WhatsApp recusa! Tritramos pixels com libx264
+            console.log(`[Codec Sniffer] Codec Incompatível (${codec}). Triturando formato para H.264...`);
+            const finalPath = filePath.replace('.mp4', '_ready.mp4');
+            // fast preset e crf 28 para conversão super leve no VPS de 1GB
+            await execPromise(`ffmpeg -i "${filePath}" -c:v libx264 -preset fast -crf 28 -c:a aac -movflags +faststart "${finalPath}"`);
+            try { fs.unlinkSync(filePath); } catch {}
+            return finalPath;
+        }
+    } catch (e) {
+        console.error(`[Codec Sniffer] Ignorado devido a erro:`, e.message);
+        return filePath;
+    }
 }
 
 // ==================== ENVIAR MÍDIA ====================
@@ -320,43 +374,43 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
     }
 
     if (resultado.type === 'video') {
+        let finalFilePath = null;
+
         if (resultado.filePath) {
             // Enviado de arquivo local (yt-dlp)
-            await nazu.sendMessage(from, {
-                video: { url: resultado.filePath },
-                mimetype: 'video/mp4',
-                caption: `✅ ${plataforma}${resultado.desc ? `\n📝 ${resultado.desc}` : ''}`,
-                ...extraAttrs
-            }, { quoted: m });
-            try { fs.unlinkSync(resultado.filePath); } catch {}
+            finalFilePath = resultado.filePath;
         } else if (resultado.isStream) {
-            // Stream do ytdl-core
-            const filePath = path.join(tmpDir, `yt_${Date.now()}.mp4`);
+            // Stream do ytdl-core (Legado, embora não usámos muito)
+            const tmpFp = path.join(tmpDir, `yt_${Date.now()}.mp4`);
             await new Promise((resolve, reject) => {
                 const dl = resultado.ytdlCore.default || resultado.ytdlCore;
                 const stream = dl(resultado.ytdlUrl, { quality: 'highest', filter: 'videoandaudio' });
-                const ws = fs.createWriteStream(filePath);
+                const ws = fs.createWriteStream(tmpFp);
                 stream.pipe(ws);
                 stream.on('error', reject);
                 ws.on('finish', resolve);
                 ws.on('error', reject);
             });
-            await nazu.sendMessage(from, {
-                video: { url: filePath },
-                mimetype: 'video/mp4',
-                caption: `✅ ${plataforma}${resultado.desc ? `\n📝 ${resultado.desc}` : ''}`,
-                ...extraAttrs
-            }, { quoted: m });
-            try { fs.unlinkSync(filePath); } catch {}
+            finalFilePath = tmpFp;
         } else {
-            // Buffer direto de URL
-            const buffer = await baixarBuffer(resultado.url);
+            // Stream seguro de URL externas da cascata APIs (Siputzx, Ryzendesu)
+            finalFilePath = await baixarStreamLocal(resultado.url, 'mp4');
+        }
+
+        // --- A MÁGICA FINAL: Fase 3 ---
+        // Se o video não for compativel com WhatsApp, nós ressucitamos!
+        if (finalFilePath) {
+            finalFilePath = await verificarEConverterCodec(finalFilePath);
+            
             await nazu.sendMessage(from, {
-                video: buffer,
+                video: { url: finalFilePath },
                 mimetype: 'video/mp4',
                 caption: `✅ ${plataforma}${resultado.desc ? `\n📝 ${resultado.desc}` : ''}`,
                 ...extraAttrs
             }, { quoted: m });
+            
+            // Auto Destruição do rastro
+            try { fs.unlinkSync(finalFilePath); } catch {}
         }
     } else if (resultado.type === 'audio') {
         if (resultado.filePath) {
@@ -367,27 +421,50 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
             }, { quoted: m });
             try { fs.unlinkSync(resultado.filePath); } catch {}
         } else {
-            const buffer = await baixarBuffer(resultado.url);
+            const filePath = await baixarStreamLocal(resultado.url, 'mp3');
             await nazu.sendMessage(from, {
-                audio: buffer,
+                audio: { url: filePath },
                 mimetype: 'audio/mpeg',
                 ...extraAttrs
             }, { quoted: m });
+            try { fs.unlinkSync(filePath); } catch {}
+        }
+    } else if (resultado.type === 'document') {
+        // Ex.: Mediafire
+        if (resultado.filePath) {
+            await nazu.sendMessage(from, {
+                document: { url: resultado.filePath },
+                mimetype: 'application/octet-stream',
+                fileName: resultado.filename || `arquivo.${resultado.ext || 'bin'}`,
+                ...extraAttrs
+            }, { quoted: m });
+            try { fs.unlinkSync(resultado.filePath); } catch {}
+        } else {
+            const filePath = await baixarStreamLocal(resultado.url, resultado.ext || 'bin');
+            await nazu.sendMessage(from, {
+                document: { url: filePath },
+                mimetype: 'application/octet-stream',
+                fileName: resultado.filename || `arquivo.${resultado.ext || 'bin'}`,
+                ...extraAttrs
+            }, { quoted: m });
+            try { fs.unlinkSync(filePath); } catch {}
         }
     } else if (resultado.type === 'image') {
-        const buffer = await baixarBuffer(resultado.url);
+        const filePath = await baixarStreamLocal(resultado.url, 'jpg');
         await nazu.sendMessage(from, {
-            image: buffer,
+            image: { url: filePath },
             caption: `✅ ${plataforma}`
         }, { quoted: m });
+         try { fs.unlinkSync(filePath); } catch {}
     } else if (resultado.type === 'images') {
         for (const imgUrl of resultado.urls.slice(0, 10)) {
             try {
-                const buffer = await baixarBuffer(imgUrl);
+                const filePath = await baixarStreamLocal(imgUrl, 'jpg');
                 await nazu.sendMessage(from, {
-                    image: buffer,
+                    image: { url: filePath },
                     caption: `✅ ${plataforma}`
                 }, { quoted: m });
+                try { fs.unlinkSync(filePath); } catch {}
             } catch {}
         }
     }
@@ -423,6 +500,7 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
                 case 'Twitter/X':   resultado = await baixarTwitter(url); break;
                 case 'Pinterest':   resultado = await baixarPinterest(url); break;
                 case 'Reddit':      resultado = await baixarReddit(url); break;
+                case 'Mediafire':   resultado = await baixarMediafire(url); break;
                 default:            resultado = await baixarGenerico(url, plataforma); break;
             }
         } catch (err) {

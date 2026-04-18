@@ -1,9 +1,9 @@
-import path from 'path'
-import fs from 'fs'
-import fetch from 'node-fetch'
-import fg from 'fg-senna'
-import { pipeline } from 'stream/promises'
-import { fileURLToPath } from 'url'
+import path from 'path';
+import fs from 'fs';
+import axios from 'axios';
+import fg from 'fg-senna';
+import { pipeline } from 'stream/promises';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,22 +28,22 @@ export async function downloadYT(url, type = 'audio') {
 
         if (!dl_url) {
             // Fallback 1: Ryzendesu
-            let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/${type === 'audio' ? 'ytmp3' : 'ytmp4'}?url=${encodeURIComponent(url)}`).then(v=>v.json()).catch(()=>null)
+            let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/${type === 'audio' ? 'ytmp3' : 'ytmp4'}?url=${encodeURIComponent(url)}`).then(v=>v.data).catch(()=>null)
             dl_url = rz?.url || rz?.data?.url
         }
 
         if (!dl_url) {
             // Fallback 2: Siputzx (mesma API do FB)
-            let sp = await fetch(`https://api.siputzx.my.id/api/d/youtube?url=${encodeURIComponent(url)}`).then(v=>v.json()).catch(()=>null)
+            let sp = await axios.get(`https://api.siputzx.my.id/api/d/youtube?url=${encodeURIComponent(url)}`).then(v=>v.data).catch(()=>null)
             dl_url = sp?.data?.dl || sp?.data?.url
         }
 
         if (!dl_url) throw new Error('Não foi possível gerar link de download em nenhum motor.')
 
-        let dl = await fetch(dl_url)
-        if (!dl.ok) throw new Error(`HTTP ${dl.status}`)
+        let dl = await axios({ method: 'get', url: dl_url, responseType: 'stream' });
+        if (dl.status !== 200) throw new Error(`HTTP ${dl.status}`)
         
-        await pipeline(dl.body, fs.createWriteStream(filePath))
+        await pipeline(dl.data, fs.createWriteStream(filePath))
         
         let stats = fs.statSync(filePath)
         if (stats.size < 100) throw new Error('Arquivo baixado é muito pequeno ou vazio.')
