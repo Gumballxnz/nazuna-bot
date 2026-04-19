@@ -18201,7 +18201,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             case 'ytmp3':
         try {
           if (!q) return reply('❌ Envie o link do YouTube.');
-          await baixarDireto(nazu, from, info, q, 'audio');
+          // Fire-and-forget: não bloqueia o handler de mensagens
+          (async () => {
+            try {
+              await baixarDireto(nazu, from, info, q, 'audio');
+            } catch (e) { reply('❌ Erro no ytmp3.'); }
+          })();
         } catch (e) { reply('❌ Erro no ytmp3.'); }
         break;
 
@@ -18223,23 +18228,22 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply('❌ Por favor, envie um link válido do Spotify.\n\n💡 Dica: Use o comando play2 para buscar por nome!');
           }
 
-          await reply('🎵 Baixando do Spotify... Aguarde um momento!');
-
-          // Usar API Siputzx Gratuita
-          try {
+          // Fire-and-forget: não bloqueia o handler
+          (async () => {
+            try {
               const spRes = await downloadSpotify(q);
-              const caption = `🎵 *Música:* ${spRes.title}\n👤 *Artista:* ${spRes.artist}\n💿 *Álbum:* ${spRes.album}\n\n🎧 *Enviando áudio...*`;
+              const caption = `🎵 *Música:* ${spRes.title}\n👤 *Artista:* ${spRes.artist}\n💿 *Álbum:* ${spRes.album}`;
               await reply(caption);
-              
               await nazu.sendMessage(from, {
                  audio: { url: spRes.url },
                  mimetype: 'audio/mpeg',
                  fileName: `${spRes.title}.mp3`
               }, { quoted: info });
-          } catch (error) {
+            } catch (error) {
               console.error('Erro no download do Spotify:', error.message);
               reply(`❌ Erro ao baixar do Spotify: ${error.message}`);
-          }
+            }
+          })();
         } catch (error) {
           console.error('Erro no comando spotifydl:', error);
           reply("❌ Ocorreu um erro ao processar sua solicitação.");
@@ -18532,7 +18536,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             case 'ytmp4':
         try {
           if (!q) return reply('❌ Envie o link do YouTube.');
-          await baixarDireto(nazu, from, info, q, 'video');
+          (async () => {
+            try {
+              await baixarDireto(nazu, from, info, q, 'video');
+            } catch (e) { reply('❌ Erro no ytmp4.'); }
+          })();
         } catch (e) { reply('❌ Erro no ytmp4.'); }
         break;
       case 'lyrics':
@@ -18841,7 +18849,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply('❌ Por favor, envie um link válido do Facebook.');
           }
 
-          await reply('📹 Baixando vídeo do Facebook em HD... Aguarde!');
+          reply('📹 Baixando vídeo do Facebook em HD...');
 
           facebook.downloadHD(q, KeyCog)
             .then(async (result) => {
@@ -19605,12 +19613,18 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       case 'gd':
         try {
           if (!q) return reply(`📁 *Google Drive Download*\n\n❌ Por favor, envie o link do arquivo.\n\n📝 *Uso:* ${prefix}${command} <link>`);
-          await reply('⏳ Buscando informações do arquivo...');
-          const spRes = await downloadGDrive(q);
-          const caption = `📁 *Baixando arquivo...*\n\n📄 *Nome:* ${spRes.fileName}\n📊 *Tamanho:* ${spRes.size}`;
-          await reply(caption);
-          await nazu.sendMessage(from, { document: { url: spRes.downloadUrl }, fileName: spRes.fileName, mimetype: spRes.mimetype }, { quoted: info });
-          reply('✅ Download concluído!');
+          (async () => {
+            try {
+              const gdRes = await downloadGDrive(q);
+              const caption = `📁 *Baixando...*\n📄 *Nome:* ${gdRes.fileName}\n📊 *Tamanho:* ${gdRes.size}`;
+              await reply(caption);
+              await nazu.sendMessage(from, { document: { url: gdRes.downloadUrl }, fileName: gdRes.fileName, mimetype: gdRes.mimetype }, { quoted: info });
+              reply('✅ Download concluído!');
+            } catch (e) {
+              console.error('Erro no comando gdrive:', e.message);
+              reply('❌ Erro ao baixar do GDrive: ' + e.message);
+            }
+          })();
         } catch (e) {
           console.error('Erro no comando gdrive:', e.message);
           reply('❌ Ocorreu um erro ao baixar do GDrive: ' + e.message);
@@ -19620,12 +19634,18 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       case 'mf':
         try {
           if (!q) return reply(`📁 *MediaFire Download*\n\n❌ Envie o link do arquivo.\n\n📝 *Uso:* ${prefix}${command} <link>`);
-          await reply('⏳ Buscando informações do arquivo...');
-          const spRes = await downloadMediafire(q);
-          const caption = `📁 *Baixando arquivo...*\n\n📄 *Nome:* ${spRes.filename}\n📊 *Tamanho:* ${spRes.size}\n📅 *Upload:* ${spRes.aploud || 'N/A'}`;
-          await reply(caption);
-          await nazu.sendMessage(from, { document: { url: spRes.url }, fileName: spRes.filename, mimetype: spRes.ext }, { quoted: info });
-          reply('✅ Download concluído!');
+          (async () => {
+            try {
+              const mfRes = await downloadMediafire(q);
+              const caption = `📁 *Baixando...*\n📄 *Nome:* ${mfRes.filename}\n📊 *Tamanho:* ${mfRes.size}`;
+              await reply(caption);
+              await nazu.sendMessage(from, { document: { url: mfRes.url }, fileName: mfRes.filename, mimetype: mfRes.ext }, { quoted: info });
+              reply('✅ Download concluído!');
+            } catch (e) {
+              console.error('Erro no comando mediafire:', e.message);
+              reply('❌ Erro ao baixar do Mediafire: ' + e.message);
+            }
+          })();
         } catch (e) {
           console.error('Erro no comando mediafire:', e.message);
           reply('❌ Ocorreu um erro ao baixar do Mediafire: ' + e.message);
@@ -19635,8 +19655,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       case 'twt':
       case 'x':
         try {
-          const { downloadTwitter } = await import('./utils/extraDl.js');
-          const twtRes = await downloadTwitter(q);
+          if (!q) return reply('❌ Envie o link do Twitter/X.');
+          (async () => {
+            try {
+              const { downloadTwitter } = await import('./utils/extraDl.js');
+              const twtRes = await downloadTwitter(q);
           const caption = `🐦 *Twitter/X*
 👤 *Autor:* ${twtRes.author}`;
           for (const item of twtRes.media) {
@@ -19646,6 +19669,8 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                   await nazu.sendMessage(from, { image: { url: item.url }, caption }, { quoted: info });
               }
           }
+            } catch (e) { reply('❌ Erro no Twitter.'); }
+          })();
         } catch (e) { reply('❌ Erro no Twitter.'); }
         break;
 
