@@ -1411,9 +1411,11 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
 
   const messages = [];
 
-  if (systemPrompt) {
-    messages.push({ role: 'system', content: systemPrompt });
-  }
+  // System prompt padrão da Nazuna (quando nenhum for passado)
+  const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'Africa/Maputo', dateStyle: 'full' });
+  const defaultSystemPrompt = `Você é Nazuna, uma assistente virtual inteligente e amigável de um bot de WhatsApp chamado Nazuna Bot. Responda de forma direta, útil e natural em português. A data de hoje é ${hoje}. Nunca diga que é da OpenAI, ChatGPT ou qualquer outra empresa. Você é a Nazuna.`;
+
+  messages.push({ role: 'system', content: systemPrompt || defaultSystemPrompt });
 
   if (historico && historico.length > 0) {
     messages.push(...historico);

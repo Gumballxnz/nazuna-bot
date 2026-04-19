@@ -14956,15 +14956,13 @@ Seja específico e recomende opções variadas (populares e menos conhecidas). F
       case 'gpt':
       case 'chatgpt':
       case 'cog':
-        if (!q) return reply(`📢 Ei, falta a pergunta! Me diga o que quer saber após o comando ${prefix}cog! 😴`);
+        if (!q) return reply(`📢 Ei, falta a pergunta! Me diga o que quer saber após o comando ${prefix}ia! 😴`);
         
-        reply('⏳ Um momentinho, estou pensando na melhor resposta... 🌟').then(() => {
-          ia.makeCognimaRequest('cognima/CognimAI', q, null, KeyCog || null).then((response) => {
-            reply(formatAIResponse(response.data.choices[0].message.content));
-          }).catch((e) => {
-            console.error('Erro na API CognimAI:', e);
-            reply('😓 Vixe, algo deu errado por aqui! Tente novamente em breve, combinado? 🌈');
-          });
+        ia.makeCognimaRequest('gpt', q, null, null).then((response) => {
+          reply(formatAIResponse(response.data.choices[0].message.content));
+        }).catch((e) => {
+          console.error('Erro na IA:', e);
+          reply('😓 Erro na IA. Tente novamente em breve!');
         });
         break;
       case 'tradutor':
@@ -18761,7 +18759,16 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           // Verificar se tem API key
           
 
-          reply('Aguarde um momentinho... ☀️');
+          // Validação de plataforma
+          if (q.includes('instagram.com') || q.includes('instagr.am')) {
+            return reply('❌ Esse link é do *Instagram*, não do TikTok!\n\n💡 Use: ' + prefix + 'ig ' + q);
+          }
+          if (q.includes('youtube.com') || q.includes('youtu.be')) {
+            return reply('❌ Esse link é do *YouTube*, não do TikTok!\n\n💡 Use: ' + prefix + 'play ' + q);
+          }
+          if (q.includes('facebook.com') || q.includes('fb.watch')) {
+            return reply('❌ Esse link é do *Facebook*, não do TikTok!\n\n💡 Use: ' + prefix + 'fb ' + q);
+          }
           let isTikTokUrl = q.includes('tiktok');
           const tiktokPromise = isTikTokUrl ? tiktok.dl(q, KeyCog) : tiktok.search(q, KeyCog);
 
@@ -19549,7 +19556,16 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           // Verificar se tem API key
           
 
-          reply('Aguarde um momentinho... ☀️');
+          // Validação de plataforma
+          if (q.includes('tiktok.com') || q.includes('vm.tiktok')) {
+            return reply('❌ Esse link é do *TikTok*, não do Instagram!\n\n💡 Use: ' + prefix + 'tiktok ' + q);
+          }
+          if (q.includes('youtube.com') || q.includes('youtu.be')) {
+            return reply('❌ Esse link é do *YouTube*, não do Instagram!\n\n💡 Use: ' + prefix + 'play ' + q);
+          }
+          if (q.includes('facebook.com') || q.includes('fb.watch')) {
+            return reply('❌ Esse link é do *Facebook*, não do Instagram!\n\n💡 Use: ' + prefix + 'fb ' + q);
+          }
           igdl.dl(q, KeyCog)
             .then(async (datinha) => {
               if (!datinha.ok) return reply(datinha.msg);
