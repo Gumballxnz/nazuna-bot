@@ -1010,16 +1010,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const isGroup = from?.endsWith('@g.us') || false;
     if (!info.key.participant && !info.key.remoteJid) return;
     let sender;
-    
-    
-    
-
-    
-           })();
-        }
-      }
-    } catch (e) {}
-
     if (isGroup) {
       // Prioriza participant, depois busca por LID, com fallback para JID
       sender = info.key.participant || info.message?.participant;
