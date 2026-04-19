@@ -1,6 +1,7 @@
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import fg from 'fg-senna';
 import { pipeline } from 'stream/promises';
 
 /**
@@ -23,21 +24,46 @@ export async function downloadTwitter(url) {
 }
 
 /**
- * Download de APK via Aptoide API
+ * Download de APK via APKPure (Motor Senna Bot)
  */
 export async function downloadAPK(query) {
-    const res = await axios.get(`https://ws75.aptoide.com/api/7/apps/search?query=${encodeURIComponent(query)}&limit=1`).then(v => v.data).catch(() => null);
-    if (!res || !res.datalist || res.datalist.list.length === 0) throw new Error('App não encontrado');
+    // Fase 1: Pesquisa no APKPure (Motor de Confiança do Senna)
+    const searchRes = await fg.apks(query).catch(() => null);
+    if (!searchRes || searchRes.length === 0) throw new Error('App não encontrado no Google Play/APKPure.');
 
-    const app = res.datalist.list[0];
+    const app = searchRes[0];
+    
+    // Fase 2: Extrair link de download real
+    const appDl = await fg.apkdl(app.pkg).catch(() => null);
+    if (!appDl || !appDl.download) {
+        // Fallback Aptoide se APKPure falhar
+        const resAptoide = await axios.get(`https://ws75.aptoide.com/api/7/apps/search?query=${encodeURIComponent(query)}&limit=1`).then(v => v.data).catch(() => null);
+        if (resAptoide && resAptoide.datalist?.list?.length > 0) {
+            const apt = resAptoide.datalist.list[0];
+            return {
+                name: apt.name,
+                package: apt.package,
+                size: (apt.size / 1024 / 1024).toFixed(2),
+                icon: apt.icon,
+                developer: apt.developer?.name || 'N/A',
+                version: apt.file?.vername || 'N/A',
+                downloads: apt.stats?.downloads?.toLocaleString() || 'N/A',
+                dlUrl: apt.file.path,
+                engine: 'Aptoide'
+            };
+        }
+        throw new Error('Falha ao extrair link de download.');
+    }
+
     return {
-        name: app.name,
-        package: app.package,
-        size: (app.size / 1024 / 1024).toFixed(2),
-        icon: app.icon,
-        developer: app.developer?.name || 'N/A',
-        version: app.file?.vername || 'N/A',
-        downloads: app.stats?.downloads?.toLocaleString() || 'N/A',
-        dlUrl: app.file.path
+        name: appDl.name || app.name,
+        package: app.pkg,
+        size: appDl.size || 'N/A',
+        icon: appDl.icon || app.icon,
+        developer: appDl.developer || 'N/A',
+        version: appDl.version || 'N/A',
+        downloads: 'N/A',
+        dlUrl: appDl.download,
+        engine: 'APKPure'
     };
 }

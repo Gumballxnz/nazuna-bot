@@ -99,22 +99,22 @@ async function baixarTiktok(url) {
 // ==================== INSTAGRAM ====================
 async function baixarInstagram(url) {
     try {
-        // Motor 1: Siputzx (API Leve)
-        let sip = await axios.get(`https://api.siputzx.my.id/api/d/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        if (sip && sip.data && sip.data.length > 0) {
-           return { type: sip.data[0].url.includes('.mp4') ? 'video' : 'image', url: sip.data[0].url, desc: 'Instagram (API 1)' };
-        }
-
-        // Motor 2: Ryzendesu Fallback
-        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        if (rz && rz.data && rz.data.length > 0) {
-           return { type: rz.data[0].url.includes('.mp4') ? 'video' : 'image', url: rz.data[0].url, desc: 'Instagram (API 2)' };
-        }
-
-        // Motor 3: fg-senna (Último recurso)
+        // Motor 1: fg-senna (Prioridade Máxima - Estabilidade Senna)
         const res = await fg.igdl(url).catch(() => null);
         if (res && res.dl_url) {
-             return { type: 'video', url: res.dl_url, desc: 'Instagram (API 3)' };
+             return { type: 'video', url: res.dl_url, desc: 'Instagram (API 1)' };
+        }
+
+        // Motor 2: Siputzx (Fallback Leve)
+        let sip = await axios.get(`https://api.siputzx.my.id/api/d/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        if (sip && sip.data && sip.data.length > 0) {
+           return { type: sip.data[0].url.includes('.mp4') ? 'video' : 'image', url: sip.data[0].url, desc: 'Instagram (API 2)' };
+        }
+
+        // Motor 3: Ryzendesu Fallback final
+        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        if (rz && rz.data && rz.data.length > 0) {
+           return { type: rz.data[0].url.includes('.mp4') ? 'video' : 'image', url: rz.data[0].url, desc: 'Instagram (API 3)' };
         }
     } catch (e) {
         console.error('[Instagram Cascade Error]', e.message);
