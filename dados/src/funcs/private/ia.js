@@ -1405,25 +1405,14 @@ Usuário: "muta esse maluco" (com tem_mencao=true)
 `;
 
 async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, historico = [], retries = 3) {
-  if (!modelo || !texto) {
-    throw new Error('Parâmetros obrigatórios ausentes: modelo e texto');
-  }
-
-  if (!key) {
-    throw new Error('API key não fornecida');
-  }
-
-  if (!apiKeyStatus.isValid) {
-    const timeSinceLastCheck = Date.now() - apiKeyStatus.lastCheck;
-    if (timeSinceLastCheck < 5 * 60 * 1000) {
-      throw new Error(`API key inválida. Último erro: ${apiKeyStatus.lastError}`);
-    }
+  if (!texto) {
+    throw new Error('Parâmetros obrigatórios ausentes: texto');
   }
 
   const messages = [];
 
   if (systemPrompt) {
-    messages.push({ role: 'user', content: systemPrompt });
+    messages.push({ role: 'system', content: systemPrompt });
   }
 
   if (historico && historico.length > 0) {
@@ -1434,47 +1423,48 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
+      // Fase 1: Vercel ChatGPT API (Principal Motor Senna)
       const response = await axios.post(
-        `https://cog.api.br/api/v1/completion`,
-        {
-          messages,
-          model: modelo,
-          temperature: 0.7,
-          max_tokens: 2000
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': key
-          },
-          timeout: 120000
-        }
+        'https://aichat-api.vercel.app/chatgpt',
+        { messages },
+        { timeout: 20000 }
       );
 
-      if (!response.data.data || !response.data.data.choices || !response.data.data.choices[0]) {
-        throw new Error('Resposta da API inválida');
-      }
+      let resContent = response.data?.content || response.data?.text || response.data?.message;
+      
+      if (!resContent) throw new Error('Falha no resContent da API Principal');
 
-      updateApiKeyStatus();
-      return response.data;
+      // Mantendo o formato original da API da Cognima/OpenAI para compatibilidade
+      return {
+          data: {
+              choices: [
+                  { message: { content: resContent.trim() } }
+              ]
+          }
+      };
 
     } catch (error) {
-      console.warn(`Tentativa ${attempt + 1} falhou:`, {
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message,
-        key: key ? `${key.substring(0, 8)}...` : 'undefined'
-      });
-
-      if (isApiKeyError(error)) {
-        updateApiKeyStatus(error);
-        throw new Error(`API key inválida ou expirada: ${error.response?.data?.message || error.message}`);
+      console.warn(`Tentativa de IA Vercel ${attempt + 1} falhou. Motivo:`, error.message);
+      
+      // Fase 2: Siputzx Llama/GPT API Fallback Mapeamento Cego
+      try {
+        let plainText = messages.map(m => m.content).join("\\n");
+        let queryUrl = `https://api.siputzx.my.id/api/ai/llama33?prompt=${encodeURIComponent(plainText)}`;
+        let sipRes = await axios.get(queryUrl, { timeout: 15000 }).then(r => r.data);
+        
+        let sipContent = sipRes?.data || sipRes?.message || sipRes?.result;
+        if (sipContent) {
+           return { data: { choices: [ { message: { content: sipContent.trim() } } ] } };
+        }
+      } catch (fallbackError) {
+        console.warn(`Tentativa de IA Siputzx Llama ${attempt + 1} falhou.`);
       }
 
       if (attempt === retries - 1) {
-        throw new Error(`Falha na requisição após ${retries} tentativas: ${error.message}`);
+        throw new Error(`Falha na requisição após ${retries} tentativas: as APIs gratuitas estão indisponíveis.`);
       }
 
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 }

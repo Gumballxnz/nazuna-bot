@@ -38,7 +38,7 @@ import * as vipCommandsManager from './utils/vipCommandsManager.js';
 import { notifyOwnerAboutApiKey, isApiKeyError } from './funcs/utils/apiKeyNotifier.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
 import baixarVideoLocal, { playAudio, playVideo, handlePlayConfirmation, baixarDireto } from './utils/baixarVideo.js';
-import { downloadTwitter, downloadAPK } from './utils/extraDl.js';
+import { downloadTwitter, downloadAPK, downloadSpotify, downloadGDrive, downloadMediafire } from './utils/extraDl.js';
 import fsPromises from 'fs/promises';
 import {
   formatUptime,
@@ -12340,10 +12340,7 @@ Entre em contato com o dono do bot:
       //INTELIGENCIA ARTIFICIAL
       case 'gemma':
         if (!q) return reply(`🤔 Qual sua dúvida para o Gemma? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Gemma... ✨`).then(() => {
           ia.makeCognimaRequest('google/gemma-7b', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12361,10 +12358,7 @@ Entre em contato com o dono do bot:
       case 'phi':
       case 'phi3':
         if (!q) return reply(`🤔 Qual sua dúvida para o Phi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Phi... ✨`).then(() => {
           ia.makeCognimaRequest('microsoft/phi-3-medium-4k-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12381,10 +12375,7 @@ Entre em contato com o dono do bot:
         break;
       case 'qwen2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwen2? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Qwen2... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen2-7b-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12402,10 +12393,7 @@ Entre em contato com o dono do bot:
       case 'qwen':
       case 'qwen3':
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwen? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Qwen... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12423,10 +12411,7 @@ Entre em contato com o dono do bot:
       case 'llama':
       case 'llama3':
         if (!q) return reply(`🤔 Qual sua dúvida para o Llama? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Llama... ✨`).then(() => {
           ia.makeCognimaRequest('abacusai/dracarys-llama-3.1-70b-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12444,10 +12429,7 @@ Entre em contato com o dono do bot:
       case 'baichuan':
       case 'baichuan2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Baichuan? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Baichuan... ✨`).then(() => {
           ia.makeCognimaRequest('baichuan-inc/baichuan2-13b-chat', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12464,10 +12446,7 @@ Entre em contato com o dono do bot:
         break;
       case 'marin':
         if (!q) return reply(`🤔 Qual sua dúvida para o Marin? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Marin... ✨`).then(() => {
           ia.makeCognimaRequest('marin/marin-8b-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12485,10 +12464,7 @@ Entre em contato com o dono do bot:
       case 'kimi':
       case 'kimik2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Kimi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Kimi... ✨`).then(() => {
           ia.makeCognimaRequest('moonshotai/kimi-k2-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12505,10 +12481,7 @@ Entre em contato com o dono do bot:
         break;
       case 'mistral':
         if (!q) return reply(`🤔 Qual sua dúvida para o Mistral? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Mistral... ✨`).then(() => {
           ia.makeCognimaRequest('mistralai/mistral-small-24b-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12525,10 +12498,7 @@ Entre em contato com o dono do bot:
         break;
       case 'magistral':
         if (!q) return reply(`🤔 Qual sua dúvida para o Magistral? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Magistral... ✨`).then(() => {
           ia.makeCognimaRequest('mistralai/magistral-small-2506', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12546,10 +12516,7 @@ Entre em contato com o dono do bot:
       case 'rakutenai':
       case 'rocket':
         if (!q) return reply(`🤔 Qual sua dúvida para o RakutenAI? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o RakutenAI... ✨`).then(() => {
           ia.makeCognimaRequest('rakuten/rakutenai-7b-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12566,10 +12533,7 @@ Entre em contato com o dono do bot:
         break;
       case 'yi':
         if (!q) return reply(`🤔 Qual sua dúvida para o Yi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Yi... ✨`).then(() => {
           ia.makeCognimaRequest('01-ai/yi-large', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12586,10 +12550,7 @@ Entre em contato com o dono do bot:
         break;
       case 'gemma2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Gemma2? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Gemma2... ✨`).then(() => {
           ia.makeCognimaRequest('google/gemma-2-27b-it', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12606,10 +12567,7 @@ Entre em contato com o dono do bot:
         break;
       case 'swallow':
         if (!q) return reply(`🤔 Qual sua dúvida para o Swallow? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Swallow... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12626,10 +12584,7 @@ Entre em contato com o dono do bot:
         break;
       case 'falcon':
         if (!q) return reply(`🤔 Qual sua dúvida para o Falcon? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Falcon... ✨`).then(() => {
           ia.makeCognimaRequest('tiiuae/falcon3-7b-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12646,10 +12601,7 @@ Entre em contato com o dono do bot:
         break;
       case 'qwencoder':
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwencoder? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o Qwencoder... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen2.5-coder-32b-instruct', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12666,10 +12618,7 @@ Entre em contato com o dono do bot:
         break;
       case 'codegemma':
         if (!q) return reply(`🤔 Qual sua dúvida para o CodeGemma? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply(`⏳ Só um segundinho, estou consultando o CodeGemma... ✨`).then(() => {
           ia.makeCognimaRequest('google/codegemma-7b', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12686,10 +12635,7 @@ Entre em contato com o dono do bot:
         break;
       case 'resumir':
         if (!q) return reply(`📝 *Resumidor de Texto*\n\n💡 *Como usar:*\n• Envie o texto que deseja resumir após o comando\n• Ex: ${prefix}resumir [seu texto aqui]\n\n✨ O texto será resumido de forma clara e objetiva!`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply('⏳ Aguarde enquanto preparo um resumo bem caprichado... ✨').then(() => {
           const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara e objetiva, destacando as informações mais importantes:\n\n${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
@@ -12707,10 +12653,7 @@ Entre em contato com o dono do bot:
         break;
       case 'resumirurl':
         if (!q) return reply(`🌐 Quer resumir uma página? Envie a URL após o comando ${prefix}resumirurl! Exemplo: ${prefix}resumirurl https://exemplo.com/artigo 😊`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         if (!q.startsWith('http://') && !q.startsWith('https://')) {
           return reply(`🚫 Ops, parece que a URL é inválida! Certifique-se de incluir http:// ou https://. Exemplo: ${prefix}resumirurl https://exemplo.com/artigo 😊`);
         }
@@ -12755,10 +12698,7 @@ Entre em contato com o dono do bot:
       case 'ideias':
       case 'ideia':
         if (!q) return reply(`💡 Quer ideias criativas? Diga o tema após o comando ${prefix}ideias! Exemplo: ${prefix}ideias nomes para um aplicativo de receitas 😊`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply('⏳ Um segundinho, estou pensando em ideias incríveis... ✨').then(() => {
           const prompt = `Gere 15 ideias criativas e detalhadas para o seguinte tema: ${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
@@ -12777,10 +12717,7 @@ Entre em contato com o dono do bot:
       case 'explicar':
       case 'explique':
         if (!q) return reply(`🤓 Quer entender algo? Diga o que deseja explicar após o comando ${prefix}explicar! Exemplo: ${prefix}explicar o que é inteligência artificial 😊`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply('⏳ Um momentinho, estou preparando uma explicação bem clara... ✨').then(() => {
           const prompt = `Explique o seguinte conceito de forma simples e clara, como se fosse para alguém sem conhecimento prévio: ${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
@@ -12799,10 +12736,7 @@ Entre em contato com o dono do bot:
       case 'corrigir':
       case 'correcao':
         if (!q) return reply(`✍️ Quer corrigir um texto? Envie o texto após o comando ${prefix}corrigir! Exemplo: ${prefix}corrigir Eu foi no mercado e comprei frutas. 😊`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply('⏳ Aguarde enquanto dou um polimento no seu texto... ✨').then(() => {
           const prompt = `Corrija os erros gramaticais, ortográficos e de estilo no seguinte texto, mantendo o significado original: ${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
@@ -12824,10 +12758,7 @@ Entre em contato com o dono do bot:
           return reply('⚠️ Este comando só pode ser usado em grupos!');
         }
 
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
 
         const quantidade = parseInt(args[0]) || 50;
         const limite = Math.min(Math.max(quantidade, 10), 200); // Entre 10 e 200 mensagens
@@ -12919,10 +12850,7 @@ Faça um resumo conciso mas completo, destacando o que é mais relevante.`;
       case 'historia':
       case 'story':
       case 'gerarhistoria': {
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
 
         if (!q) {
           return reply(`📖 *Gerador de Histórias*\n\n💡 *Como usar:*\n• ${prefix}historia <gênero> <tema opcional>\n\n📚 *Gêneros disponíveis:*\n• fantasia, terror, romance, ficção científica, aventura, mistério, comédia, drama, ação, suspense\n\n✨ *Exemplos:*\n• ${prefix}historia fantasia dragões\n• ${prefix}historia terror casa abandonada\n• ${prefix}historia romance escola\n• ${prefix}historia ficção científica viagem no tempo`);
@@ -12986,10 +12914,7 @@ Seja criativo e original. Não use clichês. A história deve ser envolvente do 
       case 'recomendacao':
       case 'recomendação':
       case 'suggest': {
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
 
         if (!q) {
           return reply(`🎬 *Recomendador de Mídia*\n\n💡 *Como usar:*\n• ${prefix}recomendar <tipo> <gênero/preferência>\n\n📺 *Tipos disponíveis:*\n• anime, jogo, musica, livro\n\n✨ *Exemplos:*\n• ${prefix}recomendar anime ação\n• ${prefix}recomendar jogo rpg\n• ${prefix}recomendar musica rock\n• ${prefix}recomendar livro fantasia`);
@@ -15039,10 +14964,7 @@ Seja específico e recomende opções variadas (populares e menos conhecidas). F
 
       case 'cog':
         if (!q) return reply(`📢 Ei, falta a pergunta! Me diga o que quer saber após o comando ${prefix}cog! 😴`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply('⏳ Um momentinho, estou pensando na melhor resposta... 🌟').then(() => {
           ia.makeCognimaRequest('cognima/CognimAI', q, null, KeyCog || null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -15056,10 +14978,7 @@ Seja específico e recomende opções variadas (populares e menos conhecidas). F
       case 'translator':
         if (!q) return reply(`🌍 Quer traduzir algo? Me diga o idioma e o texto assim: ${prefix}${command} idioma | texto
 Exemplo: ${prefix}tradutor inglês | Bom dia! 😊`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         {
           const partes = q.split('|');
           if (partes.length < 2) {
@@ -15178,10 +15097,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       case 'dicionario':
       case 'dictionary':
         if (!q) return reply(`📔 Qual palavra você quer procurar no dicionário? Me diga após o comando ${prefix}${command}! 😊`);
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
         reply("📔 Procurando no dicionário... Aguarde um pouquinho! ⏳").then(() => {
           const palavra = q.trim().toLowerCase();
           axios.get(`https://dicio-api-ten.vercel.app/v2/${encodeURIComponent(palavra)}`).then((resp) => {
@@ -17995,790 +17911,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       case 'score':
       case 'compras':
       case 'cnh':
-        {
-          // Mapeamento de comandos para tipos de consulta
-          const consultaTypes = {
-            'cpf': { type: 'cpf', name: 'CPF', exemplo: `${prefix}cpf 12345678900` },
-            'vizinhos': { type: 'vizinhos', name: 'Vizinhos', exemplo: `${prefix}vizinhos 12345678900` },
-            'proprietario': { type: 'proprietario', name: 'Proprietário', exemplo: `${prefix}proprietario 12345678900` },
-            'empregos': { type: 'empregos', name: 'Empregos', exemplo: `${prefix}empregos 12345678900` },
-            'vacinas': { type: 'vacinas', name: 'Vacinas', exemplo: `${prefix}vacinas 12345678900` },
-            'beneficios': { type: 'beneficios', name: 'Benefícios', exemplo: `${prefix}beneficios 12345678900` },
-            'internet': { type: 'internet', name: 'Internet', exemplo: `${prefix}internet 12345678900` },
-            'parentes': { type: 'parentes', name: 'Parentes', exemplo: `${prefix}parentes 12345678900` },
-            'enderecos': { type: 'enderecos', name: 'Endereços', exemplo: `${prefix}enderecos 12345678900` },
-            'obito': { type: 'obito', name: 'Óbito', exemplo: `${prefix}obito 12345678900` },
-            'score': { type: 'score', name: 'Score', exemplo: `${prefix}score 12345678900` },
-            'compras': { type: 'compras', name: 'Compras', exemplo: `${prefix}compras 12345678900` },
-            'cnh': { type: 'cnh', name: 'CNH', exemplo: `${prefix}cnh 12345678900` }
-          };
-
-          const consultaInfo = consultaTypes[command.toLowerCase()];
-
-          if (!consultaInfo) {
-            return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-          }
-
-          // Verificar API key
-          if (!KeyCog) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          if (!q) {
-            return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o CPF após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Formato:* Apenas números, sem pontos ou traços`);
-          }
-
-          const cpf = q.replace(/\D/g, '');
-          if (cpf.length !== 11) {
-            return reply(`❌ *CPF inválido!*\n\n📝 O CPF deve conter exatamente 11 dígitos.\n💡 Exemplo: ${consultaInfo.exemplo}`);
-          }
-
-          reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-          axios.get('https://cog.api.br/api/v1/consulta/', {
-            params: {
-              type: consultaInfo.type,
-              dados: cpf
-            },
-            headers: {
-              'Authorization': `Bearer ${KeyCog}`
-            },
-            timeout: 120000
-          }).then(response => {
-            // Verificar se a resposta indica erro de limite
-            if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-              const errorData = response.data;
-              if (errorData.required_limit && errorData.required_limit > 500) {
-                // Notificar dono sobre necessidade de plano ilimitado
-                const ownerMessage = `🚨 *ALERTA - PLANO INSUFICIENTE PARA CONSULTAS DE DADOS* 🚨
-
-⚠️ *Problema detectado:*
-• *Tipo de consulta:* ${consultaInfo.name}
-• *Limite necessário:* ${errorData.required_limit} requisições diárias
-• *Limite atual:* ${errorData.current_limit || 'N/A'} requisições diárias
-
-📋 *Solução:*
-As consultas de dados (CPF, Vizinhos, Proprietário, Empregos, Vacinas, Benefícios, Internet, Parentes, Endereços, Óbito, Score, Compras, CNH) estão disponíveis apenas no *plano ilimitado*.
-
-💳 *Como fazer upgrade:*
-• Acesse: https://cog.api.br/plans
-• Entre em contato para fazer upgrade do seu plano
-• Configure a nova API key após o upgrade
-
-⚙️ *Como atualizar API key:*
-• Use o comando: !apikey suachave
-• Reinicie o bot após configurar`;
-
-                nazu.sendMessage(nmrdn, { text: ownerMessage }).catch(notifyErr => {
-                  console.error('Erro ao notificar dono:', notifyErr.message);
-                });
-
-                return reply(`❌ *Plano insuficiente*\n\n⚠️ As consultas de dados estão disponíveis apenas no plano ilimitado.\n\n📞 O dono do bot foi notificado sobre a necessidade de fazer upgrade do plano.`);
-              }
-            }
-
-            if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-              reply(`✅ *Consulta realizada com sucesso!*\n\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n📋 *Acesse o link acima para visualizar os dados completos.*\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-            } else {
-              reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o CPF consultado.\n\n💡 *Possíveis motivos:*\n• CPF não cadastrado na base de dados\n• Dados não disponíveis no momento\n\n🔄 Tente novamente mais tarde.`);
-            }
-          }).catch(apiError => {
-            console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-            // Verificar se é erro de API key
-            if (isApiKeyError(apiError)) {
-              notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-              return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key da Cognima. O dono do bot foi notificado.\n\n💡 Tente novamente mais tarde ou entre em contato com o dono do bot.`);
-            }
-
-            // Verificar se é erro de limite
-            if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-              const errorData = apiError.response.data;
-              if (errorData.required_limit && errorData.required_limit > 500) {
-                const ownerMessage = `🚨 *ALERTA - PLANO INSUFICIENTE PARA CONSULTAS DE DADOS* 🚨
-
-⚠️ *Problema detectado:*
-• *Tipo de consulta:* ${consultaInfo.name}
-• *Limite necessário:* ${errorData.required_limit} requisições diárias
-• *Limite atual:* ${errorData.current_limit || 'N/A'} requisições diárias
-
-📋 *Solução:*
-As consultas de dados estão disponíveis apenas no *plano ilimitado*.
-
-💳 *Como fazer upgrade:*
-• Acesse: https://cog.api.br/plans
-• Entre em contato para fazer upgrade do seu plano
-• Configure a nova API key após o upgrade`;
-
-                nazu.sendMessage(nmrdn, { text: ownerMessage }).catch(notifyErr => {
-                  console.error('Erro ao notificar dono:', notifyErr.message);
-                });
-
-                return reply(`❌ *Plano insuficiente*\n\n⚠️ As consultas de dados estão disponíveis apenas no plano ilimitado.\n\n📞 O dono do bot foi notificado sobre a necessidade de fazer upgrade do plano.`);
-              }
-            }
-
-            // Erro genérico
-            if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-              reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o CPF consultado.\n\n💡 *Possíveis motivos:*\n• CPF não cadastrado na base de dados\n• Dados não disponíveis no momento\n\n🔄 Tente novamente mais tarde.`);
-            } else {
-              reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente em alguns minutos.`);
-            }
-          });
-        }
-        break;
-      case 'nome':
-      case 'pai':
-      case 'mae':
-        {
-          // Mapeamento de comandos para tipos de consulta
-          const consultaTypes = {
-            'nome': { type: 'nome', name: 'Nome', exemplo: `${prefix}nome João Silva Santos` },
-            'pai': { type: 'pai', name: 'Pai', exemplo: `${prefix}pai João Silva Santos` },
-            'mae': { type: 'mae', name: 'Mãe', exemplo: `${prefix}mae Maria Silva Santos` }
-          };
-
-          const consultaInfo = consultaTypes[command.toLowerCase()];
-
-          if (!consultaInfo) {
-            return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-          }
-
-          // Verificar API key
-          if (!KeyCog) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          if (!q) {
-            return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o nome completo após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Dica:* Use o nome completo para melhores resultados`);
-          }
-
-          const nome = q.trim();
-          if (nome.length < 3) {
-            return reply(`❌ *Nome muito curto!*\n\n📝 O nome deve conter pelo menos 3 caracteres.\n💡 Exemplo: ${consultaInfo.exemplo}`);
-          }
-
-          reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-          axios.get('https://cog.api.br/api/v1/consulta/', {
-            params: {
-              type: consultaInfo.type,
-              dados: nome
-            },
-            headers: {
-              'Authorization': `Bearer ${KeyCog}`
-            },
-            timeout: 120000
-          }).then(response => {
-            // Verificar se a resposta indica erro de limite
-            if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-              const errorData = response.data;
-              if (errorData.required_limit && errorData.required_limit > 500) {
-                // Notificar dono sobre necessidade de plano ilimitado
-                const ownerMessage = `🚨 *ALERTA - PLANO INSUFICIENTE PARA CONSULTAS DE DADOS* 🚨
-
-⚠️ *Problema detectado:*
-• *Tipo de consulta:* ${consultaInfo.name}
-• *Limite necessário:* ${errorData.required_limit} requisições diárias
-• *Limite atual:* ${errorData.current_limit || 'N/A'} requisições diárias
-
-📋 *Solução:*
-As consultas de dados (Nome, Pai, Mãe) estão disponíveis apenas no *plano ilimitado*.
-
-💳 *Como fazer upgrade:*
-• Acesse: https://cog.api.br/plans
-• Entre em contato para fazer upgrade do seu plano
-• Configure a nova API key após o upgrade
-
-⚙️ *Como atualizar API key:*
-• Use o comando: !apikey suachave
-• Reinicie o bot após configurar`;
-
-                nazu.sendMessage(nmrdn, { text: ownerMessage }).catch(notifyErr => {
-                  console.error('Erro ao notificar dono:', notifyErr.message);
-                });
-
-                return reply(`❌ *Plano insuficiente*\n\n⚠️ As consultas de dados estão disponíveis apenas no plano ilimitado.\n\n📞 O dono do bot foi notificado sobre a necessidade de fazer upgrade do plano.`);
-              }
-            }
-
-            if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-              reply(`✅ *Consulta realizada com sucesso!*\n\n👤 *${consultaInfo.name} consultado(a):* ${nome}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n📋 *Acesse o link acima para visualizar os dados completos.*\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-            } else {
-              reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o ${consultaInfo.name.toLowerCase()} consultado.\n\n💡 *Possíveis motivos:*\n• ${consultaInfo.name} não cadastrado na base de dados\n• Dados não disponíveis no momento\n• ${consultaInfo.name} digitado incorretamente\n\n🔄 Tente verificar a grafia e tentar novamente.`);
-            }
-          }).catch(apiError => {
-            console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-            // Verificar se é erro de API key
-            if (isApiKeyError(apiError)) {
-              notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-              return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key da Cognima. O dono do bot foi notificado.\n\n💡 Tente novamente mais tarde ou entre em contato com o dono do bot.`);
-            }
-
-            // Verificar se é erro de limite
-            if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-              const errorData = apiError.response.data;
-              if (errorData.required_limit && errorData.required_limit > 500) {
-                const ownerMessage = `🚨 *ALERTA - PLANO INSUFICIENTE PARA CONSULTAS DE DADOS* 🚨
-
-⚠️ *Problema detectado:*
-• *Tipo de consulta:* ${consultaInfo.name}
-• *Limite necessário:* ${errorData.required_limit} requisições diárias
-• *Limite atual:* ${errorData.current_limit || 'N/A'} requisições diárias
-
-📋 *Solução:*
-As consultas de dados estão disponíveis apenas no *plano ilimitado*.
-
-💳 *Como fazer upgrade:*
-• Acesse: https://cog.api.br/plans
-• Entre em contato para fazer upgrade do seu plano
-• Configure a nova API key após o upgrade`;
-
-                nazu.sendMessage(nmrdn, { text: ownerMessage }).catch(notifyErr => {
-                  console.error('Erro ao notificar dono:', notifyErr.message);
-                });
-
-                return reply(`❌ *Plano insuficiente*\n\n⚠️ As consultas de dados estão disponíveis apenas no plano ilimitado.\n\n📞 O dono do bot foi notificado sobre a necessidade de fazer upgrade do plano.`);
-              }
-            }
-
-            // Erro genérico
-            if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-              reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o ${consultaInfo.name.toLowerCase()} consultado.\n\n💡 *Possíveis motivos:*\n• ${consultaInfo.name} não cadastrado na base de dados\n• Dados não disponíveis no momento\n• ${consultaInfo.name} digitado incorretamente\n\n🔄 Tente verificar a grafia e tentar novamente.`);
-            } else {
-              reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente em alguns minutos.`);
-            }
-          });
-        }
-        break;
-      case 'telefone':
-      case 'tel':
-        {
-          // Mapeamento de comandos para tipos de consulta
-          const consultaTypes = {
-            'telefone': { type: 'telefone', name: 'Telefone', exemplo: `${prefix}telefone 11987654321` },
-            'tel': { type: 'telefone', name: 'Telefone', exemplo: `${prefix}tel 11987654321` }
-          };
-
-          const consultaInfo = consultaTypes[command.toLowerCase()];
-
-          if (!consultaInfo) {
-            return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-          }
-
-          // Verificar API key
-          if (!KeyCog) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          if (!q) {
-            return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o telefone após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Formato:* DDD + número com o 9 da operadora\n💡 Exemplo: 11987654321 (11 = DDD, 9 = operadora, 87654321 = número)`);
-          }
-
-          const telefone = q.replace(/\D/g, '');
-          if (telefone.length < 10 || telefone.length > 11) {
-            return reply(`❌ *Telefone inválido!*\n\n📝 O telefone deve conter 10 ou 11 dígitos (com DDD e o 9 da operadora).\n💡 Exemplo: ${consultaInfo.exemplo}\n\n📋 *Formato esperado:*\n• DDD (2 dígitos)\n• 9 (operadora)\n• Número (8 dígitos)`);
-          }
-
-          reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-          axios.get('https://cog.api.br/api/v1/consulta/', {
-            params: {
-              type: consultaInfo.type,
-              dados: telefone
-            },
-            headers: {
-              'Authorization': `Bearer ${KeyCog}`
-            },
-            timeout: 120000
-          }).then(response => {
-            // Verificar se a resposta indica erro de limite
-            if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-              const errorData = response.data;
-              if (errorData.required_limit && errorData.required_limit > 500) {
-                nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE* 🚨\n\nConsulta: ${consultaInfo.name}\nLimite necessário: ${errorData.required_limit}` }).catch(() => { });
-                return reply(`❌ *Plano insuficiente*\n\n⚠️ As consultas de dados estão disponíveis apenas no plano ilimitado.\n\n📞 O dono do bot foi notificado.`);
-              }
-            }
-
-            if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-              reply(`✅ *Consulta realizada com sucesso!*\n\n📱 *Telefone consultado:* ${telefone}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n📋 *Acesse o link acima para visualizar os dados completos.*\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-            } else {
-              reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o telefone consultado.`);
-            }
-          }).catch(apiError => {
-            console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-            if (isApiKeyError(apiError)) {
-              notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-              return reply(`❌ *Erro na API Key*\n\n⚠️ O dono do bot foi notificado.`);
-            }
-            reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno.`);
-          });
-        }
-        break;
-      case 'placa': {
-        const consultaTypes = {
-          'placa': { type: 'placa', name: 'Placa', exemplo: `${prefix}placa ABC1234` }
-        };
-
-        const consultaInfo = consultaTypes[command.toLowerCase()];
-
-        if (!consultaInfo) {
-          return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-        }
-
-        if (!KeyCog) {
-          notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
-
-        if (!q) {
-          return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite a placa após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Formato:* 3 letras e 4 números (ex: ABC1234)`);
-        }
-
-        const placa = q.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (placa.length !== 7 || (!/^[A-Z]{3}[0-9]{4}$/.test(placa) && !/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa))) {
-          return reply(`❌ *Placa inválida!*\n\n📝 A placa deve ter 7 caracteres.\n💡 Formato antigo: ABC1234\n💡 Formato Mercosul: ABC1D23\n💡 Exemplo: ${consultaInfo.exemplo}`);
-        }
-
-        reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-        axios.get('https://cog.api.br/api/v1/consulta/', {
-          params: {
-            type: consultaInfo.type,
-            dados: placa
-          },
-          headers: {
-            'Authorization': `Bearer ${KeyCog}`
-          },
-          timeout: 120000
-        }).then(response => {
-          if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-            const errorData = response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-            reply(`✅ *Consulta realizada com sucesso!*\n\n🚗 *Placa consultada:* ${placa}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-          } else {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para a placa consultada.\n\n🔄 Verifique a placa e tente novamente.`);
-          }
-        }).catch(apiError => {
-          console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-          if (isApiKeyError(apiError)) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-            return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key. O dono foi notificado.`);
-          }
-
-          if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-            const errorData = apiError.response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para a placa consultada.\n\n🔄 Verifique a placa e tente novamente.`);
-          } else {
-            reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente.`);
-          }
-        });
-      }
-        break;
-      case 'chassi': {
-        const consultaTypes = {
-          'chassi': { type: 'chassi', name: 'Chassi', exemplo: `${prefix}chassi 9BW11111111111111` }
-        };
-
-        const consultaInfo = consultaTypes[command.toLowerCase()];
-
-        if (!consultaInfo) {
-          return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-        }
-
-        if (!KeyCog) {
-          notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
-
-        if (!q) {
-          return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o chassi após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Formato:* 17 caracteres alfanuméricos`);
-        }
-
-        const chassi = q.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (chassi.length !== 17) {
-          return reply(`❌ *Chassi inválido!*\n\n📝 O chassi deve conter exatamente 17 caracteres alfanuméricos.\n💡 Exemplo: ${consultaInfo.exemplo}`);
-        }
-
-        reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-        axios.get('https://cog.api.br/api/v1/consulta/', {
-          params: {
-            type: consultaInfo.type,
-            dados: chassi
-          },
-          headers: {
-            'Authorization': `Bearer ${KeyCog}`
-          },
-          timeout: 120000
-        }).then(response => {
-          if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-            const errorData = response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-            reply(`✅ *Consulta realizada com sucesso!*\n\n🔧 *Chassi consultado:* ${chassi}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-          } else {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o chassi consultado.\n\n🔄 Verifique o chassi e tente novamente.`);
-          }
-        }).catch(apiError => {
-          console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-          if (isApiKeyError(apiError)) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-            return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key. O dono foi notificado.`);
-          }
-
-          if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-            const errorData = apiError.response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o chassi consultado.\n\n🔄 Verifique o chassi e tente novamente.`);
-          } else {
-            reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente.`);
-          }
-        });
-      }
-        break;
-      case 'cnpj':
-      case 'funcionarios': {
-        const consultaTypes = {
-          'cnpj': { type: 'cnpj', name: 'CNPJ', exemplo: `${prefix}cnpj 12345678000190` },
-          'funcionarios': { type: 'funcionarios', name: 'Funcionários', exemplo: `${prefix}funcionarios 12345678000190` }
-        };
-
-        const consultaInfo = consultaTypes[command.toLowerCase()];
-
-        if (!consultaInfo) {
-          return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-        }
-
-        if (!KeyCog) {
-          notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
-
-        if (!q) {
-          return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o CNPJ após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Formato:* Apenas números, sem pontos ou traços (14 dígitos)`);
-        }
-
-        const cnpj = q.replace(/\D/g, '');
-        if (cnpj.length !== 14) {
-          return reply(`❌ *CNPJ inválido!*\n\n📝 O CNPJ deve conter exatamente 14 dígitos.\n💡 Exemplo: ${consultaInfo.exemplo}`);
-        }
-
-        reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-        axios.get('https://cog.api.br/api/v1/consulta/', {
-          params: {
-            type: consultaInfo.type,
-            dados: cnpj
-          },
-          headers: {
-            'Authorization': `Bearer ${KeyCog}`
-          },
-          timeout: 120000
-        }).then(response => {
-          if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-            const errorData = response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-            reply(`✅ *Consulta realizada com sucesso!*\n\n🏢 *CNPJ consultado:* ${cnpj}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-          } else {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o CNPJ consultado.\n\n🔄 Verifique o CNPJ e tente novamente.`);
-          }
-        }).catch(apiError => {
-          console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-          if (isApiKeyError(apiError)) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-            return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key. O dono foi notificado.`);
-          }
-
-          if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-            const errorData = apiError.response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o CNPJ consultado.\n\n🔄 Verifique o CNPJ e tente novamente.`);
-          } else {
-            reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente.`);
-          }
-        });
-      }
-        break;
-      case 'cep': {
-        const consultaTypes = {
-          'cep': { type: 'cep', name: 'CEP', exemplo: `${prefix}cep 12345678` }
-        };
-
-        const consultaInfo = consultaTypes[command.toLowerCase()];
-
-        if (!consultaInfo) {
-          return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-        }
-
-        if (!KeyCog) {
-          notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
-
-        if (!q) {
-          return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o CEP após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Formato:* Apenas números, sem pontos ou traços (8 dígitos)`);
-        }
-
-        const cep = q.replace(/\D/g, '');
-        if (cep.length !== 8) {
-          return reply(`❌ *CEP inválido!*\n\n📝 O CEP deve conter exatamente 8 dígitos.\n💡 Exemplo: ${consultaInfo.exemplo}`);
-        }
-
-        reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-        axios.get('https://cog.api.br/api/v1/consulta/', {
-          params: {
-            type: consultaInfo.type,
-            dados: cep
-          },
-          headers: {
-            'Authorization': `Bearer ${KeyCog}`
-          },
-          timeout: 120000
-        }).then(response => {
-          if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-            const errorData = response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-            reply(`✅ *Consulta realizada com sucesso!*\n\n📍 *CEP consultado:* ${cep}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-          } else {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o CEP consultado.\n\n🔄 Verifique o CEP e tente novamente.`);
-          }
-        }).catch(apiError => {
-          console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-          if (isApiKeyError(apiError)) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-            return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key. O dono foi notificado.`);
-          }
-
-          if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-            const errorData = apiError.response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o CEP consultado.\n\n🔄 Verifique o CEP e tente novamente.`);
-          } else {
-            reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente.`);
-          }
-        });
-      }
-        break;
-      case 'email': {
-        const consultaTypes = {
-          'email': { type: 'email', name: 'Email', exemplo: `${prefix}email exemplo@email.com` }
-        };
-
-        const consultaInfo = consultaTypes[command.toLowerCase()];
-
-        if (!consultaInfo) {
-          return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-        }
-
-        if (!KeyCog) {
-          notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
-
-        if (!q) {
-          return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o email após o comando\n• Exemplo: ${consultaInfo.exemplo}`);
-        }
-
-        const email = q.trim().toLowerCase();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          return reply(`❌ *Email inválido!*\n\n📝 O email deve ter um formato válido.\n💡 Exemplo: ${consultaInfo.exemplo}`);
-        }
-
-        reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-        axios.get('https://cog.api.br/api/v1/consulta/', {
-          params: {
-            type: consultaInfo.type,
-            dados: email
-          },
-          headers: {
-            'Authorization': `Bearer ${KeyCog}`
-          },
-          timeout: 120000
-        }).then(response => {
-          if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-            const errorData = response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-            reply(`✅ *Consulta realizada com sucesso!*\n\n📧 *Email consultado:* ${email}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-          } else {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o email consultado.\n\n🔄 Verifique o email e tente novamente.`);
-          }
-        }).catch(apiError => {
-          console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-          if (isApiKeyError(apiError)) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-            return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key. O dono foi notificado.`);
-          }
-
-          if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-            const errorData = apiError.response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o email consultado.\n\n🔄 Verifique o email e tente novamente.`);
-          } else {
-            reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente.`);
-          }
-        });
-      }
-        break;
-      case 'titulo': {
-        const consultaTypes = {
-          'titulo': { type: 'titulo', name: 'Título de Eleitor', exemplo: `${prefix}titulo 123456789012` }
-        };
-
-        const consultaInfo = consultaTypes[command.toLowerCase()];
-
-        if (!consultaInfo) {
-          return reply(`❌ *Comando inválido*\n\n⚠️ Erro interno ao processar comando.`);
-        }
-
-        if (!KeyCog) {
-          notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', `Consulta de ${consultaInfo.name}`);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
-
-        if (!q) {
-          return reply(`🔍 *CONSULTA DE ${consultaInfo.name.toUpperCase()}*\n\n📝 *Como usar:*\n• Digite o título de eleitor após o comando\n• Exemplo: ${consultaInfo.exemplo}\n\n⚠️ *Formato:* Apenas números, sem pontos ou traços (12 dígitos)`);
-        }
-
-        const titulo = q.replace(/\D/g, '');
-        if (titulo.length !== 12) {
-          return reply(`❌ *Título de eleitor inválido!*\n\n📝 O título de eleitor deve conter exatamente 12 dígitos.\n💡 Exemplo: ${consultaInfo.exemplo}`);
-        }
-
-        reply(`🔍 *Consultando ${consultaInfo.name}...*\n⏳ Aguarde um momento...`);
-
-        axios.get('https://cog.api.br/api/v1/consulta/', {
-          params: {
-            type: consultaInfo.type,
-            dados: titulo
-          },
-          headers: {
-            'Authorization': `Bearer ${KeyCog}`
-          },
-          timeout: 120000
-        }).then(response => {
-          if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
-            const errorData = response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (response.data && response.data.success && response.data.data && response.data.data.publicUrl) {
-            reply(`✅ *Consulta realizada com sucesso!*\n\n🗳️ *Título de eleitor consultado:* ${titulo}\n🔗 *Link do resultado:*\n${response.data.data.publicUrl}\n\n⏰ *Expira em:* ${response.data.data.expiresAt ? new Date(response.data.data.expiresAt).toLocaleString('pt-BR') : 'N/A'}`);
-          } else {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o título de eleitor consultado.\n\n🔄 Verifique o título e tente novamente.`);
-          }
-        }).catch(apiError => {
-          console.error(`Erro no comando ${consultaInfo.name}:`, apiError.message);
-
-          if (isApiKeyError(apiError)) {
-            notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, `Consulta de ${consultaInfo.name}`);
-            return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key. O dono foi notificado.`);
-          }
-
-          if (apiError.response?.data && apiError.response.data.success === false && apiError.response.data.error === "Acesso negado") {
-            const errorData = apiError.response.data;
-            if (errorData.required_limit && errorData.required_limit > 500) {
-              nazu.sendMessage(nmrdn, { text: `🚨 *ALERTA - PLANO INSUFICIENTE*\n\n• Consulta: ${consultaInfo.name}\n• Limite necessário: ${errorData.required_limit}\n• Limite atual: ${errorData.current_limit || 'N/A'}\n\n💳 Acesse: https://cog.api.br/plans` }).catch(() => { });
-              return reply(`❌ *Plano insuficiente*\n\n⚠️ Consultas de dados disponíveis apenas no plano ilimitado.\n\n📞 O dono foi notificado.`);
-            }
-          }
-
-          if (apiError.response?.status === 404 || (apiError.response?.data && !apiError.response.data.success)) {
-            reply(`❌ *Resultado não encontrado*\n\n🔍 Não foi possível encontrar informações para o título de eleitor consultado.\n\n🔄 Verifique o título e tente novamente.`);
-          } else {
-            reply(`❌ *Erro ao consultar ${consultaInfo.name}*\n\n⚠️ Ocorreu um erro interno. Tente novamente.`);
-          }
-        });
-      }
-        break;
-      case 'nick':
-      case 'gerarnick':
-      case 'nickgenerator':
-        try {
-          if (!q) return reply(`🎮 *GERADOR DE NICK*\n\n📝 *Como usar:*\n• Digite o nick após o comando\n• Ex: ${prefix}nick nazuna`);
-          var datzn;
-          datzn = await styleText(q);
-          await reply(datzn.join('\n'));
-        } catch (e) {
-          console.error(e);
-          await reply("❌ Ocorreu um erro interno. Tente novamente em alguns minutos.");
-        }
+        reply('⚠️ *FUNÇÃO DESATIVADA*\n\n🚫 O sistema de consultas a dados pessoais e confidenciais foi removido por razões legais e de privacidade.\n\nA Nazuna Bot não comercializa nem disponibiliza mais serviços de consultas abertas. Agradeço a compreensão! 💙');
         break;
       case 'printsite':
       case 'ssweb':
@@ -19110,71 +18243,27 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'Spotify', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
           if (!q.includes('open.spotify.com/track/')) {
             return reply('❌ Por favor, envie um link válido do Spotify.\n\n💡 Dica: Use o comando play2 para buscar por nome!');
           }
 
           await reply('🎵 Baixando do Spotify... Aguarde um momento!');
 
-          // Usar rota de download da API Cognima
-          axios.get('https://cog.api.br/api/v1/spotify/download', {
-            params: { url: q },
-            headers: { 'X-API-Key': KeyCog },
-            responseType: 'arraybuffer',
-            timeout: 120000
-          })
-            .then(async (response) => {
-              const audioBuffer = Buffer.from(response.data);
-
-              // Extrair informações do track ID para mostrar nome
-              const trackId = q.match(/track\/([a-zA-Z0-9]+)/)?.[1];
-              const filename = trackId ? `spotify_${trackId}.mp3` : 'spotify_audio.mp3';
-
-              const caption = `🎵 *Música Baixada do Spotify!* 🎵\n\n🔗 ${q}\n\n🎧 *Enviando áudio...*`;
-
-              try {
-                await reply(caption);
-              } catch (err) {
-                console.error('Erro ao enviar caption:', err);
-              }
-
-              try {
-                await nazu.sendMessage(from, {
-                  audio: audioBuffer,
-                  mimetype: 'audio/mpeg',
-                  fileName: filename
-                }, { quoted: info });
-              } catch (audioError) {
-                if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
-                  await reply('📦 Arquivo muito grande, enviando como documento...');
-                  await nazu.sendMessage(from, {
-                    document: audioBuffer,
-                    fileName: filename,
-                    mimetype: 'audio/mpeg'
-                  }, { quoted: info });
-                } else {
-                  console.error('Erro ao enviar áudio do Spotify:', audioError);
-                  reply('❌ Ocorreu um erro ao enviar o áudio.');
-                }
-              }
-            })
-            .catch((error) => {
-              console.error('Erro no download do Spotify:', error);
-              if (error.response?.status === 401 || error.response?.status === 403) {
-                notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida ou expirada', 'Spotify', prefix);
-                reply('🤖 *Sistema de Spotify temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!');
-              } else if (error.response?.status === 400) {
-                reply('❌ Link inválido ou música não encontrada no Spotify.');
-              } else {
-                reply(`❌ Erro ao baixar do Spotify: ${error.message || 'Erro desconhecido'}`);
-              }
-            });
-
+          // Usar API Siputzx Gratuita
+          try {
+              const spRes = await downloadSpotify(q);
+              const caption = `🎵 *Música:* ${spRes.title}\n👤 *Artista:* ${spRes.artist}\n💿 *Álbum:* ${spRes.album}\n\n🎧 *Enviando áudio...*`;
+              await reply(caption);
+              
+              await nazu.sendMessage(from, {
+                 audio: { url: spRes.url },
+                 mimetype: 'audio/mpeg',
+                 fileName: `${spRes.title}.mp3`
+              }, { quoted: info });
+          } catch (error) {
+              console.error('Erro no download do Spotify:', error.message);
+              reply(`❌ Erro ao baixar do Spotify: ${error.message}`);
+          }
         } catch (error) {
           console.error('Erro no comando spotifydl:', error);
           reply("❌ Ocorreu um erro ao processar sua solicitação.");
@@ -19196,10 +18285,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'Spotify', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           await reply('🔎 Buscando no Spotify... Aguarde!');
 
@@ -19301,10 +18387,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           if (!q.includes('soundcloud.com/')) {
             return reply('❌ Por favor, envie um link válido do SoundCloud.\n\n💡 Dica: Use o comando play3 para buscar por nome!');
@@ -19387,10 +18470,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           await reply('🔎 Buscando no SoundCloud... Aguarde!');
 
@@ -19493,129 +18573,11 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
       case 'bandcamp':
       case 'bandcampdl':
         try {
-          if (!q) return reply(`Digite um link do Bandcamp.\n> Ex: ${prefix}${command} https://artist.bandcamp.com/track/song-name`);
-
-          // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
-          // Verificar se é um link válido do Bandcamp
-          if (!q.includes('bandcamp.com')) {
-            return reply('❌ Por favor, forneça um link válido do Bandcamp.');
-          }
-
-          reply('Aguarde um momentinho... ☀️');
-
-          // Helper para formatação de duração
-          const formatDuration = (seconds) => {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-          };
-
-          bandcamp.download(q, KeyCog).then(result => {
-            if (!result.ok) {
-              return reply(result.message || '❌ Erro ao baixar do Bandcamp.');
-            }
-
-            const {
-              title,
-              artist,
-              album,
-              thumbnail,
-              duration,
-              genre,
-              releaseDate,
-              trackNumber,
-              buffer,
-              filename
-            } = result;
-
-            // Preparar a mensagem com informações da música
-            let caption = `╭━━━⊱🎵 BANDCAMP ⊱━━━╮\n\n`;
-            caption += `📝 *Título:* ${title}\n`;
-            caption += `👤 *Artista:* ${artist}\n`;
-
-            if (album) {
-              caption += `💿 *Álbum:* ${album}\n`;
-            }
-
-            if (trackNumber) {
-              caption += `🔢 *Faixa:* ${trackNumber}\n`;
-            }
-
-            if (duration) {
-              caption += `⏱️ *Duração:* ${formatDuration(duration)}\n`;
-            }
-
-            if (genre) {
-              caption += `🎼 *Gênero:* ${genre}\n`;
-            }
-
-            if (releaseDate) {
-              caption += `📅 *Lançamento:* ${releaseDate}\n`;
-            }
-
-            caption += `\n╰━━━━━━━━━━━━━━━━━━━╯`;
-
-            // Enviar thumbnail primeiro
-            if (thumbnail) {
-              nazu.sendMessage(from, {
-                image: { url: thumbnail },
-                caption: caption
-              }).catch(err => {
-                console.error('Erro ao enviar thumbnail do Bandcamp:', err);
-              });
-            }
-
-            // Enviar o áudio
-            const fileSize = buffer.length;
-            const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
-
-            nazu.sendMessage(from, {
-              audio: buffer,
-              mimetype: 'audio/mpeg',
-              fileName: filename,
-              ptt: false
-            }, { quoted: info }).then(() => {
-              reply(`✅ Música do Bandcamp baixada com sucesso! (${fileSizeMB}MB)`);
-            }).catch(err => {
-              console.error('Erro ao enviar áudio do Bandcamp:', err);
-              // Tentar enviar como documento se falhar
-              nazu.sendMessage(from, {
-                document: buffer,
-                mimetype: 'audio/mpeg',
-                fileName: filename
-              }, { quoted: info }).then(() => {
-                reply(`✅ Música enviada como documento (${fileSizeMB}MB).`);
-              }).catch(docErr => {
-                console.error('Erro ao enviar documento do Bandcamp:', docErr);
-                reply('❌ Erro ao enviar o áudio. Tente novamente.');
-              });
-            });
-          }).catch(error => {
-            console.error('Erro ao baixar do Bandcamp:', error);
-
-            if (error.message?.includes('401') || error.message?.includes('403')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, `Erro de autenticação na API: ${error.message}`);
-              return reply('❌ Erro de autenticação da API. O dono foi notificado.');
-            }
-
-            if (error.message?.includes('404')) {
-              return reply('❌ Música não encontrada. Verifique se o link está correto e se a música ainda está disponível.');
-            }
-
-            if (error.message?.includes('timeout')) {
-              return reply('❌ O download demorou muito tempo. Tente novamente.');
-            }
-
-            reply('❌ Erro ao baixar do Bandcamp. Tente novamente mais tarde.');
-          });
-        } catch (error) {
-          console.error('Erro no comando bandcamp:', error);
-          reply("❌ Ocorreu um erro ao processar sua solicitação.");
+          if (!q) return reply(`🎵 *Bandcamp Download*\n\n❌ Envie o link da música.\n\n📝 *Uso:* ${prefix}${command} <link>`);
+          await baixarDireto(nazu, from, info, q, 'audio');
+        } catch (e) {
+          console.error('Erro no comando bandcamp:', e.message);
+          reply('❌ Ocorreu um erro ao baixar do Bandcamp.');
         }
         break;
 
@@ -19626,10 +18588,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           if (!q) return reply(`Digite uma URL para extrair todos os formatos disponíveis.\n> Ex: ${prefix}${command} https://www.youtube.com/watch?v=dQw4w9WgXcQ\n\n✨ Suporta 1000+ sites!`);
 
           // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           reply('🔍 Analisando URL e extraindo todos os formatos disponíveis...\n⏳ Isso pode levar alguns segundos...');
 
@@ -19822,10 +18781,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           if (!q) return reply(`Digite um nome ou o link de um vídeo.\n> Ex: ${prefix}${command} Gato`);
 
           // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           reply('Aguarde um momentinho... ☀️');
           let isTikTokUrl = q.includes('tiktok');
@@ -19894,10 +18850,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           if (!q.includes('facebook.com/')) {
             return reply('❌ Por favor, envie um link válido do Facebook.');
@@ -19983,10 +18936,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           if (!q.includes('vimeo.com/')) {
             return reply('❌ Por favor, envie um link válido do Vimeo.');
@@ -20077,10 +19027,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           if (!q) return reply(`Digite um link do Twitch (clip ou VOD).\n> Ex: ${prefix}${command} https://www.twitch.tv/videos/12345678\n> Ex: ${prefix}${command} https://clips.twitch.tv/AbcdEfgh`);
 
           // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           // Verificar se é um link válido do Twitch
           if (!q.includes('twitch.tv')) {
@@ -20211,10 +19158,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           if (!q) return reply(`Digite um link de um post do Reddit.\n> Ex: ${prefix}${command} https://www.reddit.com/r/videos/comments/abc123/...`);
 
           // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           // Verificar se é um link válido do Reddit
           if (!q.includes('reddit.com')) {
@@ -20352,10 +19296,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           if (!q) return reply(`Digite um link do Dailymotion.\n> Ex: ${prefix}${command} https://www.dailymotion.com/video/x8abc123`);
 
           // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           // Verificar se é um link válido do Dailymotion
           if (!q.includes('dailymotion.com')) {
@@ -20491,10 +19432,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           if (!q) return reply(`Digite um link do Streamable.\n> Ex: ${prefix}${command} https://streamable.com/abc123`);
 
           // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           // Verificar se é um link válido do Streamable
           if (!q.includes('streamable.com')) {
@@ -20631,10 +19569,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
           if (!q) return reply(`Digite um link do Instagram.\n> Ex: ${prefix}${command} https://www.instagram.com/reel/DFaq_X7uoiT/?igsh=M3Q3N2ZyMWU1M3Bo`);
 
           // Verificar se tem API key
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           reply('Aguarde um momentinho... ☀️');
           igdl.dl(q, KeyCog)
@@ -20675,223 +19610,31 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
       case 'drive':
       case 'gd':
         try {
-          if (!q) return reply(`📁 *Google Drive Download*\n\n❌ Por favor, envie o link do arquivo do Google Drive.\n\n📝 *Uso:* ${prefix}${command} <link>\n\n📌 *Formatos suportados:*\n• https://drive.google.com/file/d/ID/view\n• https://drive.google.com/open?id=ID\n• https://drive.google.com/uc?id=ID`);
-
-          // Validar se é um link do Google Drive
-          const gdriveRegex = /(?:https?:\/\/)?(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)|docs\.google\.com\/(?:document|spreadsheets|presentation)\/d\/)([a-zA-Z0-9_-]+)/i;
-          if (!gdriveRegex.test(q)) {
-            return reply('❌ Link inválido! Por favor, envie um link válido do Google Drive.');
-          }
-
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
+          if (!q) return reply(`📁 *Google Drive Download*\n\n❌ Por favor, envie o link do arquivo.\n\n📝 *Uso:* ${prefix}${command} <link>`);
           await reply('⏳ Buscando informações do arquivo...');
-
-          // Fazer requisição para a API
-          const gdriveResponse = await axios.get('https://cog.api.br/api/v1/gdrive/info', {
-            params: { url: q },
-            headers: { 'X-API-Key': KeyCog },
-            timeout: 120000
-          });
-
-          if (!gdriveResponse.data.success || !gdriveResponse.data.data) {
-            return reply('❌ Não foi possível obter informações do arquivo. Verifique se o link está correto e se o arquivo é público.');
-          }
-
-          const fileData = gdriveResponse.data.data;
-          const { fileName, fileSize, fileSizeBytes, downloadUrl, mimetype } = fileData;
-
-          // Verificar tamanho do arquivo (limite de 100MB para envio no WhatsApp)
-          const maxSize = 100 * 1024 * 1024; // 100MB
-          if (fileSizeBytes > maxSize) {
-            const shortLinkGdrive = await axios.post("https://spoo.me/api/v1/shorten", {
-              long_url: downloadUrl,
-              alias: `nazuna_${Math.floor(10000 + Math.random() * 90000)}`
-            });
-            return reply(`📁 *Arquivo encontrado!*\n\n📄 *Nome:* ${fileName}\n📊 *Tamanho:* ${fileSize}\n📋 *Tipo:* ${mimetype}\n\n⚠️ *Arquivo muito grande para enviar!*\nO limite do WhatsApp é 100MB.\n\n🔗 *Link direto:*\n${shortLinkGdrive.data.short_url}`);
-          }
-
-          await reply(`📁 *Baixando arquivo...*\n\n📄 *Nome:* ${fileName}\n📊 *Tamanho:* ${fileSize}\n📋 *Tipo:* ${mimetype}`);
-
-          // Baixar o arquivo
-          const fileResponse = await axios.get(downloadUrl, {
-            responseType: 'arraybuffer',
-            timeout: 120000,
-            maxContentLength: maxSize,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          });
-
-          const fileBuffer = Buffer.from(fileResponse.data);
-
-          // Determinar o tipo de mídia e enviar
-          if (mimetype.startsWith('image/')) {
-            await nazu.sendMessage(from, {
-              image: fileBuffer,
-              caption: `📁 *${fileName}*\n📊 Tamanho: ${fileSize}`,
-              mimetype: mimetype
-            }, { quoted: info });
-          } else if (mimetype.startsWith('video/')) {
-            await nazu.sendMessage(from, {
-              video: fileBuffer,
-              caption: `📁 *${fileName}*\n📊 Tamanho: ${fileSize}`,
-              mimetype: mimetype
-            }, { quoted: info });
-          } else if (mimetype.startsWith('audio/')) {
-            await nazu.sendMessage(from, {
-              audio: fileBuffer,
-              mimetype: mimetype,
-              ptt: false
-            }, { quoted: info });
-          } else {
-            // Enviar como documento para outros tipos
-            await nazu.sendMessage(from, {
-              document: fileBuffer,
-              fileName: fileName,
-              mimetype: mimetype,
-              caption: `📁 *Google Drive Download*\n📊 Tamanho: ${fileSize}`
-            }, { quoted: info });
-          }
-
+          const spRes = await downloadGDrive(q);
+          const caption = `📁 *Baixando arquivo...*\n\n📄 *Nome:* ${spRes.fileName}\n📊 *Tamanho:* ${spRes.size}`;
+          await reply(caption);
+          await nazu.sendMessage(from, { document: { url: spRes.downloadUrl }, fileName: spRes.fileName, mimetype: spRes.mimetype }, { quoted: info });
           reply('✅ Download concluído!');
         } catch (e) {
-          console.error('Erro no comando gdrive:', e);
-
-          if (e.response?.status === 401 || (e.message && e.message.includes('API key'))) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida ou expirada');
-            return reply('🤖 *Sistema temporariamente indisponível*\n\n😅 Estou com problemas técnicos. O administrador já foi notificado!');
-          }
-
-          if (e.response?.status === 404) {
-            return reply('❌ Arquivo não encontrado ou não é público.');
-          }
-
-          if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-            return reply('⏰ Tempo esgotado! O arquivo pode ser muito grande ou a conexão está lenta.');
-          }
-
-          reply('❌ Ocorreu um erro ao baixar o arquivo. Verifique se o link está correto e tente novamente.');
+          console.error('Erro no comando gdrive:', e.message);
+          reply('❌ Ocorreu um erro ao baixar do GDrive: ' + e.message);
         }
         break;
       case 'mediafire':
       case 'mf':
         try {
-          if (!q) return reply(`📁 *MediaFire Download*\n\n❌ Por favor, envie o link do arquivo do MediaFire.\n\n📝 *Uso:* ${prefix}${command} <link>\n\n📌 *Exemplo:*\n${prefix}${command} https://www.mediafire.com/file/abc123/arquivo.zip/file`);
-
-          // Validar se é um link do MediaFire
-          const mediafireRegex = /(?:https?:\/\/)?(?:www\.)?mediafire\.com\/(?:file|view|download)\/([a-zA-Z0-9]+)/i;
-          if (!mediafireRegex.test(q)) {
-            return reply('❌ Link inválido! Por favor, envie um link válido do MediaFire.');
-          }
-
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
-
+          if (!q) return reply(`📁 *MediaFire Download*\n\n❌ Envie o link do arquivo.\n\n📝 *Uso:* ${prefix}${command} <link>`);
           await reply('⏳ Buscando informações do arquivo...');
-
-          // Fazer requisição para a API
-          const mfResponse = await axios.get('https://cog.api.br/api/v1/mediafire/info', {
-            params: { url: q },
-            headers: { 'X-API-Key': KeyCog },
-            timeout: 120000
-          });
-
-          if (!mfResponse.data.success || !mfResponse.data.data) {
-            return reply('❌ Não foi possível obter informações do arquivo. Verifique se o link está correto.');
-          }
-
-          const fileData = mfResponse.data.data;
-          const { fileName, fileSize, uploadDate, mimetype, extension, downloadUrl } = fileData;
-
-          // Converter tamanho para bytes para verificação
-          const sizeMatch = fileSize.match(/([\d.]+)\s*(KB|MB|GB)/i);
-          let fileSizeBytes = 0;
-          if (sizeMatch) {
-            const size = parseFloat(sizeMatch[1]);
-            const unit = sizeMatch[2].toUpperCase();
-            if (unit === 'KB') fileSizeBytes = size * 1024;
-            else if (unit === 'MB') fileSizeBytes = size * 1024 * 1024;
-            else if (unit === 'GB') fileSizeBytes = size * 1024 * 1024 * 1024;
-          }
-
-          // Verificar tamanho do arquivo (limite de 100MB para envio no WhatsApp)
-          const maxSize = 100 * 1024 * 1024; // 100MB
-          if (fileSizeBytes > maxSize) {
-            const shortLinkMf = await axios.post("https://spoo.me/api/v1/shorten", {
-              long_url: downloadUrl,
-              alias: `nazuna_${Math.floor(10000 + Math.random() * 90000)}`
-            });
-            return reply(`📁 *Arquivo encontrado!*\n\n📄 *Nome:* ${fileName}\n📊 *Tamanho:* ${fileSize}\n📅 *Upload:* ${uploadDate || 'N/A'}\n📋 *Tipo:* ${extension || mimetype}\n\n⚠️ *Arquivo muito grande para enviar!*\nO limite do WhatsApp é 100MB.\n\n🔗 *Link direto:*\n${shortLinkMf.data.short_url}`);
-          }
-
-          await reply(`📁 *Baixando arquivo...*\n\n📄 *Nome:* ${fileName}\n📊 *Tamanho:* ${fileSize}\n📅 *Upload:* ${uploadDate || 'N/A'}`);
-
-          // Baixar o arquivo
-          const fileResponse = await axios.get(downloadUrl, {
-            responseType: 'arraybuffer',
-            timeout: 120000,
-            maxContentLength: maxSize,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          });
-
-          const fileBuffer = Buffer.from(fileResponse.data);
-          const mimeType = mimetype || 'application/octet-stream';
-
-          // Determinar o tipo de mídia e enviar
-          if (mimeType.startsWith('image/')) {
-            await nazu.sendMessage(from, {
-              image: fileBuffer,
-              caption: `📁 *${fileName}*\n📊 Tamanho: ${fileSize}`,
-              mimetype: mimeType
-            }, { quoted: info });
-          } else if (mimeType.startsWith('video/')) {
-            await nazu.sendMessage(from, {
-              video: fileBuffer,
-              caption: `📁 *${fileName}*\n📊 Tamanho: ${fileSize}`,
-              mimetype: mimeType
-            }, { quoted: info });
-          } else if (mimeType.startsWith('audio/')) {
-            await nazu.sendMessage(from, {
-              audio: fileBuffer,
-              mimetype: mimeType,
-              ptt: false
-            }, { quoted: info });
-          } else {
-            // Enviar como documento para outros tipos
-            await nazu.sendMessage(from, {
-              document: fileBuffer,
-              fileName: fileName,
-              mimetype: mimeType,
-              caption: `📁 *MediaFire Download*\n📊 Tamanho: ${fileSize}`
-            }, { quoted: info });
-          }
-
+          const spRes = await downloadMediafire(q);
+          const caption = `📁 *Baixando arquivo...*\n\n📄 *Nome:* ${spRes.filename}\n📊 *Tamanho:* ${spRes.size}\n📅 *Upload:* ${spRes.aploud || 'N/A'}`;
+          await reply(caption);
+          await nazu.sendMessage(from, { document: { url: spRes.url }, fileName: spRes.filename, mimetype: spRes.ext }, { quoted: info });
           reply('✅ Download concluído!');
         } catch (e) {
-          console.error('Erro no comando mediafire:', e);
-
-          if (e.response?.status === 401 || (e.message && e.message.includes('API key'))) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida ou expirada');
-            return reply('🤖 *Sistema temporariamente indisponível*\n\n😅 Estou com problemas técnicos. O administrador já foi notificado!');
-          }
-
-          if (e.response?.status === 404) {
-            return reply('❌ Arquivo não encontrado ou foi removido.');
-          }
-
-          if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-            return reply('⏰ Tempo esgotado! O arquivo pode ser muito grande ou a conexão está lenta.');
-          }
-
-          reply('❌ Ocorreu um erro ao baixar o arquivo. Verifique se o link está correto e tente novamente.');
+          console.error('Erro no comando mediafire:', e.message);
+          reply('❌ Ocorreu um erro ao baixar do Mediafire: ' + e.message);
         }
         break;
             case 'twitter':
@@ -20919,10 +19662,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
         try {
           if (!q) return reply(`🔍 *Pesquisa Web*\n\n❌ Digite o que deseja pesquisar.\n\n📝 *Uso:* ${prefix}${command} <termo>\n\n📌 *Exemplo:*\n${prefix}${command} inteligência artificial`);
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           await reply('🔍 Pesquisando...');
 
@@ -20964,10 +19704,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
         try {
           if (!q) return reply(`📰 *Pesquisa de Notícias*\n\n❌ Digite o que deseja pesquisar.\n\n📝 *Uso:* ${prefix}${command} <termo>\n\n📌 *Exemplo:*\n${prefix}${command} tecnologia brasil`);
 
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           await reply('📰 Buscando notícias...');
 
@@ -21068,10 +19805,7 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
 
           const isPinUrl = PIN_URL_REGEX.test(searchTerm);
           // Ensure API key is configured
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
           const pinPromise = isPinUrl ? pinterest.dl(searchTerm, KeyCog) : pinterest.search(searchTerm, KeyCog);
 
           pinPromise
@@ -28686,10 +27420,7 @@ Exemplos:
       case 'assistente':
       case 'assistent':
         try {
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
 
@@ -31787,10 +30518,7 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
       case 'likesff':
         try {
           // Verificar API key
-          if (!KeyCog) {
-            await notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'Envio de Likes Free Fire');
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           if (!q) {
             return reply(`⭐ *ENVIAR LIKES - FREE FIRE*\n\n📝 *Como usar:*\n• Digite o ID do Free Fire após o comando\n• Exemplo: ${prefix}likes 1033857091\n\n💡 *Formato:* Apenas números do seu ID`);
@@ -31947,10 +30675,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
       case 'bsjogador':
       case 'bsperfil':
         {
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           if (!q) {
             return reply(`🎮 *BRAWL STARS - PERFIL DE JOGADOR*\n\n📝 *Como usar:*\n• Digite a TAG do jogador após o comando\n• Exemplo: ${prefix}bsplayer #2PP\n\n💡 *Dica:* Você pode copiar sua tag do jogo`);
@@ -32064,10 +30789,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
       case 'bscla':
       case 'bsclube':
         {
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           if (!q) {
             return reply(`⚔️ *BRAWL STARS - INFORMAÇÕES DO CLUBE*\n\n📝 *Como usar:*\n• Digite a TAG do clube após o comando\n• Exemplo: ${prefix}bsclub #2PP\n\n💡 *Dica:* Você pode copiar a tag do clube no jogo`);
@@ -32374,10 +31096,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
       case 'bsrankings':
       case 'bsrank':
       case 'bstop': {
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
 
         const argsRank = q ? q.trim().toLowerCase().split(/\s+/) : [];
         const country = argsRank[0] || 'global';
@@ -32639,10 +31358,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
       case 'bshistorico':
       case 'bspartidas':
         {
-          if (!KeyCog) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-            return reply(API_KEY_REQUIRED_MESSAGE);
-          }
+          
 
           if (!q) {
             return reply(`📜 *BRAWL STARS - HISTÓRICO DE BATALHAS*\n\n📝 *Como usar:*\n• Digite a TAG do jogador\n• Exemplo: ${prefix}bsbattlelog #2PP\n\n💡 Mostra as últimas 25 partidas`);
@@ -32989,10 +31705,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
       case 'bsclubmembers':
       case 'bsmembros': {
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
 
         if (!q) {
           return reply(`👥 *BRAWL STARS - MEMBROS DO CLUBE*\n\n📝 *Como usar:*\n• Digite a TAG do clube\n• Exemplo: ${prefix}bsmembros #2PP\n\n💡 Lista completa de todos os membros`);
@@ -33063,10 +31776,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
       case 'bscompare':
       case 'bscomparar':
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
 
         const tags = q ? q.trim().split(/\s+/) : [];
         if (tags.length < 2) {
@@ -33147,10 +31857,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
       case 'bsplayerbrawlers':
       case 'bsjogadorbrawlers':
       case 'bsmeusbrawlers': {
-        if (!KeyCog) {
-          ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key não configurada', 'IA', prefix);
-          return reply(API_KEY_REQUIRED_MESSAGE);
-        }
+        
 
         if (!q) {
           return reply(`👾 *BRAWL STARS - BRAWLERS DO JOGADOR*\n\n📝 *Como usar:*\n• Digite a TAG do jogador\n• Exemplo: ${prefix}bsmeusbrawlers #2PP\n\n💡 Lista completa de brawlers com detalhes`);

@@ -67,3 +67,40 @@ export async function downloadAPK(query) {
         engine: 'APKPure'
     };
 }
+
+/**
+ * Download de GDrive via fg-senna
+ */
+export async function downloadGDrive(url) {
+    const res = await fg.gdrive(url).catch(() => null);
+    if (!res || !res.downloadUrl) throw new Error('Falha ao obter link do GDrive');
+    return res; 
+    // retorna { fileName, mimetype, size, downloadUrl }
+}
+
+/**
+ * Download de MediaFire via fg-senna
+ */
+export async function downloadMediafire(url) {
+    const res = await fg.mediafire(url).catch(() => null);
+    if (!res || !res.url) throw new Error('Falha ao extrair do Mediafire');
+    return res;
+    // retorna { url, type, filename, ext, aploud, size }
+}
+
+/**
+ * Download de Spotify via Siputzx (Motor Secundário Senna)
+ */
+export async function downloadSpotify(url) {
+    const res = await axios.get(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(url)}`, { timeout: 20000 }).then(v => v.data).catch(() => null);
+    if (!res || !res.data || !res.data.download) {
+        throw new Error('Música não encontrada ou API indisponível');
+    }
+    return {
+        title: res.data.title,
+        artist: res.data.artist,
+        album: res.data.album,
+        thumbnail: res.data.thumbnail,
+        url: res.data.download
+    };
+}
