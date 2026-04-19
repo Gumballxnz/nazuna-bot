@@ -14952,6 +14952,9 @@ Seja específico e recomende opções variadas (populares e menos conhecidas). F
         break;
       }
 
+      case 'ia':
+      case 'gpt':
+      case 'chatgpt':
       case 'cog':
         if (!q) return reply(`📢 Ei, falta a pergunta! Me diga o que quer saber após o comando ${prefix}cog! 😴`);
         
@@ -17887,21 +17890,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           console.error(e);
           await reply("❌ Ocorreu um erro interno. Tente novamente em alguns minutos.");
         }
-        break;
-      case 'cpf':
-      case 'vizinhos':
-      case 'proprietario':
-      case 'empregos':
-      case 'vacinas':
-      case 'beneficios':
-      case 'internet':
-      case 'parentes':
-      case 'enderecos':
-      case 'obito':
-      case 'score':
-      case 'compras':
-      case 'cnh':
-        reply('⚠️ *FUNÇÃO DESATIVADA*\n\n🚫 O sistema de consultas a dados pessoais e confidenciais foi removido por razões legais e de privacidade.\n\nA Nazuna Bot não comercializa nem disponibiliza mais serviços de consultas abertas. Agradeço a compreensão! 💙');
         break;
       case 'printsite':
       case 'ssweb':
