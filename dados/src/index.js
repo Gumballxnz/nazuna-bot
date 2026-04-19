@@ -35,7 +35,7 @@ import { fileURLToPath } from 'url';
 import { PerformanceOptimizer, getPerformanceOptimizer } from './utils/performanceOptimizer.js';
 import * as ia from './funcs/private/ia.js';
 import * as vipCommandsManager from './utils/vipCommandsManager.js';
-import { notifyOwnerAboutApiKey, isApiKeyError } from './funcs/utils/apiKeyNotifier.js';
+// apiKeyNotifier removido - sistema agora é 100% gratuito
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
 import baixarVideoLocal, { playAudio, playVideo, handlePlayConfirmation, baixarDireto } from './utils/baixarVideo.js';
 import { downloadTwitter, downloadAPK, downloadSpotify, downloadGDrive, downloadMediafire } from './utils/extraDl.js';
@@ -240,7 +240,7 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathz.dirname(__filename);
-const API_KEY_REQUIRED_MESSAGE = 'Este comando precisa de API key para funcionar. Meu dono já foi notificado! 😺';
+// API_KEY_REQUIRED_MESSAGE removido
 const OWNER_ONLY_MESSAGE = '🚫 Este comando é apenas para o dono do bot!';
 
 // Função para formatar respostas de IA para WhatsApp (converte ** para *)
@@ -675,18 +675,10 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   const prefixo = config.prefixo;
   const debug = config.debug;
   const lidowner = config.lidowner;
-  let KeyCog = config.apikey || '';
+  // KeyCog removido - sistema 100% gratuito
+  const KeyCog = null;
 
-  function isValidApiKey(key) {
-    if (!key || typeof key !== 'string') return false;
-    if (key.trim() === '') return false;
-    if (key.length < 10) return false;
-
-    const validChars = /^[a-zA-Z0-9\-_]+$/;
-    return validChars.test(key.trim());
-  }
-
-  if (!KeyCog || KeyCog.trim() === '') {
+if (!null || KeyCog.trim() === '') {
     KeyCog = false;
   } else if (!isValidApiKey(KeyCog)) {
     KeyCog = false;
@@ -3241,7 +3233,7 @@ Código: *${roleCode}*`,
           const shouldForceSquare = global.autoStickerMode === 'square';
           await sendSticker(nazu, from, {
             sticker: buffer,
-            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`,
+            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
             packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫',
             type: isVideo ? 'video' : 'image',
             forceSquare: shouldForceSquare
@@ -3635,10 +3627,10 @@ Código: *${roleCode}*`,
         }
 
         // Processamento do antitoxic
-        if (antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body && ia && KeyCog) {
+        if (antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body && ia ) {
           // Função wrapper para a IA do antitoxic
           const aiFunction = (prompt) => {
-            return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog)
+            return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
               .then(response => response?.data?.choices?.[0]?.message?.content || '');
           };
 
@@ -3752,7 +3744,7 @@ Código: *${roleCode}*`,
 
     const _botShort = (nazu && nazu.user && (nazu.user.id || nazu.user.lid)) ? String((nazu.user.id || nazu.user.lid).split(':')[0]) : '';
     // Não processar pela assistente se a mensagem veio do PRO (evita loop infinito)
-    if (!info.key.fromMe && isAssistente && !isCmd && !info._fromPro && ((_botShort && budy2.includes(_botShort)) || (menc_os2 && menc_os2 == botNumber)) && KeyCog) {
+    if (!info.key.fromMe && isAssistente && !isCmd && !info._fromPro && ((_botShort && budy2.includes(_botShort)) || (menc_os2 && menc_os2 == botNumber)) ) {
       if (budy2.replaceAll('@' + _botShort, '').length > 2) {
         // Detectar tipo de mídia da mensagem atual
         const tipoMidiaAtual = info.message?.imageMessage ? 'imagem' :
@@ -3870,7 +3862,7 @@ Código: *${roleCode}*`,
 
         ia.makeAssistentRequest({
           mensagens: [jSoNzIn]
-        }, KeyCog, nazu, nmrdn, personality).then((respAssist) => {
+        }, null, nazu, nmrdn, personality).then((respAssist) => {
           if (respAssist.erro === 'Sistema de IA temporariamente desativado') {
             return;
           }
@@ -3878,10 +3870,7 @@ Código: *${roleCode}*`,
           console.log('✅ Assistente processado com sucesso');
           console.log(`[${personality}] Resposta recebida:`, JSON.stringify(respAssist).substring(0, 500));
 
-          if (respAssist.apiKeyInvalid) {
-            reply(respAssist.message || '🤖 Sistema de IA temporariamente indisponível. Tente novamente mais tarde.');
-            return;
-          }
+          // apiKeyInvalid check removido
 
           // Tratamento especial para personalidade 'pro' (interpretador de comandos)
           if (respAssist.isPro) {
@@ -4043,35 +4032,33 @@ Código: *${roleCode}*`,
                   delete fakeMessage.message.stickerMessage;
                 }
                 // Mensagem de texto simples
-                else {
-                  // Preservar menções se existirem (sem a menção do bot)
-                  const mentionedJid = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-                  const filteredMentions = mentionedJid.filter(m => m !== botNumber && !m.includes(_botShort));
+                // Preservar menções se existirem (sem a menção do bot)
+                const mentionedJid = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                const filteredMentions = mentionedJid.filter(m => m !== botNumber && !m.includes(_botShort));
 
-                  // Se temos menção de um alvo (não bot), adicionar ao mentionedJid
-                  const targetMentionsForContext = mentionOrQuoted && !filteredMentions.includes(mentionOrQuoted)
-                    ? [...filteredMentions, mentionOrQuoted]
-                    : filteredMentions;
+                // Se temos menção de um alvo (não bot), adicionar ao mentionedJid
+                const targetMentionsForContext = mentionOrQuoted && !filteredMentions.includes(mentionOrQuoted)
+                  ? [...filteredMentions, mentionOrQuoted]
+                  : filteredMentions;
 
-                  if (targetMentionsForContext.length > 0) {
-                    fakeMessage.message.extendedTextMessage = {
-                      text: simulatedBody,
-                      contextInfo: {
-                        mentionedJid: targetMentionsForContext
-                      }
-                    };
-                    delete fakeMessage.message.conversation;
-                  } else {
-                    fakeMessage.message.conversation = simulatedBody;
-                    delete fakeMessage.message.extendedTextMessage;
-                  }
-
-                  delete fakeMessage.message.imageMessage;
-                  delete fakeMessage.message.videoMessage;
-                  delete fakeMessage.message.audioMessage;
-                  delete fakeMessage.message.documentMessage;
-                  delete fakeMessage.message.stickerMessage;
+                if (targetMentionsForContext.length > 0) {
+                  fakeMessage.message.extendedTextMessage = {
+                    text: simulatedBody,
+                    contextInfo: {
+                      mentionedJid: targetMentionsForContext
+                    }
+                  };
+                  delete fakeMessage.message.conversation;
+                } else {
+                  fakeMessage.message.conversation = simulatedBody;
+                  delete fakeMessage.message.extendedTextMessage;
                 }
+
+                delete fakeMessage.message.imageMessage;
+                delete fakeMessage.message.videoMessage;
+                delete fakeMessage.message.audioMessage;
+                delete fakeMessage.message.documentMessage;
+                delete fakeMessage.message.stickerMessage;
               } else {
                 fakeMessage.message = { conversation: simulatedBody };
               }
@@ -12327,16 +12314,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Gemma? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Gemma... ✨`).then(() => {
-          ia.makeCognimaRequest('google/gemma-7b', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('google/gemma-7b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Gemma:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Gemma! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12345,16 +12327,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Phi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Phi... ✨`).then(() => {
-          ia.makeCognimaRequest('microsoft/phi-3-medium-4k-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('microsoft/phi-3-medium-4k-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Phi:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Phi! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12362,16 +12339,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwen2? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Qwen2... ✨`).then(() => {
-          ia.makeCognimaRequest('qwen/qwen2-7b-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen2-7b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Qwen2:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Qwen2! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12380,16 +12352,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwen? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Qwen... ✨`).then(() => {
-          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Qwen:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Qwen! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12398,16 +12365,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Llama? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Llama... ✨`).then(() => {
-          ia.makeCognimaRequest('abacusai/dracarys-llama-3.1-70b-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('abacusai/dracarys-llama-3.1-70b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Llama:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Llama! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12416,16 +12378,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Baichuan? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Baichuan... ✨`).then(() => {
-          ia.makeCognimaRequest('baichuan-inc/baichuan2-13b-chat', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('baichuan-inc/baichuan2-13b-chat', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Baichuan:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Baichuan! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12433,16 +12390,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Marin? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Marin... ✨`).then(() => {
-          ia.makeCognimaRequest('marin/marin-8b-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('marin/marin-8b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Marin:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Marin! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12451,16 +12403,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Kimi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Kimi... ✨`).then(() => {
-          ia.makeCognimaRequest('moonshotai/kimi-k2-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('moonshotai/kimi-k2-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Kimi:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Kimi! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12468,16 +12415,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Mistral? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Mistral... ✨`).then(() => {
-          ia.makeCognimaRequest('mistralai/mistral-small-24b-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('mistralai/mistral-small-24b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Mistral:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Mistral! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12485,16 +12427,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Magistral? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Magistral... ✨`).then(() => {
-          ia.makeCognimaRequest('mistralai/magistral-small-2506', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('mistralai/magistral-small-2506', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Magistral:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Magistral! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12503,16 +12440,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o RakutenAI? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o RakutenAI... ✨`).then(() => {
-          ia.makeCognimaRequest('rakuten/rakutenai-7b-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('rakuten/rakutenai-7b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API RakutenAI:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o RakutenAI! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12520,16 +12452,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Yi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Yi... ✨`).then(() => {
-          ia.makeCognimaRequest('01-ai/yi-large', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('01-ai/yi-large', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Yi:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Yi! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12537,16 +12464,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Gemma2? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Gemma2... ✨`).then(() => {
-          ia.makeCognimaRequest('google/gemma-2-27b-it', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('google/gemma-2-27b-it', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Gemma2:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Gemma2! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12554,16 +12476,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Swallow? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Swallow... ✨`).then(() => {
-          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Swallow:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Swallow! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12571,16 +12488,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Falcon? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Falcon... ✨`).then(() => {
-          ia.makeCognimaRequest('tiiuae/falcon3-7b-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('tiiuae/falcon3-7b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Falcon:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Falcon! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12588,16 +12500,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwencoder? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o Qwencoder... ✨`).then(() => {
-          ia.makeCognimaRequest('qwen/qwen2.5-coder-32b-instruct', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen2.5-coder-32b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API Qwencoder:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o Qwencoder! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12605,16 +12512,11 @@ Entre em contato com o dono do bot:
         if (!q) return reply(`🤔 Qual sua dúvida para o CodeGemma? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
         
         reply(`⏳ Só um segundinho, estou consultando o CodeGemma... ✨`).then(() => {
-          ia.makeCognimaRequest('google/codegemma-7b', q, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('google/codegemma-7b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro na API CodeGemma:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply(`😓 Poxa, algo deu errado com o CodeGemma! Tente novamente em alguns instantes, tá? 🌈`);
-            }
           });
         });
         break;
@@ -12623,16 +12525,11 @@ Entre em contato com o dono do bot:
         
         reply('⏳ Aguarde enquanto preparo um resumo bem caprichado... ✨').then(() => {
           const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara e objetiva, destacando as informações mais importantes:\n\n${q}`;
-          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro ao resumir texto:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply('😓 Ops, não consegui resumir agora! Que tal tentar de novo? 🌟');
-            }
           });
         });
         break;
@@ -12657,16 +12554,11 @@ Entre em contato com o dono do bot:
               return;
             }
             const prompt = `Resuma o seguinte conteúdo extraído de uma página web em poucos parágrafos, de forma clara e objetiva, destacando os pontos principais:\n\n${cleanText.substring(0, 5000)}`;
-            ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((iaResponse) => {
+            ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((iaResponse) => {
               reply(formatAIResponse(iaResponse.data.choices[0].message.content));
             }).catch((e) => {
               console.error('Erro ao resumir URL (IA):', e.message);
-              if (e.message && e.message.includes('API key inválida')) {
-                ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-                reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-              } else {
-                reply('😓 Vixe, algo deu errado ao resumir a página! Tente novamente em breve, combinado? 🌈');
-              }
+              reply('😓 Vixe, algo deu errado ao resumir a página! Tente novamente em breve, combinado? 🌈');
             });
           }).catch((e) => {
             console.error('Erro ao resumir URL:', e.message);
@@ -12686,16 +12578,11 @@ Entre em contato com o dono do bot:
         
         reply('⏳ Um segundinho, estou pensando em ideias incríveis... ✨').then(() => {
           const prompt = `Gere 15 ideias criativas e detalhadas para o seguinte tema: ${q}`;
-          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro ao gerar ideias:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply('😓 Poxa, não consegui gerar ideias agora! Tente de novo em breve, tá? 🌈');
-            }
           });
         });
         break;
@@ -12705,16 +12592,11 @@ Entre em contato com o dono do bot:
         
         reply('⏳ Um momentinho, estou preparando uma explicação bem clara... ✨').then(() => {
           const prompt = `Explique o seguinte conceito de forma simples e clara, como se fosse para alguém sem conhecimento prévio: ${q}`;
-          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro ao explicar conceito:', e);
-            if (e.message && e.message.includes('API key inválida')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-              reply('🤖 *Sistema de IA temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-            } else {
               reply('😓 Vixe, não consegui explicar agora! Tente de novo em alguns instantes, tá? 🌈');
-            }
           });
         });
         break;
@@ -12724,7 +12606,7 @@ Entre em contato com o dono do bot:
         
         reply('⏳ Aguarde enquanto dou um polimento no seu texto... ✨').then(() => {
           const prompt = `Corrija os erros gramaticais, ortográficos e de estilo no seguinte texto, mantendo o significado original: ${q}`;
-          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((response) => {
+          ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
           }).catch((e) => {
             console.error('Erro ao corrigir texto:', e);
@@ -12814,14 +12696,13 @@ ${conversaTexto.substring(0, 8000)}
 
 Faça um resumo conciso mas completo, destacando o que é mais relevante.`;
 
-          return ia.makeCognimaRequest('abacusai/dracarys-llama-3.1-70b-instruct', prompt, null, KeyCog);
+          return ia.makeCognimaRequest('abacusai/dracarys-llama-3.1-70b-instruct', prompt, null, null);
         }).then(response => {
           return reply(`💬 *Resumo da Conversa* (últimas mensagens)\n\n${formatAIResponse(response.data.choices[0].message.content)}`);
         }).catch(e => {
           console.error('Erro ao resumir conversa:', e);
           if (e.message?.includes('API key inválida')) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-            return reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrador já foi notificado!');
+
           } else {
             return reply('😓 Não consegui resumir a conversa agora! Tente novamente em breve. 🌈');
           }
@@ -12878,13 +12759,12 @@ Faça um resumo conciso mas completo, destacando o que é mais relevante.`;
 
 Seja criativo e original. Não use clichês. A história deve ser envolvente do início ao fim.`;
 
-          const response = await ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog);
+          const response = await ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null);
           await reply(`📖✨ *Sua História*\n\n${formatAIResponse(response.data.choices[0].message.content)}`);
         } catch (e) {
           console.error('Erro ao gerar história:', e);
           if (e.message?.includes('API key inválida')) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-            await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrador já foi notificado!');
+await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrador já foi notificado!');
           } else {
             await reply('😓 Não consegui escrever a história agora! Tente novamente em breve. 🌈');
           }
@@ -12935,13 +12815,12 @@ Para cada recomendação, forneça:
 
 Seja específico e recomende opções variadas (populares e menos conhecidas). Formate de forma clara e organizada.`;
 
-          const response = await ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog);
+          const response = await ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null);
           await reply(`${tipoInfo.emoji} *Recomendações de ${tipoInfo.nome.charAt(0).toUpperCase() + tipoInfo.nome.slice(1)}*\n\n${formatAIResponse(response.data.choices[0].message.content)}`);
         } catch (e) {
           console.error('Erro ao gerar recomendações:', e);
           if (e.message?.includes('API key inválida')) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, 'IA', prefix);
-            await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrador já foi notificado!');
+await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrador já foi notificado!');
           } else {
             await reply('😓 Não consegui buscar recomendações agora! Tente novamente em breve. 🌈');
           }
@@ -14975,7 +14854,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const texto = partes.slice(1).join('|').trim();
           reply('Aguarde um momentinho... ☀️').then(() => {
             const prompt = `Traduza o seguinte texto para ${idioma}:\n\n${texto}\n\nForneça apenas a tradução, sem explicações adicionais.`;
-            ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog || null).then((bahz) => {
+            ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((bahz) => {
               reply(`🌐✨ *Prontinho! Sua tradução para ${idioma.toUpperCase()} está aqui:*\n\n${formatAIResponse(bahz.data.choices[0].message.content)}`);
             }).catch((e) => {
               console.error("Erro ao traduzir texto:", e);
@@ -16196,9 +16075,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             daysToAdd = parseInt(parts[1]);
           }
           // Nenhum argumento válido
-          else {
             return reply(`💡 *Uso:* ${prefix}estenderaluguel <dias> (no grupo)\nou\n${prefix}estenderaluguel <id_do_grupo> <dias>\n\n📝 *Exemplo:*\n${prefix}estenderaluguel 7 (no grupo)\n${prefix}estenderaluguel 5511999999999 7\n\n💡 Use ${prefix}listaraluguel para ver os IDs.`);
-          }
 
           if (isNaN(daysToAdd) || daysToAdd <= 0) {
             return reply("❌ O número de dias deve ser um valor positivo!");
@@ -18265,7 +18142,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           await reply('🔎 Buscando no Spotify... Aguarde!');
 
           // 1. Primeiro buscar a música usando search-one
-          axios.get('https://cog.api.br/api/v1/spotify/search-one', {
+          axios.get('/* API removida */', {
             params: { q: q },
             headers: { 'X-API-Key': KeyCog },
             timeout: 30000
@@ -18290,7 +18167,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               await reply(searchCaption);
 
               // 2. Agora baixar a música usando o link encontrado
-              axios.get('https://cog.api.br/api/v1/spotify/download', {
+              axios.get('/* API removida */', {
                 params: { url: trackUrl },
                 headers: { 'X-API-Key': KeyCog },
                 responseType: 'arraybuffer',
@@ -18323,8 +18200,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 .catch((downloadError) => {
                   console.error('Erro no download do Spotify:', downloadError);
                   if (downloadError.response?.status === 401 || downloadError.response?.status === 403) {
-                    notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida ou expirada', 'Spotify', prefix);
-                    reply('🤖 *Sistema de Spotify temporariamente indisponível*');
+reply('🤖 *Sistema de Spotify temporariamente indisponível*');
                   } else {
                     reply(`❌ Erro ao baixar a música: ${downloadError.message || 'Erro desconhecido'}`);
                   }
@@ -18333,8 +18209,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             .catch((searchError) => {
               console.error('Erro na busca do Spotify:', searchError);
               if (searchError.response?.status === 401 || searchError.response?.status === 403) {
-                notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida ou expirada', 'Spotify', prefix);
-                reply('🤖 *Sistema de Spotify temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!');
+reply('🤖 *Sistema de Spotify temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!');
               } else if (searchError.response?.status === 400) {
                 reply('❌ Não foi possível buscar essa música. Tente com outro nome.');
               } else {
@@ -18370,13 +18245,9 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply('🎵 Baixando do SoundCloud... Aguarde um momento!');
 
-          soundcloud.download(q, KeyCog)
+          soundcloud.download(q, null)
             .then(async (result) => {
               if (!result.ok) {
-                if (result.msg.includes('API key inválida')) {
-                  soundcloud.notifyOwnerAboutApiKey(nazu, numerodono, result.msg, command);
-                  return reply('🤖 *Sistema de SoundCloud temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!');
-                }
                 return reply(`❌ Erro: ${result.msg}`);
               }
 
@@ -18416,12 +18287,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             })
             .catch((error) => {
               console.error('Erro no download do SoundCloud:', error);
-              if (error.message?.includes('API key inválida')) {
-                soundcloud.notifyOwnerAboutApiKey(nazu, numerodono, error.message, command);
-                reply('🤖 *Sistema de SoundCloud temporariamente indisponível*');
-              } else {
-                reply(`❌ Erro ao baixar do SoundCloud: ${error.message}`);
-              }
+              reply(`❌ Erro ao baixar do SoundCloud: ${error.message}`);
             });
 
         } catch (error) {
@@ -18449,14 +18315,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply('🔎 Buscando no SoundCloud... Aguarde!');
 
-          soundcloud.searchDownload(q, KeyCog)
+          soundcloud.searchDownload(q, null)
             .then(async (result) => {
               if (!result.ok) {
-                if (result.msg.includes('API key inválida')) {
-                  soundcloud.notifyOwnerAboutApiKey(nazu, numerodono, result.msg, command);
-                  return reply('🤖 *Sistema de SoundCloud temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!');
-                }
-                return reply(`❌ Erro: ${result.msg}`);
+return reply(`❌ Erro: ${result.msg}`);
               }
 
               const formatDuration = (seconds) => {
@@ -18513,12 +18375,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             })
             .catch((error) => {
               console.error('Erro na busca/download do SoundCloud:', error);
-              if (error.message?.includes('API key inválida')) {
-                soundcloud.notifyOwnerAboutApiKey(nazu, numerodono, error.message, command);
-                reply('🤖 *Sistema de SoundCloud temporariamente indisponível*');
-              } else {
-                reply(`❌ Erro ao buscar no SoundCloud: ${error.message}`);
-              }
+              reply(`❌ Erro ao buscar no SoundCloud: ${error.message}`);
             });
 
         } catch (error) {
@@ -18571,7 +18428,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           reply('🔍 Analisando URL e extraindo todos os formatos disponíveis...\n⏳ Isso pode levar alguns segundos...');
 
-          alldl.getAllMedia(q, KeyCog).then(result => {
+          alldl.getAllMedia(q, null).then(result => {
             if (!result.ok) {
               return reply(result.message || '❌ Erro ao extrair informações da mídia.');
             }
@@ -18729,8 +18586,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             console.error('Erro ao extrair formatos:', error);
 
             if (error.message?.includes('401') || error.message?.includes('403')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, `Erro de autenticação na API: ${error.message}`);
-              return reply('❌ Erro de autenticação da API. O dono foi notificado.');
+return reply('❌ Erro de autenticação da API. O dono foi notificado.');
             }
 
             if (error.message?.includes('404')) {
@@ -18773,7 +18629,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply('❌ Esse link é do *Facebook*, não do TikTok!\n\n💡 Use: ' + prefix + 'fb ' + q);
           }
           let isTikTokUrl = q.includes('tiktok');
-          const tiktokPromise = isTikTokUrl ? tiktok.dl(q, KeyCog) : tiktok.search(q, KeyCog);
+          const tiktokPromise = isTikTokUrl ? tiktok.dl(q, null) : tiktok.search(q, null);
 
           tiktokPromise
             .then(async (datinha) => {
@@ -18800,10 +18656,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             })
             .catch(async (e) => {
               console.error('Erro no comando TikTok (promise):', e);
-              if (e.message && e.message.includes('API key inválida')) {
-                await notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "TikTok", prefix);
-                return reply('🤖 *Sistema de TikTok temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-              }
+              
 
               reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
             });
@@ -18813,10 +18666,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           console.error('Erro no comando TikTok:', e);
 
           // Verificar se é erro de API key e notificar o dono
-          if (e.message && e.message.includes('API key inválida')) {
-            await notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "TikTok", prefix);
-            return reply('🤖 *Sistema de TikTok temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-          }
+          
 
           reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
         }
@@ -18846,14 +18696,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           reply('📹 Baixando vídeo do Facebook em HD...');
 
-          facebook.downloadHD(q, KeyCog)
+          facebook.downloadHD(q, null)
             .then(async (result) => {
               if (!result.ok) {
-                if (result.msg.includes('API key inválida')) {
-                  facebook.notifyOwnerAboutApiKey(nazu, numerodono, result.msg, command);
-                  return reply('🤖 *Sistema de Facebook temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!');
-                }
-                return reply(`❌ Erro: ${result.msg}`);
+return reply(`❌ Erro: ${result.msg}`);
               }
 
               const qualityList = result.allQualities.map((q, i) =>
@@ -18896,12 +18742,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             })
             .catch((error) => {
               console.error('Erro no download do Facebook:', error);
-              if (error.message?.includes('API key inválida')) {
-                facebook.notifyOwnerAboutApiKey(nazu, numerodono, error.message, command);
-                reply('🤖 *Sistema de Facebook temporariamente indisponível*');
-              } else {
-                reply(`❌ Erro ao baixar do Facebook: ${error.message}`);
-              }
+              reply(`❌ Erro ao baixar do Facebook: ${error.message}`);
             });
 
         } catch (error) {
@@ -18932,14 +18773,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply('🎬 Baixando vídeo do Vimeo... Aguarde!');
 
-          vimeo.download(q, KeyCog)
+          vimeo.download(q, null)
             .then(async (result) => {
               if (!result.ok) {
-                if (result.msg.includes('API key inválida')) {
-                  vimeo.notifyOwnerAboutApiKey(nazu, numerodono, result.msg, command);
-                  return reply('🤖 *Sistema de Vimeo temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!');
-                }
-                return reply(`❌ Erro: ${result.msg}`);
+return reply(`❌ Erro: ${result.msg}`);
               }
 
               const formatDuration = (seconds) => {
@@ -18995,12 +18832,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             })
             .catch((error) => {
               console.error('Erro no download do Vimeo:', error);
-              if (error.message?.includes('API key inválida')) {
-                vimeo.notifyOwnerAboutApiKey(nazu, numerodono, error.message, command);
-                reply('🤖 *Sistema de Vimeo temporariamente indisponível*');
-              } else {
-                reply(`❌ Erro ao baixar do Vimeo: ${error.message}`);
-              }
+              reply(`❌ Erro ao baixar do Vimeo: ${error.message}`);
             });
 
         } catch (error) {
@@ -19037,7 +18869,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return num.toString();
           };
 
-          twitch.download(q, KeyCog).then(result => {
+          twitch.download(q, null).then(result => {
             if (!result.ok) {
               return reply(result.message || '❌ Erro ao baixar o vídeo do Twitch.');
             }
@@ -19120,8 +18952,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             console.error('Erro ao baixar do Twitch:', error);
 
             if (error.message?.includes('401') || error.message?.includes('403')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, `Erro de autenticação na API: ${error.message}`);
-              return reply('❌ Erro de autenticação da API. O dono foi notificado.');
+return reply('❌ Erro de autenticação da API. O dono foi notificado.');
             }
 
             if (error.message?.includes('404')) {
@@ -19168,7 +18999,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return num.toString();
           };
 
-          reddit.download(q, KeyCog).then(result => {
+          reddit.download(q, null).then(result => {
             if (!result.ok) {
               return reply(result.message || '❌ Erro ao baixar o post do Reddit.');
             }
@@ -19258,8 +19089,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             console.error('Erro ao baixar do Reddit:', error);
 
             if (error.message?.includes('401') || error.message?.includes('403')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, `Erro de autenticação na API: ${error.message}`);
-              return reply('❌ Erro de autenticação da API. O dono foi notificado.');
+return reply('❌ Erro de autenticação da API. O dono foi notificado.');
             }
 
             if (error.message?.includes('404')) {
@@ -19306,7 +19136,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return num.toString();
           };
 
-          dailymotion.download(q, KeyCog).then(result => {
+          dailymotion.download(q, null).then(result => {
             if (!result.ok) {
               return reply(result.message || '❌ Erro ao baixar o vídeo do Dailymotion.');
             }
@@ -19394,8 +19224,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             console.error('Erro ao baixar do Dailymotion:', error);
 
             if (error.message?.includes('401') || error.message?.includes('403')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, `Erro de autenticação na API: ${error.message}`);
-              return reply('❌ Erro de autenticação da API. O dono foi notificado.');
+return reply('❌ Erro de autenticação da API. O dono foi notificado.');
             }
 
             if (error.message?.includes('404')) {
@@ -19442,7 +19271,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return bytes + 'B';
           };
 
-          streamable.download(q, KeyCog).then(result => {
+          streamable.download(q, null).then(result => {
             if (!result.ok) {
               return reply(result.message || '❌ Erro ao baixar o vídeo do Streamable.');
             }
@@ -19528,8 +19357,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             console.error('Erro ao baixar do Streamable:', error);
 
             if (error.message?.includes('401') || error.message?.includes('403')) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, `Erro de autenticação na API: ${error.message}`);
-              return reply('❌ Erro de autenticação da API. O dono foi notificado.');
+return reply('❌ Erro de autenticação da API. O dono foi notificado.');
             }
 
             if (error.message?.includes('404')) {
@@ -19569,7 +19397,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           if (q.includes('facebook.com') || q.includes('fb.watch')) {
             return reply('❌ Esse link é do *Facebook*, não do Instagram!\n\n💡 Use: ' + prefix + 'fb ' + q);
           }
-          igdl.dl(q, KeyCog)
+          igdl.dl(q, null)
             .then(async (datinha) => {
               if (!datinha.ok) return reply(datinha.msg);
 
@@ -19583,10 +19411,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             })
             .catch(async (e) => {
               console.error('Erro no comando Instagram (promise):', e);
-              if (e.message && e.message.includes('API key inválida')) {
-                await notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "Instagram", prefix);
-                return reply('🤖 *Sistema de Instagram temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-              }
+              
               reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
             });
           return;
@@ -19594,10 +19419,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           console.error('Erro no comando Instagram:', e);
 
           // Verificar se é erro de API key e notificar o dono
-          if (e.message && e.message.includes('API key inválida')) {
-            await notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "Instagram", prefix);
-            return reply('🤖 *Sistema de Instagram temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-          }
+          
 
           reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
         }
@@ -19680,7 +19502,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply('🔍 Pesquisando...');
 
-          const searchResponse = await axios.get('https://cog.api.br/api/v1/search', {
+          const searchResponse = await axios.get('/* API removida */', {
             params: { q: q, max: 10 },
             headers: { 'X-API-Key': KeyCog },
             timeout: 120000
@@ -19705,8 +19527,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           console.error('Erro no comando google:', e);
 
           if (e.response?.status === 401) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida');
-            return reply('🤖 *Sistema temporariamente indisponível*');
+return reply('🤖 *Sistema temporariamente indisponível*');
           }
 
           reply('❌ Ocorreu um erro na pesquisa. Tente novamente.');
@@ -19722,7 +19543,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply('📰 Buscando notícias...');
 
-          const newsResponse = await axios.get('https://cog.api.br/api/v1/search/news', {
+          const newsResponse = await axios.get('/* API removida */', {
             params: { q: q, max: 10 },
             headers: { 'X-API-Key': KeyCog },
             timeout: 120000
@@ -19747,8 +19568,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           console.error('Erro no comando noticias:', e);
 
           if (e.response?.status === 401) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, 'API key inválida');
-            return reply('🤖 *Sistema temporariamente indisponível*');
+return reply('🤖 *Sistema temporariamente indisponível*');
           }
 
           reply('❌ Ocorreu um erro na pesquisa. Tente novamente.');
@@ -19820,7 +19640,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const isPinUrl = PIN_URL_REGEX.test(searchTerm);
           // Ensure API key is configured
           
-          const pinPromise = isPinUrl ? pinterest.dl(searchTerm, KeyCog) : pinterest.search(searchTerm, KeyCog);
+          const pinPromise = isPinUrl ? pinterest.dl(searchTerm, null) : pinterest.search(searchTerm, null);
 
           pinPromise
             .then(async (datinha) => {
@@ -19838,19 +19658,13 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             })
             .catch((e) => {
               console.error('Erro no comando pinterest (promise):', e);
-              if (e.message && e.message.includes('API key inválida')) {
-                ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "Pinterest", prefix);
-                return reply('🤖 *Sistema de Pinterest temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-              }
+              
               reply("Ocorreu um erro ao processar o Pinterest 💔");
             });
           return;
         } catch (e) {
           console.error('Erro no comando pinterest:', e);
-          if (e.message && e.message.includes('API key inválida')) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.message, "Pinterest", prefix);
-            return reply('🤖 *Sistema de Pinterest temporariamente indisponível*\n\n😅 Estou com problemas técnicos no momento. O administrador já foi notificado!\n\n⏰ Tente novamente em alguns minutos.');
-          }
+          
           reply("Ocorreu um erro ao processar o Pinterest 💔");
         }
         break;
@@ -20362,9 +20176,8 @@ Exemplo: ${prefix}numerodono 5511999999999
 
 🔹 *API Key (IA e Recursos)*
 Use: ${prefix}apikey <tipo> <chave>
-Tipos: gemini, openai, cognimax
+Tipos: vercel, siputzx
 • Necessário para comandos de IA
-• Obtenha em: cog.api.br/plans
 
 🔹 *Mensagem de Comando Não Encontrado*
 Use: ${prefix}configcmdnotfound <ação>
@@ -21148,11 +20961,9 @@ Precisa de ajuda? Entre em contato:
             };
           }
           // Apenas texto
-          else {
             baseMessage = {
               text: `${cabecalho}${q}`
             };
-          }
 
           const groups = await nazu.groupFetchAllParticipating();
           const totalGroups = Object.keys(groups).length;
@@ -21290,11 +21101,9 @@ Precisa de ajuda? Entre em contato:
             };
           }
           // Apenas texto
-          else {
             baseMessage = {
               text: `${cabecalho}${q}`
             };
-          }
 
           const totalSubscribers = subscribers.length;
           let enviados = 0;
@@ -23769,7 +23578,6 @@ ${prefix}togglecmdvip premium_ia off`);
           const keyPreview = KeyCog ? `${KeyCog.substring(0, 8)}...` : 'Não configurada';
 
           const statusMessage = [
-            "╭───🔑 STATUS API COGNIMA ───╮",
             `┊ ${statusColor} Status: ${statusEmoji} ${statusText}`,
             `┊ 🗝️ Key: ${keyPreview}`,
             `┊ 🕐 Última verificação: ${lastCheckTime}`,
@@ -24174,15 +23982,14 @@ ${prefix}togglecmdvip premium_ia off`);
               "replyMessage": {}
             }]
           };
-          var res;
-          res = await axios.post('https://cognima-quote.onrender.com/generate', json, {
+          res = await axios.post('https://bot.lyo.su/quote/generate', json, {
             headers: {
               'Content-Type': 'application/json'
             }
           });
           await sendSticker(nazu, from, {
             sticker: Buffer.from(res.data.result.image, 'base64'),
-            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`,
+            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
             packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫',
             type: 'image'
           }, {
@@ -24206,7 +24013,7 @@ ${prefix}togglecmdvip premium_ia off`);
             sticker: {
               url: datzc
             },
-            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`,
+            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
             packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫',
             type: 'image'
           }, {
@@ -24255,7 +24062,7 @@ ${prefix}togglecmdvip premium_ia off`);
             sticker: {
               url: `https://huratera.sirv.com/PicsArt_08-01-10.00.42.png?profile=Example-Text&text.0.text=${encodeURIComponent(processedText)}&text.0.outline.color=000000&text.0.outline.blur=0&text.0.outline.opacity=55&text.0.color=${cores}&text.0.font.family=${fontes}&text.0.font.weight=bold&text.0.background.color=ff0000`
             },
-            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`,
+            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
             packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫',
             type: 'image'
           }, {
@@ -24352,7 +24159,7 @@ ${prefix}togglecmdvip premium_ia off`);
           // Enviar sticker
           await sendSticker(nazu, from, {
             sticker: fs.readFileSync(outputWebp),
-            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`,
+            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
             packname: `👤 Usuario(a)ᮀ۟❁'￫\n🤖 Botᮀ۟❁'￫\n👑 Donoᮀ۟❁'￫\n🌐 Siteᮀ۟❁'￫`,
             type: 'image'
           }, {
@@ -24385,7 +24192,7 @@ ${prefix}togglecmdvip premium_ia off`);
           var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image');
           await sendSticker(nazu, from, {
             sticker: buffer,
-            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`,
+            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
             packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫',
             type: isVideo2 ? 'video' : 'image',
             forceSquare: true
@@ -24411,7 +24218,7 @@ ${prefix}togglecmdvip premium_ia off`);
           var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image');
           await sendSticker(nazu, from, {
             sticker: buffer,
-            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`,
+            author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
             packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫',
             type: isVideo2 ? 'video' : 'image'
           }, {
@@ -28468,7 +28275,7 @@ ${prefix}horoscopo <signo>
 
         // Função wrapper para a IA
         const aiFunctionHoroscope = (prompt) => {
-          return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog)
+          return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
             .then(response => response?.data?.choices?.[0]?.message?.content || '');
         };
 
@@ -28511,7 +28318,7 @@ Use ${prefix}horoscopo <signo> para ver a previsão!`);
 
         // Função wrapper para a IA
         const aiFunctionDebate = (prompt) => {
-          return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog)
+          return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
             .then(response => response?.data?.choices?.[0]?.message?.content || '');
         };
 
@@ -28535,7 +28342,7 @@ Use ${prefix}horoscopo <signo> para ver a previsão!`);
 
         // Função wrapper para a IA
         const aiFunctionStory = (prompt) => {
-          return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, KeyCog)
+          return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
             .then(response => response?.data?.choices?.[0]?.message?.content || '');
         };
 
@@ -30546,7 +30353,7 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
           await reply(`⭐ *Enviando likes...*\n⏳ Aguarde um momento...`);
 
           try {
-            const response = await axios.get(`https://cog.api.br/api/v1/freefire/sendlikes`, {
+            const response = await axios.get(`/* API removida */`, {
               params: {
                 playerId: playerId
               },
@@ -30572,7 +30379,7 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
 O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
 💳 *Como fazer upgrade:*
-• Acesse: https://cog.api.br/plans
+• Acesse: /* API removida */
 • Entre em contato para fazer upgrade do seu plano
 • Configure a nova API key após o upgrade
 
@@ -30647,8 +30454,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
             // Verificar se é erro de API key
             if (isApiKeyError(apiError)) {
-              await notifyOwnerAboutApiKey(nazu, nmrdn, apiError.response?.data?.message || apiError.message, 'Envio de Likes Free Fire');
-              return reply(`❌ *Erro na API Key*\n\n⚠️ Problema com a API key da Cognima. O dono do bot foi notificado.\n\n💡 Tente novamente mais tarde ou entre em contato com o dono do bot.`);
+return reply('❌ Comando indisponível no momento.');
             }
 
             // Verificar se é o caso de menos de 100 likes (mesmo vindo como erro HTTP)
@@ -30702,7 +30508,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
           reply('🔍 Buscando informações do jogador...');
 
           Promise.all([
-            axios.get(`https://cog.api.br/api/v1/brawlstars/players/${encodedTag}`, {
+            axios.get(`/* API removida */`, {
               headers: { 'X-API-Key': KeyCog },
               timeout: 120000
             }),
@@ -30791,8 +30597,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
               return reply('❌ Jogador não encontrado. Verifique a TAG e tente novamente.');
             }
             if (isApiKeyError(e)) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-              return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
             }
             reply('❌ Erro ao buscar informações do jogador.');
           });
@@ -30815,7 +30620,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
           reply('🔍 Buscando informações do clube...');
 
-          axios.get(`https://cog.api.br/api/v1/brawlstars/clubs/${encodedTag}`, {
+          axios.get(`/* API removida */`, {
             headers: { 'X-API-Key': KeyCog },
             timeout: 120000
           }).then(response => {
@@ -30900,8 +30705,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
               return reply('❌ Clube não encontrado. Verifique a TAG e tente novamente.');
             }
             if (isApiKeyError(e)) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-              return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
             }
             reply('❌ Erro ao buscar informações do clube.');
           });
@@ -31126,9 +30930,9 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
         let url;
         if (country === 'global') {
-          url = `https://cog.api.br/api/v1/brawlstars/rankings/global/${type}`;
+          url = `/* API removida */`;
         } else {
-          url = `https://cog.api.br/api/v1/brawlstars/rankings/${country}/${type}`;
+          url = `/* API removida */`;
         }
 
         // Se for ranking de brawler específico
@@ -31138,8 +30942,8 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
             const found = brawlersRes.data.list.find(b => b.name.toLowerCase() === brawlerId.toLowerCase());
             if (found) {
               url = country === 'global'
-                ? `https://cog.api.br/api/v1/brawlstars/rankings/global/brawlers/${found.id}`
-                : `https://cog.api.br/api/v1/brawlstars/rankings/${country}/brawlers/${found.id}`;
+                ? `/* API removida */`
+                : `/* API removida */`;
             }
 
             axios.get(url, {
@@ -31211,8 +31015,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
                 return reply('❌ País ou tipo de ranking não encontrado.');
               }
               if (isApiKeyError(e)) {
-                ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-                return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
               }
               reply('❌ Erro ao buscar ranking.');
             });
@@ -31290,8 +31093,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
               return reply('❌ País ou tipo de ranking não encontrado.');
             }
             if (isApiKeyError(e)) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-              return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
             }
             reply('❌ Erro ao buscar ranking.');
           });
@@ -31384,7 +31186,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
           reply('🔍 Buscando histórico de batalhas...');
 
-          axios.get(`https://cog.api.br/api/v1/brawlstars/players/${encodedTag}/battlelog`, {
+          axios.get(`/* API removida */`, {
             headers: { 'X-API-Key': KeyCog },
             timeout: 120000
           }).then(response => {
@@ -31448,8 +31250,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
               return reply('❌ Jogador não encontrado.');
             }
             if (isApiKeyError(e)) {
-              ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-              return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
             }
             reply('❌ Erro ao buscar histórico de batalhas.');
           });
@@ -31731,7 +31532,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
         reply('🔍 Buscando membros do clube...');
 
-        axios.get(`https://cog.api.br/api/v1/brawlstars/clubs/${encodedTag}/members`, {
+        axios.get(`/* API removida */`, {
           headers: { 'X-API-Key': KeyCog },
           timeout: 120000
         }).then(response => {
@@ -31780,8 +31581,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
             return reply('❌ Clube não encontrado.');
           }
           if (isApiKeyError(e)) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-            return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
           }
           reply('❌ Erro ao buscar membros do clube.');
         });
@@ -31806,8 +31606,8 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
         });
 
         Promise.all([
-          axios.get(`https://cog.api.br/api/v1/brawlstars/players/${tag1}`, { headers: { 'X-API-Key': KeyCog }, timeout: 120000 }),
-          axios.get(`https://cog.api.br/api/v1/brawlstars/players/${tag2}`, { headers: { 'X-API-Key': KeyCog }, timeout: 120000 })
+          axios.get(`/* API removida */`, { headers: { 'X-API-Key': KeyCog }, timeout: 120000 }),
+          axios.get(`/* API removida */`, { headers: { 'X-API-Key': KeyCog }, timeout: 120000 })
         ]).then(([res1, res2]) => {
           if (!res1.data?.tag || !res2.data?.tag) {
             return reply('❌ Um ou ambos os jogadores não foram encontrados.');
@@ -31861,8 +31661,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
             return reply('❌ Um ou ambos os jogadores não foram encontrados.');
           }
           if (isApiKeyError(e)) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-            return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
           }
           reply('❌ Erro ao comparar jogadores.');
         });
@@ -31883,7 +31682,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
 
         reply('🔍 Buscando brawlers do jogador...');
 
-        axios.get(`https://cog.api.br/api/v1/brawlstars/players/${encodedTag}`, {
+        axios.get(`/* API removida */`, {
           headers: { 'X-API-Key': KeyCog },
           timeout: 120000
         }).then(response => {
@@ -31947,8 +31746,7 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
             return reply('❌ Jogador não encontrado.');
           }
           if (isApiKeyError(e)) {
-            ia.notifyOwnerAboutApiKey(nazu, nmrdn, e.response?.data?.message || e.message);
-            return reply(`❌ Erro na API. O dono foi notificado.`);
+return reply(`❌ Erro na API. O dono foi notificado.`);
           }
           reply('❌ Erro ao buscar brawlers do jogador.');
         });

@@ -1,7 +1,7 @@
 {
     "name": "nazuna",
-    "version": "8.0.0",
-    "description": "Bot de whatsapp criada por hiudy",
+    "version": "9.0.0",
+    "description": "Nazuna Bot - Bot de WhatsApp multifuncional",
     "type": "module",
     "main": "dados/src/connect.js",
     "scripts": {
@@ -13,10 +13,9 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/hiudyy/nazuna.git"
+        "url": "git+https://github.com/Gumballxnz/nazuna-bot.git"
     },
-    "homepage": "https://cognima.com.br",
-    "author": "Hiudy",
+    "author": "Gumball",
     "license": "ISC",
     "dependencies": {
         "@distube/ytdl-core": "^4.16.0",
@@ -24,6 +23,7 @@
         "@tobyg74/tiktok-api-dl": "^1.1.2",
         "@whiskeysockets/baileys": "^7.0.0-rc.9",
         "axios": "^1.13.2",
+        "cheerio": "^1.0.0",
         "fg-senna": "^0.0.7",
         "fluent-ffmpeg": "^2.1.3",
         "linkedom": "^0.18.12",
