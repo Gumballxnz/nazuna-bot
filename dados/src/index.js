@@ -1012,39 +1012,9 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     let sender;
     
     
-    // --- AUTO DOWNLOAD YOUTUBE (Arquitetura Senna) ---
-    try {
-      const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/i;
-      if (body && ytRegex.test(body)) {
-        const ytLink = body.match(/https?:\/\/[^\s]+/i)?.[0];
-        if (ytLink) {
-           (async () => {
-              try {
-                 await baixarDireto(nazu, from, info, ytLink, 'video');
-              } catch (e) {}
-           })();
-        }
-      }
-    } catch (e) {}
+    
 
-    // --- AUTO DOWNLOAD TWITTER (Arquitetura Senna) ---
-    try {
-      if (body && /(twitter\.com|x\.com)\/.+\/status\/\d+/i.test(body)) {
-        const twitterLink = body.match(/https?:\/\/[^\s]+/i)?.[0];
-        if (twitterLink) {
-           (async () => {
-              try {
-                 const { downloadTwitter } = await import('./utils/extraDl.js');
-                 const twtRes = await downloadTwitter(twitterLink);
-                 const caption = `🐦 *AutoDownload Twitter*\n👤 *Autor:* ${twtRes.author}`;
-                 for (const item of twtRes.media) {
-                     if (item.type === 'video' || item.type === 'gif') {
-                         await nazu.sendMessage(from, { video: { url: item.url }, caption }, { quoted: info });
-                     } else {
-                         await nazu.sendMessage(from, { image: { url: item.url }, caption }, { quoted: info });
-                     }
-                 }
-              } catch (e) {}
+    
            })();
         }
       }

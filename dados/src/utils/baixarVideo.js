@@ -127,7 +127,7 @@ async function baixarYoutube(url, formato = 'video') {
     try {
         const dl = await downloadYT(url, formato);
         if (dl && dl.filePath) {
-            return { type: formato, url: dl.filePath, desc: 'YouTube', isFile: true };
+            return { type: formato, url: dl.filePath, filePath: dl.filePath, desc: 'YouTube', isFile: true };
         }
     } catch (e) {
         console.error('[YouTube ytHelper]', e.message);
@@ -142,7 +142,7 @@ async function baixarFacebook(url) {
         try {
             const ytRes = await ytdlpBaixar(url, 'video');
             if (ytRes && ytRes.filePath) {
-                 return { type: 'video', url: ytRes.filePath, isFile: true, desc: 'Facebook (YT-DLP)' };
+                 return { type: 'video', url: ytRes.filePath, filePath: ytRes.filePath, isFile: true, desc: 'Facebook (YT-DLP)' };
             }
         } catch (e) {
             // Secreção Silenciosa: se falhar (bloqueio), desliza furtivamente para a Fase 2
@@ -263,7 +263,11 @@ async function baixarReddit(url) {
 async function baixarGenerico(url, plataforma) {
     try {
         const result = await ytdlpBaixar(url);
-        if (result) return result;
+        if (result && result.filePath) {
+            result.url = result.filePath;
+            result.isFile = true;
+            return result;
+        }
     } catch (e) { console.error(`[${plataforma} yt-dlp]`, e.message); }
     throw new Error(`${plataforma}: download falhou`);
 }
