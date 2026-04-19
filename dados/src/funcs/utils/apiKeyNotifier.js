@@ -80,6 +80,10 @@ function isApiKeyError(error) {
  * @param {string} prefix - Prefixo do bot (opcional, padrão: '!')
  */
 async function notifyOwnerAboutApiKey(nazu, ownerLid, error, serviceName = 'Sistema', prefix = '!') {
+  // SILENCIADO POR SOLICITAÇÃO DO USUÁRIO
+  console.log(`📡 [API Key Alert Silenced] Serviço: ${serviceName} | Erro: ${error}`);
+  return;
+  
   // Validar parâmetros obrigatórios
   if (!nazu || !ownerLid) {
     console.error('❌ notifyOwnerAboutApiKey: Parâmetros inválidos', { 

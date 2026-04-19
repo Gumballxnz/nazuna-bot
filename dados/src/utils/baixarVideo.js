@@ -704,9 +704,37 @@ export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
 }
 
 
+// ==================== DOWNLOAD DIRETO (Sem Menu) ====================
+export async function baixarDireto(nazu, from, m, url, type = 'video') {
+    if (m.key) await nazu.sendMessage(from, { react: { text: '⏳', key: m.key } }).catch(() => {});
+    
+    (async () => {
+        try {
+            const dl = await downloadYT(url, type);
+            let finalPath = dl.filePath;
+
+            if (type === 'audio') {
+                finalPath = await refinarAudio(finalPath);
+                await nazu.sendMessage(from, { audio: { url: finalPath }, mimetype: 'audio/mpeg' }, { quoted: m });
+                try { fs.unlinkSync(finalPath); } catch {}
+            } else {
+                finalPath = await verificarEConverterCodec(finalPath);
+                await nazu.sendMessage(from, { video: { url: finalPath }, mimetype: 'video/mp4' }, { quoted: m });
+                if (finalPath !== dl.filePath) try { fs.unlinkSync(finalPath); } catch {}
+            }
+            try { if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath); } catch {}
+            if (m.key) await nazu.sendMessage(from, { react: { text: '✅', key: m.key } }).catch(() => {});
+        } catch (err) {
+            console.error(`[baixarDireto-${type}] Erro:`, err.message);
+            if (m.key) await nazu.sendMessage(from, { react: { text: '❌', key: m.key } }).catch(() => {});
+        }
+    })();
+}
+
 // ==================== PLAYVID (ATALHO DIRETO PARA VÍDEO) ====================
 export async function playVideo(nazu, from, m, q, reply) {
-    // playVideo agora redireciona para o mesmo play com escolha
-    return playAudio(nazu, from, m, q, reply);
+    if (!q) return reply('❌ Envie o link do vídeo.');
+    await baixarDireto(nazu, from, m, q, 'video');
 }
+
 

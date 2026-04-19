@@ -37,7 +37,7 @@ import * as ia from './funcs/private/ia.js';
 import * as vipCommandsManager from './utils/vipCommandsManager.js';
 import { notifyOwnerAboutApiKey, isApiKeyError } from './funcs/utils/apiKeyNotifier.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
-import baixarVideoLocal, { playAudio, playVideo, handlePlayConfirmation } from './utils/baixarVideo.js';
+import baixarVideoLocal, { playAudio, playVideo, handlePlayConfirmation, baixarDireto } from './utils/baixarVideo.js';
 import { downloadTwitter, downloadAPK } from './utils/extraDl.js';
 import fsPromises from 'fs/promises';
 import {
@@ -1011,6 +1011,22 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     if (!info.key.participant && !info.key.remoteJid) return;
     let sender;
     
+    
+    // --- AUTO DOWNLOAD YOUTUBE (Arquitetura Senna) ---
+    try {
+      const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/i;
+      if (body && ytRegex.test(body)) {
+        const ytLink = body.match(/https?:\/\/[^\s]+/i)?.[0];
+        if (ytLink) {
+           (async () => {
+              try {
+                 await baixarDireto(nazu, from, info, ytLink, 'video');
+              } catch (e) {}
+           })();
+        }
+      }
+    } catch (e) {}
+
     // --- AUTO DOWNLOAD TWITTER (Arquitetura Senna) ---
     try {
       if (body && /(twitter\.com|x\.com)\/.+\/status\/\d+/i.test(body)) {
@@ -19103,13 +19119,11 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
         });
         break;
       case 'play':
-      case 'ytmp3':
+            case 'ytmp3':
         try {
-          await playAudio(nazu, from, info, q, reply);
-        } catch (e) {
-          console.error('Erro no play:', e.message);
-          reply('❌ Erro ao processar o comando play.');
-        }
+          if (!q) return reply('❌ Envie o link do YouTube.');
+          await baixarDireto(nazu, from, info, q, 'audio');
+        } catch (e) { reply('❌ Erro no ytmp3.'); }
         break;
 
       case 'spotifydl':
@@ -19489,13 +19503,11 @@ As consultas de dados estão disponíveis apenas no *plano ilimitado*.
         break;
 
       case 'playvid':
-      case 'ytmp4':
+            case 'ytmp4':
         try {
-          await playVideo(nazu, from, info, q, reply);
-        } catch (e) {
-          console.error('Erro no playvid:', e.message);
-          reply('❌ Erro ao processar o comando playvid.');
-        }
+          if (!q) return reply('❌ Envie o link do YouTube.');
+          await baixarDireto(nazu, from, info, q, 'video');
+        } catch (e) { reply('❌ Erro no ytmp4.'); }
         break;
       case 'lyrics':
         try {
