@@ -844,32 +844,30 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   // ═══════════════════════════════════════════════════════════════════
 
 
-  async function handleAutoDownload(nazu, from, url, info) {
-    try {
-      const urlLower = url.toLowerCase();
-      // Todas as plataformas suportadas pelo download local
-      const supportedSites = [
-        'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
-        'twitter.com', 'x.com',
-        'instagram.com', 'instagr.am',
-        'youtube.com', 'youtu.be',
-        'facebook.com', 'fb.watch', 'fb.com',
-        'reddit.com', 'redd.it',
-        'pinterest.com', 'pin.it',
-        'spotify.com', 'soundcloud.com',
-        'vimeo.com', 'dailymotion.com', 'dai.ly',
-        'streamable.com', 'twitch.tv', 'bandcamp.com'
-      ];
-      
-      if (supportedSites.some(site => urlLower.includes(site))) {
-         await baixarVideoLocal(nazu, from, info, url, (msg) => {});
-         return true;
-      }
-      return false;
-    } catch (e) {
-      console.error('Erro no autodl:', e.message);
-      return false;
+  function handleAutoDownload(nazu, from, url, info) {
+    const urlLower = url.toLowerCase();
+    // Todas as plataformas suportadas pelo download local
+    const supportedSites = [
+      'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
+      'twitter.com', 'x.com',
+      'instagram.com', 'instagr.am',
+      'youtube.com', 'youtu.be',
+      'facebook.com', 'fb.watch', 'fb.com',
+      'reddit.com', 'redd.it',
+      'pinterest.com', 'pin.it',
+      'spotify.com', 'soundcloud.com',
+      'vimeo.com', 'dailymotion.com', 'dai.ly',
+      'streamable.com', 'twitch.tv', 'bandcamp.com'
+    ];
+    
+    if (supportedSites.some(site => urlLower.includes(site))) {
+       // Fire-and-forget: roda em background sem bloquear
+       baixarVideoLocal(nazu, from, info, url, (msg) => {}).catch(e => {
+         console.error('Erro no autodl background:', e.message);
+       });
+       return true;
     }
+    return false;
   }
   const { default: menus } = await import('./menus/index.js');
   const {
@@ -3226,11 +3224,8 @@ Código: *${roleCode}*`,
     if (autodlAtivo && budy2.includes('http') && !isCmd) {
       const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
       if (urlMatch && urlMatch.length > 0) {
-        try {
-          await handleAutoDownload(nazu, from, urlMatch[0], info);
-        } catch (e) {
-          console.error('Erro no autodl:', e);
-        }
+        // Dispara o download sem bloquear — bot continua respondendo
+        handleAutoDownload(nazu, from, urlMatch[0], info);
       }
     }
     if (isGroup && groupData.autoSticker && !info.key.fromMe) {
