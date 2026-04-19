@@ -339,15 +339,15 @@ async function verificarEConverterCodec(filePath) {
         if (codec === 'h264' || codec === 'h264(high)') {
             // Se já for H264, usamos turbo copy apenas para afinar o faststart
             const finalPath = filePath.replace('.mp4', '_ready.mp4');
-            await execPromise(`ffmpeg -i "${filePath}" -c copy -movflags +faststart "${finalPath}"`);
+            await execPromise(`ffmpeg -y -i "${filePath}" -c copy -movflags +faststart "${finalPath}"`);
             try { fs.unlinkSync(filePath); } catch {}
             return finalPath;
-        } else {
+        } else if (codec && codec !== '') {
             // Se for VP9, AV1, HEVC, etc, o WhatsApp recusa! Tritramos pixels com libx264
             console.log(`[Codec Sniffer] Codec Incompatível (${codec}). Triturando formato para H.264...`);
             const finalPath = filePath.replace('.mp4', '_ready.mp4');
-            // fast preset e crf 28 para conversão super leve no VPS de 1GB
-            await execPromise(`ffmpeg -i "${filePath}" -c:v libx264 -preset fast -crf 28 -c:a aac -movflags +faststart "${finalPath}"`);
+            // ultrafast preset e crf 30 para conversão ultra leve no VPS de 1GB
+            await execPromise(`ffmpeg -y -i "${filePath}" -c:v libx264 -preset ultrafast -crf 30 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:a aac -movflags +faststart "${finalPath}"`);
             try { fs.unlinkSync(filePath); } catch {}
             return finalPath;
         }
