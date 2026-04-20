@@ -678,11 +678,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   // KeyCog removido - sistema 100% gratuito
   const KeyCog = null;
 
-if (!null || KeyCog.trim() === '') {
-    KeyCog = false;
-  } else if (!isValidApiKey(KeyCog)) {
-    KeyCog = false;
-  }
+
 
   // Sistema de degradação automática de pets
   function applyPetDegradation(pets) {
@@ -21485,12 +21481,7 @@ Precisa de ajuda? Entre em contato:
       case 'api-key':
         try {
           if (!isOwner) return reply("Este comando é exclusivo para o meu dono!");
-          if (!q) return reply(`Por favor, digite a nova API key.\nExemplo: ${prefix}${command} abc123xyz`);
-          let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
-          config.apikey = q;
-          writeJsonFile(CONFIG_FILE, config);
-          KeyCog = q; // Atualiza a variável global imediatamente
-          await reply(`✅ API key alterada com sucesso!\n\n🔄 A chave foi atualizada e já está ativa.`);
+          await reply("ℹ️ O sistema agora é 100% gratuito. Você não precisa mais de uma API Key! 🎉");
         } catch (e) {
           console.error(e);
           await reply("🐝 Ops! Ocorreu um erro inesperado. Tente novamente em alguns instantes, por favor! 🥺");
