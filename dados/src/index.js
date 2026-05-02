@@ -235,7 +235,8 @@ import {
   MODO_LITE_FILE,
   JID_LID_CACHE_FILE,
   MASS_MENTION_LIMIT_FILE,
-  MASS_MENTION_CONFIG_FILE
+  MASS_MENTION_CONFIG_FILE,
+  ANTIPALAVRA_UNBANS_FILE
 } from './utils/paths.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -2078,10 +2079,36 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       const potentialCode = body.match(/\b[A-F0-9]{8}\b/)[0].toUpperCase();
       const validation = validateActivationCode(potentialCode);
       if (validation.valid) {
+        if (!isGroupAdmin && !isOwnerOrSub) {
+          return reply("🚫 Apenas administradores do grupo ou o dono do bot podem usar códigos de ativação.");
+        }
         try {
           const activationResult = useActivationCode(potentialCode, from, sender);
           await reply(activationResult.message);
           if (activationResult.success) {
+            // Notifica o dono
+            try {
+              const configPath = pathz.join(__dirname, '..', 'config.json');
+              const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+              const ownerNumber = config.numerodono || "5511999999999";
+              const ownerJid = `${ownerNumber}@s.whatsapp.net`;
+              
+              const groupMetadata = await getCachedGroupMetadata(from);
+              const groupName = groupMetadata?.subject || 'Desconhecido';
+              
+              const notifyMsg = `✅ *CÓDIGO DE ATIVAÇÃO USADO*\n\n` +
+                                `🎫 *Código:* ${potentialCode}\n` +
+                                `👥 *Grupo:* ${groupName}\n` +
+                                `👤 *Ativado por:* @${sender.split('@')[0]}\n` +
+                                `📅 *Data:* ${new Date().toLocaleString('pt-BR')}`;
+                                
+              await nazu.sendMessage(ownerJid, { 
+                text: notifyMsg,
+                mentions: [sender]
+              });
+            } catch (notifyErr) {
+              console.error("Erro ao notificar dono sobre uso de código:", notifyErr.message);
+            }
             return;
           }
         } catch (e) {
@@ -2684,6 +2711,59 @@ Código: *${roleCode}*`,
       }
     };
     startGpScheduleWorker(nazu);
+
+    // Sistema de Unban Automático (Antipalavra)
+    let antipalavraUnbanWorkerStarted = global.antipalavraUnbanWorkerStarted || false;
+    const startAntipalavraUnbanWorker = (nazuInstance) => {
+      try {
+        if (antipalavraUnbanWorkerStarted) return;
+        antipalavraUnbanWorkerStarted = true;
+        global.antipalavraUnbanWorkerStarted = true;
+
+        console.log('[ANTIPALAVRA] Sistema de desbanimento automático iniciado.');
+
+        setInterval(async () => {
+          try {
+            if (!fs.existsSync(ANTIPALAVRA_UNBANS_FILE)) return;
+            
+            let unbans = [];
+            try {
+              const content = fs.readFileSync(ANTIPALAVRA_UNBANS_FILE, 'utf-8');
+              unbans = JSON.parse(content) || [];
+            } catch (e) { return; }
+            
+            if (unbans.length === 0) return;
+            
+            const now = Date.now();
+            const toUnban = unbans.filter(u => u.unbanAt <= now);
+            const remaining = unbans.filter(u => u.unbanAt > now);
+            
+            if (toUnban.length > 0) {
+              for (const ban of toUnban) {
+                try {
+                  console.log(`[ANTIPALAVRA] Executando unban automático: @${ban.userId.split('@')[0]} no grupo ${ban.groupId}`);
+                  await nazuInstance.groupParticipantsUpdate(ban.groupId, [ban.userId], 'add');
+                  await nazuInstance.sendMessage(ban.groupId, { 
+                    text: `✅ *ANTIPALAVRA - UNBAN AUTOMÁTICO*\n\n` +
+                          `👤 @${ban.userId.split('@')[0]} foi adicionado de volta após cumprir o prazo de 5 horas.`,
+                    mentions: [ban.userId]
+                  }).catch(() => {});
+                } catch (e) {
+                  console.error(`[ANTIPALAVRA] Erro ao re-adicionar usuário ${ban.userId}:`, e.message);
+                }
+              }
+              // Atualiza o arquivo removendo os processados
+              fs.writeFileSync(ANTIPALAVRA_UNBANS_FILE, JSON.stringify(remaining, null, 2));
+            }
+          } catch (e) {
+            console.error('[ANTIPALAVRA Worker] Erro inesperado:', e.message);
+          }
+        }, 60 * 1000); // Verifica a cada minuto
+      } catch (e) {
+        console.error('[ANTIPALAVRA Worker] Falha ao iniciar:', e.message);
+      }
+    };
+    startAntipalavraUnbanWorker(nazu);
 
     let autoHorariosWorkerStarted = global.autoHorariosWorkerStarted || false;
     const startAutoHorariosWorker = (nazuInstance) => {
@@ -3684,19 +3764,37 @@ Código: *${roleCode}*`,
                 );
 
                 // Remove o usuário do grupo
-                await nazu.groupParticipantsUpdate(from, [sender], 'remove').catch(err =>
+                await nazu.groupParticipantsUpdate(from, [sender], 'remove').then(async () => {
+                  // Agenda desbanimento para daqui a 5 horas (5 * 60 * 60 * 1000 ms)
+                  const unbanAt = Date.now() + (5 * 60 * 60 * 1000);
+                  try {
+                    let unbans = [];
+                    if (fs.existsSync(ANTIPALAVRA_UNBANS_FILE)) {
+                      try {
+                        const content = fs.readFileSync(ANTIPALAVRA_UNBANS_FILE, 'utf-8');
+                        unbans = JSON.parse(content) || [];
+                      } catch (e) { unbans = []; }
+                    }
+                    unbans.push({ groupId: from, userId: sender, unbanAt });
+                    fs.writeFileSync(ANTIPALAVRA_UNBANS_FILE, JSON.stringify(unbans, null, 2));
+                    console.log(`[ANTIPALAVRA] Unban agendado para @${sender.split('@')[0]} em ${from} para daqui a 5h.`);
+                  } catch (e) {
+                    console.error('[ANTIPALAVRA] Erro ao agendar desbanimento:', e.message);
+                  }
+                }).catch(err =>
                   console.error('[ANTIPALAVRA] Erro ao remover usuário:', err.message)
                 );
 
-                // Registra o banimento
+                // Registra o banimento nas estatísticas
                 antipalavra.registerBan(from, sender, detectionResult.palavra);
 
                 // Envia notificação
                 await nazu.sendMessage(from, {
-                  text: `🚫 *ANTIPALAVRA - BANIMENTO AUTOMÁTICO*\n\n` +
+                  text: `🚫 *ANTIPALAVRA - BANIMENTO TEMPORÁRIO*\n\n` +
                     `👤 Usuário: @${sender.split('@')[0]}\n` +
                     `⚠️ Palavra detectada: "${detectionResult.palavra}"\n` +
-                    `🔨 Ação: Banimento automático\n\n` +
+                    `🔨 Ação: Banimento de 5 horas\n` +
+                    `⏰ O usuário será adicionado de volta automaticamente após o prazo.\n\n` +
                     `_O sistema antipalavra protege este grupo._`,
                   mentions: [sender]
                 }).catch(err => console.error('[ANTIPALAVRA] Erro ao enviar notificação:', err.message));
@@ -16259,6 +16357,42 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           await reply("❌ Ocorreu um erro inesperado ao gerar o código.");
         }
         break;
+      case 'grupos':
+      case 'listagrupos':
+        if (!isOwnerOrSub) return reply(OWNER_ONLY_MESSAGE);
+        try {
+          const allGroups = await nazu.groupFetchAllParticipating();
+          const groupIds = Object.keys(allGroups);
+          let txt = `📋 *LISTA DE GRUPOS (${groupIds.length})*\n\n`;
+          
+          for (const id of groupIds) {
+            const metadata = allGroups[id];
+            const rental = getGroupRentalStatus(id);
+            const status = rental.active || rental.permanent ? '✅' : '❌';
+            txt += `${status} *${metadata.subject}*\nID: \`\`\`${id}\`\`\`\n\n`;
+          }
+          
+          await reply(txt);
+        } catch (e) {
+          console.error("Erro no comando grupos:", e);
+          reply(`❌ Erro ao listar grupos: ${e.message}`);
+        }
+        break;
+
+      case 'sairdogrupo':
+      case 'leavegp':
+        if (!isOwnerOrSub) return reply(OWNER_ONLY_MESSAGE);
+        const targetGp = args[0] || from;
+        if (!targetGp.includes('@g.us')) return reply("❌ ID de grupo inválido.");
+        try {
+          await reply("👋 Saindo do grupo conforme solicitado...");
+          await nazu.groupLeave(targetGp);
+        } catch (e) {
+          console.error("Erro no comando sairdogrupo:", e);
+          reply(`❌ Erro ao sair: ${e.message}`);
+        }
+        break;
+
       case 'limparaluguel':
         try {
           if (!isOwner) return reply("Apenas o dono pode usar este comando. 🚫");

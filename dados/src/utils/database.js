@@ -1050,6 +1050,21 @@ const validateActivationCode = code => {
       message: `😕 Este código já foi usado em ${new Date(codeInfo.usedAt).toLocaleDateString('pt-BR')} por ${getUserName(codeInfo.usedBy) || 'alguém'}!`
     };
   }
+
+  // Verifica expiração de 24 horas
+  if (codeInfo.createdAt) {
+    const now = new Date();
+    const createdAt = new Date(codeInfo.createdAt);
+    const diffInHours = Math.abs(now - createdAt) / 36e5;
+    if (diffInHours > 24) {
+      return {
+        valid: false,
+        expired: true,
+        message: '❌ Este código de ativação expirou! Ele tinha validade de apenas 24 horas.'
+      };
+    }
+  }
+
   return {
     valid: true,
     ...codeInfo

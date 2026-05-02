@@ -15,7 +15,7 @@ import { execSync } from 'child_process';
 
 import PerformanceOptimizer from './utils/performanceOptimizer.js';
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
-import { loadMsgBotOn } from './utils/database.js';
+import { loadMsgBotOn, isRentalModeActive, getGroupRentalStatus, setGroupRental } from './utils/database.js';
 import { buildUserId } from './utils/helpers.js';
 import { initCaptchaIndex } from './utils/captchaIndex.js';
 
@@ -478,6 +478,42 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
         inf.participants = inf.participants.map(isValidParticipant).filter(Boolean);
 
         if (inf.participants.some(p => p && typeof p === 'string' && p.startsWith(botId))) {
+            // Se o bot foi adicionado, verifica se o modo de aluguel está ativo e se o grupo é autorizado
+            if (isRentalModeActive()) {
+                const configPath = path.join(__dirname, '..', 'config.json');
+                const config = JSON.parse(readFileSync(configPath, 'utf8'));
+                const rentalStatus = getGroupRentalStatus(from);
+                if (!rentalStatus.active) {
+                    const ownerNumber = config.numerodono || "5511999999999";
+                    const ownerJid = `${ownerNumber}@s.whatsapp.net`;
+                    const isOwnerAdder = inf.author === ownerJid || (config.lidowner && inf.author === config.lidowner);
+
+                    if (isOwnerAdder) {
+                        // Se o dono adicionou, autoriza permanentemente o grupo automaticamente
+                        setGroupRental(from, 'permanent');
+                        await NazunaSock.sendMessage(from, { 
+                            text: "👑 *DONO DETECTADO*\n\nIdentifiquei que o meu dono me adicionou a este grupo. O aluguel foi ativado automaticamente como *PERMANENTE*. Divirtam-se! ✨"
+                        }).catch(() => {});
+                        return;
+                    }
+
+                    await NazunaSock.sendMessage(from, { 
+                        text: `⏳ *ESTE GRUPO NÃO ESTÁ AUTORIZADO*\n\nO modo de aluguel global está ATIVADO. Tens *24 horas* para enviar um código de ativação válido ou solicitar a autorização ao meu dono, caso contrário sairei automaticamente para poupar recursos.\n\n📱 *Contato do Dono:* wa.me/${ownerNumber}\n\nContate para ativar.`
+                    }).catch(() => {});
+                    
+                    setTimeout(async () => {
+                        try {
+                            const finalStatus = getGroupRentalStatus(from);
+                            if (!finalStatus.active) {
+                                await NazunaSock.groupLeave(from);
+                                console.log(`[AUTO-LEAVE] Tempo esgotado (24h). Saí do grupo não autorizado: ${from}`);
+                            }
+                        } catch (err) {
+                            console.error(`[AUTO-LEAVE] Erro ao sair do grupo ${from}:`, err.message);
+                        }
+                    }, 86400000); // 24 horas
+                }
+            }
             return;
         }
 

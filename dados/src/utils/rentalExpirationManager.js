@@ -88,6 +88,9 @@ class RentalExpirationManager {
     try {
       const startTime = Date.now();
       await this.log('Starting rental expiration check...');
+      
+      // Verifica códigos de ativação expirados (24h)
+      await this.checkExpiredActivationCodes();
 
       this.stats.totalChecks++;
       this.lastCheckTime = new Date();
@@ -439,6 +442,55 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
     };
     await this.log('Statistics reset');
     return true;
+  }
+
+  async checkExpiredActivationCodes() {
+    try {
+      const DONO_DIR = path.join(__dirname, '../../database/dono');
+      const CODIGOS_FILE = path.join(DONO_DIR, 'codigos_aluguel.json');
+
+      let data;
+      try {
+        const content = await fs.readFile(CODIGOS_FILE, 'utf8');
+        data = JSON.parse(content);
+      } catch (e) {
+        return;
+      }
+
+      if (!data || !data.codes) return;
+
+      const now = new Date();
+      const ownerInfo = await this.getOwnerInfo();
+      const ownerJid = ownerInfo.contact;
+      let hasChanges = false;
+
+      for (const [code, info] of Object.entries(data.codes)) {
+        if (info.used || info.expiredNotified) continue;
+
+        if (info.createdAt) {
+          const createdAt = new Date(info.createdAt);
+          const diffInHours = Math.abs(now - createdAt) / 36e5;
+
+          if (diffInHours > 24) {
+            const durationTxt = info.duration === 'permanent' ? 'Permanente ✨' : `${info.duration} dias ⏳`;
+            const msg = `⚠️ *CÓDIGO EXPIRADO (24H)*\n\nO código *${code}* não foi usado em 24h e agora está inválido.\n\n📅 *Gerado em:* ${createdAt.toLocaleString('pt-BR')}\n⏳ *Duração:* ${durationTxt}`;
+            
+            await this.nazu.sendMessage(ownerJid, { text: msg }).catch(err => {
+               console.error("Erro ao enviar notificação de código expirado ao dono:", err.message);
+            });
+            
+            info.expiredNotified = true;
+            hasChanges = true;
+          }
+        }
+      }
+
+      if (hasChanges) {
+        await fs.writeFile(CODIGOS_FILE, JSON.stringify(data, null, 2));
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar códigos expirados:', error);
+    }
   }
 }
 
