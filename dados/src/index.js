@@ -2742,12 +2742,33 @@ Código: *${roleCode}*`,
               for (const ban of toUnban) {
                 try {
                   console.log(`[ANTIPALAVRA] Executando unban automático: @${ban.userId.split('@')[0]} no grupo ${ban.groupId}`);
-                  await nazuInstance.groupParticipantsUpdate(ban.groupId, [ban.userId], 'add');
-                  await nazuInstance.sendMessage(ban.groupId, { 
-                    text: `✅ *ANTIPALAVRA - UNBAN AUTOMÁTICO*\n\n` +
-                          `👤 @${ban.userId.split('@')[0]} foi adicionado de volta após cumprir o prazo de 5 horas.`,
-                    mentions: [ban.userId]
-                  }).catch(() => {});
+                  const response = await nazuInstance.groupParticipantsUpdate(ban.groupId, [ban.userId], 'add');
+                  const result = response && response[0] ? String(response[0].status) : null;
+                  
+                  if (result === '200') {
+                    await nazuInstance.sendMessage(ban.groupId, { 
+                      text: `✅ *ANTIPALAVRA - UNBAN AUTOMÁTICO*\n\n` +
+                            `👤 @${ban.userId.split('@')[0]} foi adicionado de volta após cumprir o prazo de 5 horas.`,
+                      mentions: [ban.userId]
+                    }).catch(() => {});
+                  } else {
+                    console.log(`[ANTIPALAVRA] Status ${result} ao adicionar. Tentando enviar convite para ${ban.userId}`);
+                    try {
+                      const code = await nazuInstance.groupInviteCode(ban.groupId);
+                      const inviteLink = `https://chat.whatsapp.com/${code}`;
+                      
+                      await nazuInstance.sendMessage(ban.userId, {
+                        text: `✅ *Seu banimento terminou!*\n\nVocê já cumpriu as 5 horas de banimento temporário do sistema antipalavra.\n\nComo o WhatsApp bloqueia que administradores adicionem de volta pessoas removidas recentemente de forma automática, por favor, clique no link abaixo para retornar ao grupo:\n\n🔗 ${inviteLink}`
+                      });
+                      
+                      await nazuInstance.sendMessage(ban.groupId, {
+                        text: `✅ *ANTIPALAVRA - UNBAN CONCLUÍDO*\n\n👤 @${ban.userId.split('@')[0]} cumpriu as 5 horas de punição.\n⚠️ O WhatsApp impediu a re-adição direta, então enviei o link de convite no privado dele(a).`,
+                        mentions: [ban.userId]
+                      }).catch(() => {});
+                    } catch (inviteErr) {
+                      console.error(`[ANTIPALAVRA] Erro ao enviar convite:`, inviteErr.message);
+                    }
+                  }
                 } catch (e) {
                   console.error(`[ANTIPALAVRA] Erro ao re-adicionar usuário ${ban.userId}:`, e.message);
                 }
