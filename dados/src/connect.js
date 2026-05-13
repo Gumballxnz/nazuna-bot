@@ -1490,144 +1490,79 @@ async function createBotSocket(authDir) {
                 forbidden403Attempts = 0;
 
                 // APENAS loggedOut real apaga a sessão (NÃO 401/badSession)
-                // O 401 pode ser temporário e apagar a sessão é irreversível
                 if (reason === DisconnectReason.loggedOut) {
                     await clearAuthDir();
                     console.log('🔄 Sessão foi deslogada pelo WhatsApp. Nova autenticação necessária.');
+                    process.exit(1);
                 } else if (reason === DisconnectReason.badSession) {
-                    // badSession: NÃO apaga, apenas loga. A sessão pode se recuperar.
-                    console.log('⚠️ Sessão reportada como inválida. Tentando reconectar sem apagar credenciais...');
+                    console.log('⚠️ Sessão reportada como inválida. Reiniciando sem apagar credenciais...');
                 } else if (reason === 401) {
                     if (codeMode) {
-                        // Em modo pairing, 401 = sessão corrompida. Apaga e para para evitar loop.
                         console.log('❌ Sessão inválida em modo de pareamento (401). Limpando sessão...');
                         await clearAuthDir();
                         console.log('🗑️ Sessão apagada. Reinicie o bot e tente parear novamente.');
                         process.exit(0);
                     } else {
-                        // 401 fora do codeMode: NÃO apaga automaticamente
-                        console.log('⚠️ Sessão expirada (401). Tentando reconectar sem apagar credenciais...');
+                        console.log('⚠️ Sessão expirada (401). Reiniciando sem apagar credenciais...');
                     }
                 }
 
-                // Não reconecta se conexão foi substituída (outra instância assumiu)
                 if (reason === DisconnectReason.connectionReplaced) {
                     console.log('⚠️ Conexão substituída por outra instância. Não reconectando para evitar conflito.');
-                    return;
+                    process.exit(0);
                 }
 
-                // Tratamento especial para 515 (restartRequired) — evento normal durante pairing
                 if (reason === DisconnectReason.restartRequired) {
-                    console.log('🔄 Reinício necessário (515) — reconectando em 3s sem incrementar tentativas...');
-                    if (reconnectTimer) clearTimeout(reconnectTimer);
-                    reconnectTimer = setTimeout(() => {
-                        startNazu();
-                    }, 3000);
-                    return;
+                    console.log('🔄 Reinício necessário (515) — reiniciando imediatamente...');
+                    process.exit(1);
                 }
 
-                // Backoff exponencial real
                 reconnectAttempts++;
 
                 if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
                     console.error(`❌ Máximo de tentativas de reconexão (${MAX_RECONNECT_ATTEMPTS}) atingido. Parando...`);
-                    isReconnecting = false;
                     process.exit(1);
                 }
 
-                // Delay baseado no motivo
-                let baseDelay = 5000;
-                if (reason === DisconnectReason.timedOut) {
-                    baseDelay = 3000;
-                } else if (reason === DisconnectReason.connectionLost) {
-                    baseDelay = 2000;
-                } else if (reason === DisconnectReason.loggedOut || reason === DisconnectReason.badSession) {
-                    baseDelay = 10000;
+                // Para garantir que o PM2 reinicie de forma totalmente limpa e evite sockets zumbis/memory leak:
+                console.log(`🔄 Reiniciando processo via PM2 para limpeza de memória...`);
+                
+                // Se for rate limit (428), esperamos antes de encerrar para não causar loop no PM2
+                if (reason === 428) {
+                    const delay428 = Math.min(10000 * Math.pow(2, consecutive428Count - 1), MAX_RECONNECT_DELAY);
+                    console.log(`⏳ Aguardando ${Math.round(delay428 / 1000)}s antes de reiniciar (anti-loop 428)...`);
+                    setTimeout(() => process.exit(1), delay428);
+                } else {
+                    // Outros erros menores
+                    setTimeout(() => process.exit(1), 3000);
                 }
-
-                // Backoff: base * 1.5^tentativas, máx MAX_RECONNECT_DELAY
-                const reconnectDelay = Math.min(baseDelay * Math.pow(1.5, reconnectAttempts - 1), MAX_RECONNECT_DELAY);
-                console.log(`🔄 Aguardando ${Math.round(reconnectDelay / 1000)}s antes de reconectar... (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
-
-                // Cancela timer anterior se existir
-                if (reconnectTimer) {
-                    clearTimeout(reconnectTimer);
-                }
-
-                // NÃO reseta reconnectAttempts aqui — reseta no connection=open
-                reconnectTimer = setTimeout(() => {
-                    startNazu();
-                }, reconnectDelay);
             }
         });
         return NazunaSock;
     } catch (err) {
         console.error(`❌ Erro ao criar socket do bot: ${err.message}`);
-        throw err;
+        process.exit(1);
     }
 }
 
 async function startNazu() {
-    // Verifica lock de loop 428 — se existir, NÃO inicia
+    // Verifica lock de loop 428
     try {
         const lockPath = path.join(DATABASE_DIR, '428_LOCK');
         await fs.access(lockPath);
-        // Lock existe — bot está em estado de loop 428
         console.log('🛑 LOCK de 428 detectado! O bot foi parado por loop de desconexão.');
         console.log('🛑 Para reconectar: delete o arquivo dados/database/428_LOCK e re-pareie.');
         process.exit(0);
     } catch {
-        // Lock não existe — prossegue normalmente
+        // Prossegue
     }
-
-    // Evita múltiplas instâncias sendo criadas ao mesmo tempo
-    if (isReconnecting) {
-        console.log('⚠️ Reconexão já em andamento, ignorando chamada duplicada...');
-        return;
-    }
-
-    isReconnecting = true;
 
     try {
-        // NÃO reseta counters aqui — reseta no connection=open
         console.log(`🚀 Iniciando Nazuna... (tentativa ${reconnectAttempts + 1})`);
         await createBotSocket(AUTH_DIR);
-        isReconnecting = false; // Libera flag para permitir reconexões futuras (ex: 515 durante pairing)
     } catch (err) {
-        reconnectAttempts++;
-        console.error(`❌ Erro ao iniciar o bot (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}): ${err.message}`);
-
-        // Se excedeu tentativas, para de tentar
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            console.error(`❌ Máximo de tentativas de reconexão alcançado (${MAX_RECONNECT_ATTEMPTS}). Parando...`);
-            isReconnecting = false;
-            process.exit(1);
-        }
-
-        if (err.message.includes('ENOSPC') || err.message.includes('ENOMEM')) {
-            console.log('🧹 Tentando limpeza de emergência...');
-            try {
-                await performanceOptimizer.emergencyCleanup();
-                console.log('✅ Limpeza de emergência concluída');
-            } catch (cleanupErr) {
-                console.error('❌ Falha na limpeza de emergência:', cleanupErr.message);
-            }
-        }
-
-        // Delay exponencial (backoff) para evitar spam de conexões
-        const delay = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.5, reconnectAttempts - 1), MAX_RECONNECT_DELAY);
-        console.log(`🔄 Aguardando ${Math.round(delay / 1000)} segundos antes de tentar novamente...`);
-
-        // Cancela timer anterior se existir
-        if (reconnectTimer) {
-            clearTimeout(reconnectTimer);
-        }
-
-        // Permite nova tentativa de reconexão após o delay
-        isReconnecting = false;
-        reconnectTimer = setTimeout(() => {
-            startNazu();
-        }, delay);
+        console.error(`❌ Erro ao iniciar o bot: ${err.message}`);
+        process.exit(1);
     }
 }
 
