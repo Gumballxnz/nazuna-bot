@@ -2635,21 +2635,65 @@ Código: *${roleCode}*`,
             data.schedule = data.schedule || {};
             const schedule = data.schedule;
 
+            // Função auxiliar para executar com retry em caso de erro 428 (Connection Closed)
+            const executeWithRetry = async (action, actionLabel, maxRetries = 2) => {
+              for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                  return await action();
+                } catch (e) {
+                  const is428 = e?.output?.statusCode === 428 || String(e?.message || '').includes('Connection Closed');
+                  if (is428 && attempt < maxRetries) {
+                    console.warn(`[Cron] ⚠️ Conexão fechada ao ${actionLabel} ${groupId.substring(0, 15)}... Tentativa ${attempt}/${maxRetries}. Retry em 10s...`);
+                    await new Promise(r => setTimeout(r, 10000));
+                  } else {
+                    console.error(`[Cron Error] ${actionLabel} ${groupId}:`, e?.message || e);
+                    throw e;
+                  }
+                }
+              }
+            };
+
+            let groupMeta;
+            try {
+              groupMeta = await executeWithRetry(() => nazuInstance.groupMetadata(groupId), 'fetch_metadata', 1);
+            } catch (e) {
+              return; // Erro já logado na executeWithRetry (pode ser 403 Forbidden se o bot não estiver no grupo)
+            }
+
+            if (!groupMeta || !groupMeta.participants) return;
+
+            // Identificar o bot
+            const botNumber = nazuInstance.user?.id?.split(':')[0];
+            if (!botNumber) return;
+            const botJid = `${botNumber}@s.whatsapp.net`;
+
+            // Checar se o bot é admin no grupo
+            const isBotAdmin = groupMeta.participants.some(p => p.id === botJid && (p.admin === 'admin' || p.admin === 'superadmin'));
+
+            if (!isBotAdmin) {
+              console.log(`[Cron] ⏭️ Pulando grupo ${groupId.substring(0, 15)}... Bot não é administrador.`);
+              return;
+            }
+
             if (type === 'open') {
-              try {
-                await nazuInstance.groupSettingUpdate(groupId, 'not_announcement');
-                await nazuInstance.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' });
-                console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
-              } catch (e) {
-                console.error(`[Cron Error] open ${groupId}:`, e);
+              if (groupMeta.announce === false) {
+                console.log(`[Cron] ⏭️ Grupo ${groupId.substring(0, 15)}... já está ABERTO. Pulando.`);
+              } else {
+                try {
+                  await executeWithRetry(() => nazuInstance.groupSettingUpdate(groupId, 'not_announcement'), 'open');
+                  await nazuInstance.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' }).catch(() => {});
+                  console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
+                } catch (e) {} // Erro já logado
               }
             } else {
-              try {
-                await nazuInstance.groupSettingUpdate(groupId, 'announcement');
-                await nazuInstance.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' });
-                console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
-              } catch (e) {
-                console.error(`[Cron Error] close ${groupId}:`, e);
+              if (groupMeta.announce === true) {
+                console.log(`[Cron] ⏭️ Grupo ${groupId.substring(0, 15)}... já está FECHADO. Pulando.`);
+              } else {
+                try {
+                  await executeWithRetry(() => nazuInstance.groupSettingUpdate(groupId, 'announcement'), 'close');
+                  await nazuInstance.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' }).catch(() => {});
+                  console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
+                } catch (e) {} // Erro já logado
               }
             }
 
