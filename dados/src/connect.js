@@ -1336,9 +1336,25 @@ async function createBotSocket(authDir) {
                 isReconnecting = false;
                 reconnectAttempts = 0;
                 forbidden403Attempts = 0;
-                consecutive428Count = 0; // Só reseta 428 quando REALMENTE conecta
+                consecutive428Count = 0; 
 
-                // Watchdog removido
+                // Watchdog inteligente para detectar conexões silenciosamente mortas
+                if (global.nazuWatchdog) clearInterval(global.nazuWatchdog);
+                global.nazuWatchdog = setInterval(async () => {
+                    if (NazunaSock && NazunaSock.ws && NazunaSock.ws.readyState !== 1) {
+                        console.error('🚨 Watchdog: WebSocket não está mais aberto! Forçando restart...');
+                        process.exit(1);
+                    }
+                    try {
+                        // Faz um ping inofensivo para garantir que o socket responde
+                        await NazunaSock.presenceSubscribe(NazunaSock.user?.id).catch(() => {});
+                    } catch (e) {
+                        if (String(e).includes('Connection Closed') || String(e).includes('closed')) {
+                            console.error('🚨 Watchdog: Connection Closed detectado ativamente! Forçando restart...');
+                            process.exit(1);
+                        }
+                    }
+                }, 45000); // Checa a cada 45 segundos
 
                 await initializeOptimizedCaches();
 
