@@ -1341,10 +1341,7 @@ async function createBotSocket(authDir) {
                 // Watchdog inteligente para detectar conexões silenciosamente mortas
                 if (global.nazuWatchdog) clearInterval(global.nazuWatchdog);
                 global.nazuWatchdog = setInterval(async () => {
-                    if (NazunaSock && NazunaSock.ws && NazunaSock.ws.readyState !== 1) {
-                        console.error('🚨 Watchdog: WebSocket não está mais aberto! Forçando restart...');
-                        process.exit(1);
-                    }
+                    if (!NazunaSock) return;
                     try {
                         // Faz um ping inofensivo para garantir que o socket responde
                         await NazunaSock.presenceSubscribe(NazunaSock.user?.id).catch(() => {});
