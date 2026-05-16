@@ -2076,7 +2076,9 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       }
     }
     if (isGroup && !isCmd && body && /\b[A-F0-9]{8}\b/.test(body.toUpperCase())) {
-      const potentialCode = body.match(/\b[A-F0-9]{8}\b/)[0].toUpperCase();
+      const matchRegex = body.toUpperCase().match(/\b[A-F0-9]{8}\b/);
+      if (!matchRegex) return;
+      const potentialCode = matchRegex[0];
       const validation = validateActivationCode(potentialCode);
       if (validation.valid) {
         if (!isGroupAdmin && !isOwnerOrSub) {

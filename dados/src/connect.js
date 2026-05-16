@@ -331,7 +331,7 @@ async function initializeOptimizedCaches() {
 
     }
 }
-const codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE === '1';
+let codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE === '1';
 // Suporte a --phone=NUMERO para evitar readline interativo (ex: node connect.js --code --phone=258858148698)
 const phoneArg = (process.argv.find(a => a.startsWith('--phone=')) || '').replace('--phone=', '').replace(/\D/g, '');
 
@@ -1333,6 +1333,7 @@ async function createBotSocket(authDir) {
                 console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
 
                 // Reset de flags apenas quando conexão REALMENTE abre
+                codeMode = false; // Desativa o modo de pareamento permanentemente após o sucesso
                 isReconnecting = false;
                 reconnectAttempts = 0;
                 forbidden403Attempts = 0;
