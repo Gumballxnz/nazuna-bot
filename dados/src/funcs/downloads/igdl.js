@@ -1,81 +1,74 @@
 /**
- * Download Instagram usando API Cognima
- * Updated to use cog.api.br API
- * Otimizado com HTTP connection pooling
+ * Download Instagram usando fg-senna (100% gratuito, sem API key)
+ * Motor principal: fg-senna (igdl)
  */
 
-import { apiClient, mediaClient } from '../../utils/httpClient.js';
-import { notifyOwnerAboutApiKey, isApiKeyError } from '../utils/apiKeyNotifier.js';
+import axios from 'axios';
+
+// Lazy-load fg-senna
+let _fg = null;
+async function getFg() {
+    if (!_fg) _fg = (await import('fg-senna')).default;
+    return _fg;
+}
+
+// Baixar buffer de uma URL
+async function downloadBuffer(url) {
+    const res = await axios.get(url, {
+        responseType: 'arraybuffer',
+        timeout: 60000,
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    return Buffer.from(res.data);
+}
 
 // Função para baixar post do Instagram
-async function igdl(url, apiKey) {
-  try {
-    if (!apiKey) {
-      throw new Error('API key não fornecida');
-    }
+async function igdl(url) {
+    try {
+        const fg = await getFg();
+        const res = await fg.igdl(url).catch(() => null);
 
-    const response = await apiClient.post('https://cog.api.br/api/v1/instagram/download', {
-      url: url
-    }, {
-      headers: { 'X-API-Key': apiKey },
-      timeout: 120000
-    });
+        if (!res) throw new Error('fg-senna retornou vazio');
 
-    if (!response.data.success || !response.data.data) {
-      throw new Error('Resposta inválida da API');
-    }
-
-    const apiData = response.data.data;
-    
-    // Processar os dados para baixar os buffers
-    const results = [];
-    
-    if (apiData.media && Array.isArray(apiData.media)) {
-      for (const mediaItem of apiData.media) {
-        try {
-          // Baixar o conteúdo da mídia
-          const mediaResponse = await mediaClient.get(mediaItem.url, { 
-            timeout: 120000
-          });
-          
-          results.push({
-            type: mediaItem.type || 'image', // 'video' ou 'image'
-            buff: mediaResponse.data,
-            url: mediaItem.url,
-            mime: mediaItem.mime || 'application/octet-stream'
-          });
-        } catch (downloadError) {
-          console.error('Erro ao baixar mídia do Instagram:', downloadError.message);
-          // Continua com as outras mídias mesmo se uma falhar
+        // Galeria (multiplos itens)
+        if (res.result && Array.isArray(res.result) && res.result.length > 0) {
+            const results = [];
+            for (const item of res.result) {
+                try {
+                    const mediaUrl = item.url || item.dl_url;
+                    if (!mediaUrl) continue;
+                    const buff = await downloadBuffer(mediaUrl);
+                    const isVideo = mediaUrl.includes('.mp4') || item.type === 'video';
+                    results.push({
+                        type: isVideo ? 'video' : 'image',
+                        buff
+                    });
+                } catch (e) {
+                    console.error('[igdl] Erro ao baixar item:', e.message);
+                }
+            }
+            if (results.length > 0) {
+                return { ok: true, data: results, count: results.length };
+            }
         }
-      }
-    }
 
-    if (results.length === 0) {
-      throw new Error('Nenhuma mídia foi baixada com sucesso');
-    }
+        // Video unico
+        if (res.dl_url) {
+            const buff = await downloadBuffer(res.dl_url);
+            return { ok: true, data: [{ type: 'video', buff }], count: 1 };
+        }
 
-    return {
-      ok: true,
-      criador: 'Hiudy',
-      data: results,
-      count: apiData.count || results.length
-    };
+        throw new Error('Nenhuma mídia encontrada na resposta');
 
-  } catch (error) {
-    console.error('Erro no download Instagram:', error.message);
-    
-    if (isApiKeyError(error)) {
-      throw new Error(`API key inválida ou expirada: ${error.response?.data?.message || error.message}`);
+    } catch (error) {
+        console.error('❌ igdl error:', error.message);
+        return {
+            ok: false,
+            msg: 'Erro ao baixar post do Instagram: ' + error.message
+        };
     }
-    
-    return { 
-      ok: false, 
-      msg: 'Erro ao baixar post: ' + (error.response?.data?.message || error.message) 
-    };
-  }
 }
 
 export {
-  igdl as dl
+    igdl as dl
 };

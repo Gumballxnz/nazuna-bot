@@ -385,7 +385,9 @@ async function loadGroupSettings(groupId) {
         const data = await fs.readFile(groupFilePath, 'utf-8');
         return JSON.parse(data);
     } catch (e) {
-        console.error(`❌ Erro ao ler configurações do grupo ${groupId}: ${e.message}`);
+        if (e.code !== 'ENOENT') {
+            console.error(`❌ Erro ao ler configurações do grupo ${groupId}: ${e.message}`);
+        }
         return {};
     }
 }

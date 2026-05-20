@@ -1067,8 +1067,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     });
 
     const type = getContentType(info.message);
-    console.log('[DEBUG] Mensagem recebida:', JSON.stringify(info.message, null, 2));
-    console.log('[DEBUG] Tipo detectado:', type);
 
     // ==================== PROCESSAMENTO DE SOLICITAÇÕES DE ENTRADA NO GRUPO ====================
     // Fallback: Solicitações também podem vir via messageStubType (backup do evento 'group.join-request')
@@ -2643,11 +2641,14 @@ Código: *${roleCode}*`,
                   return await action();
                 } catch (e) {
                   const is428 = e?.output?.statusCode === 428 || String(e?.message || '').includes('Connection Closed');
+                  const is403 = e?.output?.statusCode === 403 || String(e?.message || '').toLowerCase().includes('forbidden');
                   if (is428 && attempt < maxRetries) {
                     console.warn(`[Cron] ⚠️ Conexão fechada ao ${actionLabel} ${groupId.substring(0, 15)}... Tentativa ${attempt}/${maxRetries}. Retry em 10s...`);
                     await new Promise(r => setTimeout(r, 10000));
-                  } else {
+                  } else if (!is403) {
                     console.error(`[Cron Error] ${actionLabel} ${groupId}:`, e?.message || e);
+                    throw e;
+                  } else {
                     throw e;
                   }
                 }
@@ -3955,7 +3956,6 @@ Código: *${roleCode}*`,
                 info.message?.documentMessage ? 'documento' : null;
 
         // Detectar tipo de mídia marcada
-        console.log('🤖 [DEBUG] quotedMessageContent:', quotedMessageContent ? Object.keys(quotedMessageContent) : 'null');
         // Checar também pttMessage (mensagem de voz) que pode vir separado
         const tipoMidiaMarcada = quotedMessageContent?.imageMessage ? 'imagem' :
           quotedMessageContent?.videoMessage ? 'video' :
@@ -3963,7 +3963,6 @@ Código: *${roleCode}*`,
               quotedMessageContent?.pttMessage ? 'audio' :
                 quotedMessageContent?.stickerMessage ? 'sticker' :
                   quotedMessageContent?.documentMessage ? 'documento' : null;
-        console.log('🤖 [DEBUG] tipoMidiaMarcada:', tipoMidiaMarcada);
 
         // Detectar menções na mensagem
         const mencoesNaMensagem = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
@@ -3973,9 +3972,6 @@ Código: *${roleCode}*`,
         const botJid = nazu.user?.id ? nazu.user.id.split(':')[0] : null;
         const botIdentifiers = [_botShort, botLid, botJid, botNumber].filter(Boolean);
 
-        console.log('🤖 [DEBUG] Bot identifiers:', botIdentifiers);
-        console.log('🤖 [DEBUG] Menções originais:', mencoesNaMensagem);
-
         // Filtrar menção do bot das menções (usando todos os identificadores possíveis)
         const mencoesFiltradas = mencoesNaMensagem.filter(m => {
           const mNumber = m.split('@')[0].split(':')[0]; // Pega só o número
@@ -3984,8 +3980,6 @@ Código: *${roleCode}*`,
             return mNumber === idNumber;
           });
         });
-
-        console.log('🤖 [DEBUG] Menções filtradas:', mencoesFiltradas);
         const primeiraMencao = mencoesFiltradas.length > 0 ? mencoesFiltradas[0] : null;
 
         const jSoNzIn = {
@@ -4041,15 +4035,6 @@ Código: *${roleCode}*`,
         }
 
         console.log('🤖 Processando mensagem de assistente...');
-        console.log('🤖 [DEBUG] jSoNzIn:', JSON.stringify({
-          tem_midia: jSoNzIn.tem_midia,
-          tipo_midia: jSoNzIn.tipo_midia,
-          marcou_mensagem: jSoNzIn.marcou_mensagem,
-          tem_midia_marcada: jSoNzIn.tem_midia_marcada,
-          tipo_midia_marcada: jSoNzIn.tipo_midia_marcada,
-          tem_mencao: jSoNzIn.tem_mencao,
-          primeira_mencao: jSoNzIn.primeira_mencao
-        }));
 
         // Add null check for ia object
         if (!ia || typeof ia.makeAssistentRequest !== 'function') {

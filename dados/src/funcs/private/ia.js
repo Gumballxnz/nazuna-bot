@@ -1432,18 +1432,15 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
         { timeout: 20000 }
       );
 
-      let resContent = response.data?.content || response.data?.text || response.data?.message;
-
-      if (!resContent) throw new Error('Falha no resContent da API Principal');
-      if (typeof resContent !== 'string') {
-        resContent = (typeof resContent === 'object') ? JSON.stringify(resContent) : String(resContent);
-      }
+      const rawContent = response.data?.content ?? response.data?.text ?? response.data?.message;
+      if (rawContent == null || rawContent === '') throw new Error('Falha no resContent da API Principal');
+      const resContent = String(rawContent).trim();
 
       // Mantendo o formato original da API da Cognima/OpenAI para compatibilidade
       return {
           data: {
               choices: [
-                  { message: { content: resContent.trim() } }
+                  { message: { content: resContent } }
               ]
           }
       };
@@ -1457,12 +1454,10 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
         let queryUrl = `https://api.siputzx.my.id/api/ai/llama33?prompt=${encodeURIComponent(plainText)}`;
         let sipRes = await axios.get(queryUrl, { timeout: 15000 }).then(r => r.data);
         
-        let sipContent = sipRes?.data || sipRes?.message || sipRes?.result;
-        if (sipContent) {
-           if (typeof sipContent !== 'string') {
-             sipContent = (typeof sipContent === 'object') ? JSON.stringify(sipContent) : String(sipContent);
-           }
-           return { data: { choices: [ { message: { content: sipContent.trim() } } ] } };
+        const sipRaw = sipRes?.data ?? sipRes?.message ?? sipRes?.result;
+        if (sipRaw != null && sipRaw !== '') {
+           const sipContent = String(sipRaw).trim();
+           return { data: { choices: [ { message: { content: sipContent } } ] } };
         }
       } catch (fallbackError) {
         console.warn(`Tentativa de IA Siputzx Llama ${attempt + 1} falhou.`);
