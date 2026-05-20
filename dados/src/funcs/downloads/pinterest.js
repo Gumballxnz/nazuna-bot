@@ -157,35 +157,37 @@ async function pinterestDL(url) {
 
     let html = null;
 
-    // 1. Obter HTML - Tentativa 1: AllOrigins
+    // 1. Obter HTML: Disparar Codetabs e AllOrigins em paralelo — vence quem responder primeiro com HTML válido
     try {
-      const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+      const fetchCodetabs = axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 15000,
+        maxRedirects: 5
+      }).then(res => {
+        // Codetabs retorna string HTML direto
+        if (res.data && typeof res.data === 'string' && res.data.includes('__PWS_DATA__')) {
+          return res.data;
+        }
+        throw new Error('Codetabs: HTML sem __PWS_DATA__');
+      });
+
+      const fetchAllOrigins = axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
         timeout: 15000
-      });
-      if (res.data && res.data.contents) {
-        html = res.data.contents;
-      }
-    } catch (e) {
-      console.error('[Pinterest DL] AllOrigins falhou:', e.message);
-    }
-
-    // 1. Obter HTML - Tentativa 2: Codetabs
-    if (!html) {
-      try {
-        const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
-          headers: { 'User-Agent': UA },
-          timeout: 10000
-        });
-        if (res.data && typeof res.data === 'string') {
-          html = res.data;
+      }).then(res => {
+        // AllOrigins retorna JSON { contents: '<html...>' }
+        if (res.data && res.data.contents && res.data.contents.includes('__PWS_DATA__')) {
+          return res.data.contents;
         }
-      } catch (e) {
-        console.error('[Pinterest DL] Codetabs falhou:', e.message);
-      }
+        throw new Error('AllOrigins: HTML sem __PWS_DATA__');
+      });
+
+      html = await Promise.any([fetchCodetabs, fetchAllOrigins]).catch(() => null);
+    } catch (e) {
+      console.error('[Pinterest DL] Proxies paralelos falharam:', e.message);
     }
 
-    // 1. Obter HTML - Tentativa 3: Direto (Útil caso não seja link encurtado e rede da VPS consiga acessar)
+    // 2. Fallback: acesso direto (funciona para links longos sem encurtamento)
     if (!html) {
       try {
         const res = await axios.get(url, {
