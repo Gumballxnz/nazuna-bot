@@ -230,6 +230,7 @@ function restartBot(codeMode) {
   }
 
   // Exponential backoff: 5s, 10s, 20s, 40s, 60s, 120s
+  // Exponential backoff
   const delay = Math.min(RESTART_DELAY_BASE * Math.pow(2, restartCount - 1), MAX_RESTART_DELAY);
   aviso(`🔄 Reiniciando o bot em ${Math.round(delay / 1000)}s... (tentativa ${restartCount}/${MAX_RESTART_ATTEMPTS})`);
   

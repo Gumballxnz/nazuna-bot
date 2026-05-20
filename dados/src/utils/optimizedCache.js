@@ -296,7 +296,7 @@ class OptimizedCacheManager {
             
             const memoryPercentage = memUsage.heapUsed / memUsage.heapTotal;
 
-            if (memoryPercentage > this.memoryThreshold) {
+            if (memoryPercentage > 0.9) {
                 await this.optimizeMemory('high_memory_usage');
             } else if (memoryPercentage > 0.80 || usedMB > 300) {
                 await this.optimizeMemory('moderate_memory_usage');
