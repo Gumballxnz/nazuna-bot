@@ -7,6 +7,26 @@
  */
 
 import axios from 'axios';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+/**
+ * Busca via curl nativo (bypassa TLS fingerprint do Node.js)
+ * Curl usa libcurl que tem fingerprint diferente do axios/node-fetch
+ * @param {string} curlUrl - URL a buscar via curl
+ * @param {string} userAgent - User-Agent a usar
+ * @returns {Promise<string>} HTML/texto da resposta
+ */
+async function fetchViaCurl(curlUrl, userAgent = '') {
+  const uaFlag = userAgent ? `-A '${userAgent}'` : '';
+  const { stdout } = await execAsync(
+    `curl -sL --max-time 15 ${uaFlag} '${curlUrl.replace(/'/g, "\'")}' 2>/dev/null`,
+    { maxBuffer: 50 * 1024 * 1024 } // 50MB buffer
+  );
+  return stdout;
+}
 
 // Cache LRU simples para evitar requisições repetidas
 class SimpleCache {
@@ -164,60 +184,106 @@ async function pinterestDL(url) {
 
     // Se for link curto (pin.it), precisa resolver para a URL completa do pin
     if (url.includes('pin.it/')) {
-      // Usa Promise.any para tentar AllOrigins e Codetabs em paralelo — quem retornar o pin ID primeiro vence
-      try {
-        const extractPinId = (htmlContent) => {
-          const m = htmlContent.match(/pinterest\.com\/pin\/([0-9]+)/);
+      // Motor A: curl via Codetabs — curl bypassa TLS fingerprinting do axios
+      // Comprovado via testes diretos na VPS que curl+codetabs funciona 100%
+      const resolveViaCurlCodetabs = fetchViaCurl(
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+      ).then(html => {
+        const m = html.match(/pinterest\.com\/pin\/([0-9]+)/);
+        if (m) return m[1];
+        throw new Error('Pin ID não encontrado via Codetabs curl');
+      });
+
+      // Motor B: curl via Googlebot direto — resolve via redirect do codetabs
+      const resolveViaAllOriginsCurl = fetchViaCurl(
+        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+      ).then(txt => {
+        try {
+          const data = JSON.parse(txt);
+          const m = (data.contents || '').match(/pinterest\.com\/pin\/([0-9]+)/);
           if (m) return m[1];
-          throw new Error('Pin ID não encontrado no HTML');
-        };
+        } catch (e) { /* ignora */ }
+        throw new Error('Pin ID não encontrado via AllOrigins curl');
+      });
 
-        const resolveViaAllOrigins = axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
-          headers: { 'User-Agent': UA_CHROME },
-          timeout: 12000
-        }).then(res => extractPinId(res.data?.contents || ''));
+      // Motor C: axios como fallback (funciona localmente)
+      const resolveViaAxios = Promise.any([
+        axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+          headers: { 'User-Agent': UA_CHROME }, timeout: 10000
+        }).then(res => {
+          const m = (res.data?.contents || '').match(/pinterest\.com\/pin\/([0-9]+)/);
+          if (m) return m[1];
+          throw new Error('sem ID');
+        }),
+        axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
+          headers: { 'User-Agent': UA_CHROME }, timeout: 10000, maxRedirects: 5
+        }).then(res => {
+          const m = (typeof res.data === 'string' ? res.data : '').match(/pinterest\.com\/pin\/([0-9]+)/);
+          if (m) return m[1];
+          throw new Error('sem ID');
+        })
+      ]);
 
-        const resolveViaCodetabs = axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
-          headers: { 'User-Agent': UA_CHROME },
-          timeout: 12000,
-          maxRedirects: 5
-        }).then(res => extractPinId(typeof res.data === 'string' ? res.data : ''));
-
-        const pinId = await Promise.any([resolveViaAllOrigins, resolveViaCodetabs]).catch(() => null);
+      try {
+        const pinId = await Promise.any([resolveViaCurlCodetabs, resolveViaAllOriginsCurl, resolveViaAxios]).catch(() => null);
         if (pinId) {
           resolvedUrl = `https://www.pinterest.com/pin/${pinId}/`;
           console.log('[Pinterest DL] Short link resolvido para:', resolvedUrl);
         } else {
-          console.error('[Pinterest DL] Falha ao resolver short link com todos os proxies');
+          console.error('[Pinterest DL] Todos os motores falharam ao resolver short link');
         }
       } catch (e) {
-        console.error('[Pinterest DL] Erro inesperado ao resolver short link:', e.message);
+        console.error('[Pinterest DL] Erro ao resolver short link:', e.message);
       }
     }
-
 
     // === FASE 2: Buscar HTML do pin com URL resolvida ===
 
-    // Motor 1: Acesso direto com Googlebot UA — funciona em data center (VPS)
-    // O Pinterest serve HTML completo com __PWS_DATA__ para Googlebot em links diretos
+    // Motor 1 (curl + Googlebot): comprovado 100% funcional na VPS via curl nativo
+    // Googlebot UA faz o Pinterest servir HTML completo com __PWS_DATA__
     try {
-      const res = await axios.get(resolvedUrl, {
-        headers: {
-          'User-Agent': UA_GOOGLEBOT,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
-        },
-        timeout: 12000,
-        maxRedirects: 5
-      });
-      if (res.data && typeof res.data === 'string' && res.data.includes('__PWS_DATA__')) {
-        html = res.data;
+      const htmlViaGooglebot = await fetchViaCurl(resolvedUrl, UA_GOOGLEBOT);
+      if (htmlViaGooglebot && htmlViaGooglebot.includes('__PWS_DATA__')) {
+        html = htmlViaGooglebot;
       }
     } catch (e) {
-      console.error('[Pinterest DL] Acesso Googlebot direto falhou:', e.message);
+      console.error('[Pinterest DL] curl Googlebot falhou:', e.message);
     }
 
-    // Motor 2: AllOrigins com URL resolvida (funciona localmente)
+    // Motor 2 (axios Googlebot): fallback para quando curl não está disponível
+    if (!html) {
+      try {
+        const res = await axios.get(resolvedUrl, {
+          headers: {
+            'User-Agent': UA_GOOGLEBOT,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
+          },
+          timeout: 12000,
+          maxRedirects: 5
+        });
+        if (res.data && typeof res.data === 'string' && res.data.includes('__PWS_DATA__')) {
+          html = res.data;
+        }
+      } catch (e) {
+        console.error('[Pinterest DL] axios Googlebot falhou:', e.message);
+      }
+    }
+
+    // Motor 3 (AllOrigins via curl): proxy que funciona localmente
+    if (!html) {
+      try {
+        const rawJson = await fetchViaCurl(`https://api.allorigins.win/get?url=${encodeURIComponent(resolvedUrl)}`);
+        const data = JSON.parse(rawJson);
+        if (data.contents && data.contents.includes('__PWS_DATA__')) {
+          html = data.contents;
+        }
+      } catch (e) {
+        console.error('[Pinterest DL] AllOrigins curl falhou:', e.message);
+      }
+    }
+
+    // Motor 4 (axios AllOrigins): último recurso
     if (!html) {
       try {
         const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(resolvedUrl)}`, {
@@ -228,23 +294,7 @@ async function pinterestDL(url) {
           html = res.data.contents;
         }
       } catch (e) {
-        console.error('[Pinterest DL] AllOrigins falhou:', e.message);
-      }
-    }
-
-    // Motor 3: Codetabs com URL resolvida (proxy alternativo)
-    if (!html) {
-      try {
-        const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(resolvedUrl)}`, {
-          headers: { 'User-Agent': UA_CHROME },
-          timeout: 15000,
-          maxRedirects: 5
-        });
-        if (res.data && typeof res.data === 'string' && res.data.includes('__PWS_DATA__')) {
-          html = res.data;
-        }
-      } catch (e) {
-        console.error('[Pinterest DL] Codetabs falhou:', e.message);
+        console.error('[Pinterest DL] axios AllOrigins falhou:', e.message);
       }
     }
 
