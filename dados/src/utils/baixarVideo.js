@@ -99,16 +99,7 @@ async function baixarTiktok(url) {
 // ==================== INSTAGRAM ====================
 async function baixarInstagram(url) {
     try {
-        // Motor 1: fg-senna (Galeria de múltiplos resultados)
-        const res = await fg.igdl(url).catch(() => null);
-        if (res?.result && res.result.length > 1) {
-            return { type: 'images', urls: res.result.map(i => i.url), desc: 'Instagram (Galeria)' };
-        }
-        if (res && res.dl_url) {
-             return { type: 'video', url: res.dl_url, desc: 'Instagram (API 1)' };
-        }
-
-        // Motor 2: yt-dlp local (Alta Qualidade - principal fallback)
+        // Motor 1: yt-dlp local (Alta Qualidade - mais confiavel)
         try {
             const ytRes = await ytdlpBaixar(url, 'video');
             if (ytRes && ytRes.filePath) {
@@ -116,6 +107,15 @@ async function baixarInstagram(url) {
             }
         } catch (e) {
             // yt-dlp falhou, continua para APIs
+        }
+
+        // Motor 2: fg-senna (Galeria de multiplos resultados)
+        const res = await fg.igdl(url).catch(() => null);
+        if (res?.result && res.result.length > 1) {
+            return { type: 'images', urls: res.result.map(i => i.url), desc: 'Instagram (Galeria)' };
+        }
+        if (res && res.dl_url) {
+             return { type: 'video', url: res.dl_url, desc: 'Instagram (API 1)' };
         }
 
         // Motor 3: Siputzx (Fallback Leve)
