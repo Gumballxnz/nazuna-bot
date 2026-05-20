@@ -159,10 +159,35 @@ async function pinterestDL(url) {
 
     let html = null;
 
+    // === FASE 1: Resolver URL (converter links curtos pin.it em URL longa) ===
+    let resolvedUrl = url;
+
+    // Se for link curto (pin.it), precisa resolver para a URL completa do pin
+    if (url.includes('pin.it/')) {
+      // AllOrigins consegue resolver pin.it mesmo na VPS (retorna HTML com link canônico)
+      try {
+        const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+          headers: { 'User-Agent': UA_CHROME },
+          timeout: 15000
+        });
+        const contents = res.data?.contents || '';
+        // Extrai pin ID do link canônico ou de qualquer URL de pin
+        const pinMatch = contents.match(/pinterest\.com\/pin\/([0-9]+)/);
+        if (pinMatch) {
+          resolvedUrl = `https://www.pinterest.com/pin/${pinMatch[1]}/`;
+          console.log('[Pinterest DL] Short link resolvido para:', resolvedUrl);
+        }
+      } catch (e) {
+        console.error('[Pinterest DL] Falha ao resolver short link:', e.message);
+      }
+    }
+
+    // === FASE 2: Buscar HTML do pin com URL resolvida ===
+
     // Motor 1: Acesso direto com Googlebot UA — funciona em data center (VPS)
-    // O Pinterest serve HTML completo com __PWS_DATA__ para Googlebot
+    // O Pinterest serve HTML completo com __PWS_DATA__ para Googlebot em links diretos
     try {
-      const res = await axios.get(url, {
+      const res = await axios.get(resolvedUrl, {
         headers: {
           'User-Agent': UA_GOOGLEBOT,
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -178,10 +203,10 @@ async function pinterestDL(url) {
       console.error('[Pinterest DL] Acesso Googlebot direto falhou:', e.message);
     }
 
-    // Motor 2: AllOrigins (proxy CORS - funciona localmente)
+    // Motor 2: AllOrigins com URL resolvida (funciona localmente)
     if (!html) {
       try {
-        const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+        const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(resolvedUrl)}`, {
           headers: { 'User-Agent': UA_CHROME },
           timeout: 15000
         });
@@ -193,10 +218,10 @@ async function pinterestDL(url) {
       }
     }
 
-    // Motor 3: Codetabs (proxy CORS - alternativo)
+    // Motor 3: Codetabs com URL resolvida (proxy alternativo)
     if (!html) {
       try {
-        const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
+        const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(resolvedUrl)}`, {
           headers: { 'User-Agent': UA_CHROME },
           timeout: 15000,
           maxRedirects: 5
@@ -212,6 +237,7 @@ async function pinterestDL(url) {
     if (!html) {
       return { ok: false, msg: 'Não foi possível carregar a página do Pinterest.' };
     }
+
 
     // 2. Tenta parsear dados do __PWS_DATA__
     const pwsMatch = html.match(/<script id="__PWS_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
