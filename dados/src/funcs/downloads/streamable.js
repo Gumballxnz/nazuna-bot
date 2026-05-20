@@ -1,134 +1,86 @@
+/**
+ * Download Streamable - 100% Gratuito 
+ * Motor: API pública do Streamable (scraping JSON)
+ */
+
 import axios from 'axios';
 
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
 /**
- * Baixa vídeo do Streamable
+ * Baixa vídeo do Streamable usando a API pública
  * @param {string} url - URL do vídeo do Streamable
- * @param {string} apiKey - Chave da API Cognima
  * @returns {Promise<Object>} Objeto com sucesso, buffer e informações do vídeo
  */
-export async function download(url, apiKey) {
+export async function download(url) {
   try {
-    const endpoint = 'https://cog.api.br/api/v1/streamable/download';
-    
-    // Fazer requisição para obter informações do vídeo
-    const response = await axios.get(endpoint, {
-      params: { url },
-      headers: {
-        'x-api-key': apiKey
-      },
-      timeout: 120000
-    });
+    // Extrair o shortcode da URL (ex: https://streamable.com/abc123 → abc123)
+    const match = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
+    if (!match) {
+      return { ok: false, message: 'URL do Streamable inválida.' };
+    }
+    const shortcode = match[1];
 
-    if (!response.data || !response.data.success) {
-      return {
-        ok: false,
-        message: response.data?.message || 'Erro ao buscar informações do vídeo do Streamable.'
-      };
+    // API pública do Streamable (não precisa de key)
+    const res = await axios.get(`https://api.streamable.com/videos/${shortcode}`, {
+      headers: { 'User-Agent': UA },
+      timeout: 15000
+    }).catch(() => null);
+
+    if (res?.data?.files) {
+      // Pegar a melhor qualidade disponível
+      const files = res.data.files;
+      const best = files['mp4-mobile'] || files['mp4'] || Object.values(files)[0];
+
+      if (best?.url) {
+        const videoUrl = best.url.startsWith('//') ? `https:${best.url}` : best.url;
+        const fileResponse = await axios.get(videoUrl, {
+          responseType: 'arraybuffer', timeout: 180000,
+          maxContentLength: Infinity, maxBodyLength: Infinity
+        });
+
+        return {
+          ok: true,
+          buffer: Buffer.from(fileResponse.data),
+          title: res.data.title || 'Streamable',
+          thumbnail: res.data.thumbnail_url || '',
+          duration: best.duration || 0,
+          width: best.width,
+          height: best.height,
+          filename: `streamable_${shortcode}.mp4`
+        };
+      }
     }
 
-    const { data } = response.data;
+    // Fallback: Siputzx
+    try {
+      const sipRes = await axios.get(`https://api.siputzx.my.id/api/d/streamable?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 30000
+      }).then(v => v.data).catch(() => null);
 
-    // Verificar se tem URL de download
-    if (!data.downloadUrl) {
-      return {
-        ok: false,
-        message: 'Não foi possível obter o link de download do Streamable.'
-      };
+      const link = sipRes?.data?.url || sipRes?.data?.dl;
+      if (link) {
+        const fileResponse = await axios.get(link, {
+          responseType: 'arraybuffer', timeout: 180000,
+          maxContentLength: Infinity, maxBodyLength: Infinity
+        });
+        return {
+          ok: true,
+          buffer: Buffer.from(fileResponse.data),
+          title: sipRes?.data?.title || 'Streamable',
+          filename: `streamable_${Date.now()}.mp4`
+        };
+      }
+    } catch (e) {
+      console.error('[Streamable] Fallback falhou:', e.message);
     }
 
-    let downloadUrl = data.downloadUrl;
-
-    // Verificar se a URL é relativa (começa com "/")
-    if (downloadUrl.startsWith('/')) {
-      downloadUrl = 'https://cog.api.br' + downloadUrl;
-    }
-
-    // Baixar o arquivo
-    const fileResponse = await axios.get(downloadUrl, {
-      responseType: 'arraybuffer',
-      timeout: 180000, // 3 minutos para download
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity
-    });
-
-    const buffer = Buffer.from(fileResponse.data);
-
-    // Gerar nome do arquivo
-    const sanitizedTitle = data.title
-      ? data.title.replace(/[^\w\s-]/g, '').substring(0, 50)
-      : 'streamable_video';
-    const filename = `${sanitizedTitle.replace(/\s+/g, '_')}.mp4`;
-
-    return {
-      ok: true,
-      buffer,
-      title: data.title || 'Vídeo do Streamable',
-      thumbnail: data.thumbnail,
-      duration: data.duration || 0,
-      description: data.description,
-      timestamp: data.timestamp,
-      width: data.width,
-      height: data.height,
-      quality: data.quality || 'Desconhecida',
-      filesize: data.filesize,
-      filename
-    };
-
+    return { ok: false, message: 'Não foi possível baixar o vídeo do Streamable.' };
   } catch (error) {
     console.error('Erro ao baixar do Streamable:', error);
-
-    // Tratar erros específicos
-    if (error.response) {
-      const status = error.response.status;
-      
-      if (status === 401 || status === 403) {
-        return {
-          ok: false,
-          message: 'Erro de autenticação da API. Verifique sua chave de API.',
-          needsNotification: true
-        };
-      }
-      
-      if (status === 404) {
-        return {
-          ok: false,
-          message: 'Vídeo não encontrado. Verifique se o link está correto e se o vídeo ainda está disponível.'
-        };
-      }
-
-      return {
-        ok: false,
-        message: `Erro na API: ${error.response.data?.message || 'Erro desconhecido'}`
-      };
-    }
-
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return {
-        ok: false,
-        message: 'O download demorou muito tempo. Tente novamente com um vídeo mais curto.'
-      };
-    }
-
-    return {
-      ok: false,
-      message: error.message || 'Erro ao processar a solicitação.'
-    };
+    return { ok: false, message: error.message || 'Erro ao processar a solicitação.' };
   }
 }
 
-/**
- * Notifica o dono do bot sobre erro de API key
- * @param {Object} nazu - Instância do bot
- * @param {string} nmrdn - Número do dono
- * @param {string} errorMsg - Mensagem de erro
- */
-export async function notifyOwnerAboutApiKey(nazu, nmrdn, errorMsg) {
-  try {
-    const message = `⚠️ *Alerta de API Key (Streamable Download)*\n\n${errorMsg}\n\nPor favor, verifique a configuração da API key no arquivo de configuração.`;
-    await nazu.sendMessage(nmrdn, { text: message });
-  } catch (error) {
-    console.error('Erro ao notificar dono sobre API key:', error);
-  }
-}
-
-export default { download, notifyOwnerAboutApiKey };
+export default { download };

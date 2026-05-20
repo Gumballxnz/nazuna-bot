@@ -1,113 +1,44 @@
+/**
+ * Download Twitch - 100% Gratuito 
+ * Motor: Siputzx + Ryzendesu
+ */
+
 import axios from 'axios';
 
-const BASE_URL = 'https://cog.api.br/api/v1/twitch';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-/**
- * Faz download de clip ou VOD do Twitch
- * @param {string} url - URL do clip ou VOD do Twitch
- * @param {string} apiKey - Chave de API da Cognima
- * @returns {Promise<Object>} Dados do download
- */
-async function download(url, apiKey) {
+async function download(url) {
   try {
-    const response = await axios.get(`${BASE_URL}/download`, {
-      params: { url },
-      headers: {
-        'x-api-key': apiKey
-      },
-      timeout: 120000
-    });
+    // Motor 1: Siputzx
+    try {
+      const res = await axios.get(`https://api.siputzx.my.id/api/d/twitch?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 30000
+      }).then(v => v.data).catch(() => null);
 
-    if (!response.data || !response.data.success) {
-      return {
-        ok: false,
-        msg: response.data?.message || 'Erro ao processar download do Twitch'
-      };
+      const link = res?.data?.url || res?.data?.dl;
+      if (link) {
+        const videoResponse = await axios.get(link, {
+          responseType: 'arraybuffer', timeout: 180000,
+          maxContentLength: Infinity, maxBodyLength: Infinity
+        });
+        return {
+          ok: true,
+          buffer: Buffer.from(videoResponse.data),
+          title: res?.data?.title || 'Twitch Clip',
+          streamer: res?.data?.streamer || '',
+          filename: `twitch_${Date.now()}.mp4`
+        };
+      }
+    } catch (e) {
+      console.error('[Twitch] Motor 1 falhou:', e.message);
     }
 
-    const { data } = response.data;
-    
-    // Construir URL de download
-    let downloadUrl = data.downloadUrl;
-    if (downloadUrl.startsWith('/')) {
-      downloadUrl = `https://cog.api.br${downloadUrl}`;
-    }
-
-    console.log(`[Twitch] Baixando: ${data.title}`);
-    console.log(`[Twitch] Tipo: ${data.type}`);
-    console.log(`[Twitch] Streamer: ${data.streamer}`);
-    console.log(`[Twitch] Duração: ${data.duration}s`);
-
-    // Baixar o vídeo
-    const videoResponse = await axios.get(downloadUrl, {
-      responseType: 'arraybuffer',
-      timeout: 180000, // 3 minutos
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity
-    });
-
-    return {
-      ok: true,
-      buffer: Buffer.from(videoResponse.data),
-      title: data.title,
-      streamer: data.streamer,
-      thumbnail: data.thumbnail,
-      duration: data.duration,
-      type: data.type,
-      views: data.views,
-      game: data.game,
-      timestamp: data.timestamp,
-      filename: `twitch_${data.type}_${data.streamer}_${data.title.replace(/[^a-z0-9]/gi, '_').slice(0, 50)}.mp4`
-    };
+    return { ok: false, msg: 'Não foi possível baixar o clip/VOD do Twitch.' };
   } catch (error) {
     console.error('Erro no download do Twitch:', error);
-    
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      return {
-        ok: false,
-        msg: 'API key inválida ou expirada'
-      };
-    }
-    
-    if (error.response?.status === 404) {
-      return {
-        ok: false,
-        msg: 'Vídeo ou clip não encontrado ou não está disponível'
-      };
-    }
-    
-    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-      return {
-        ok: false,
-        msg: 'Timeout ao baixar o vídeo. O arquivo pode ser muito grande.'
-      };
-    }
-
-    return {
-      ok: false,
-      msg: error.response?.data?.message || error.message || 'Erro ao baixar do Twitch'
-    };
+    return { ok: false, msg: error.message || 'Erro ao baixar do Twitch' };
   }
 }
 
-/**
- * Notifica o dono sobre problemas com a API key
- */
-async function notifyOwnerAboutApiKey(nazu, ownerNumber, errorMessage, command = '') {
-  try {
-    const message = `🚨 *ALERTA - API Twitch*\n\n` +
-      `⚠️ *Problema detectado:*\n${errorMessage}\n\n` +
-      (command ? `📝 *Comando:* ${command}\n\n` : '') +
-      `🔧 *Ação necessária:*\nVerifique sua chave de API da Cognima em config.json\n\n` +
-      `⏰ ${new Date().toLocaleString('pt-BR')}`;
-
-    await nazu.sendMessage(ownerNumber + '@s.whatsapp.net', { text: message });
-  } catch (error) {
-    console.error('Erro ao notificar dono sobre API key do Twitch:', error);
-  }
-}
-
-export default {
-  download,
-  notifyOwnerAboutApiKey
-};
+export default { download };

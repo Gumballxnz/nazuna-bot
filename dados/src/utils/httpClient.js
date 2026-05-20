@@ -34,7 +34,7 @@ const httpsAgent = new https.Agent({
 });
 
 /**
- * Cliente HTTP padrão para APIs JSON (cog.api.br, etc)
+ * Cliente HTTP padrão para APIs JSON
  */
 const apiClient = axios.create({
   httpAgent,

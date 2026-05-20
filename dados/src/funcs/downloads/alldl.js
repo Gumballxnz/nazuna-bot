@@ -1,82 +1,60 @@
+/**
+ * Download Universal (AllDL) - 100% Gratuito 
+ * Motor: Siputzx + Ryzendesu
+ * 
+ * Suporta múltiplas plataformas de vídeo e áudio automaticamente
+ */
+
 import axios from 'axios';
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
 /**
  * Extrai todos os formatos de mídia disponíveis de uma URL
  * @param {string} url - URL de qualquer plataforma suportada
- * @param {string} apiKey - Chave da API Cognima
  * @returns {Promise<Object>} Objeto com metadata e todos os formatos disponíveis
  */
-export async function getAllMedia(url, apiKey) {
+export async function getAllMedia(url) {
   try {
-    const endpoint = 'https://cog.api.br/api/v1/alldl';
-    
-    // Fazer requisição para obter todos os formatos
-    const response = await axios.get(endpoint, {
-      params: { url },
-      headers: {
-        'x-api-key': apiKey
-      },
-      timeout: 120000 // 2 minutos
-    });
+    // Motor 1: Siputzx (alldl genérico)
+    try {
+      const res = await axios.get(`https://api.siputzx.my.id/api/d/alldl?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 30000
+      }).then(v => v.data).catch(() => null);
 
-    if (!response.data || !response.data.success) {
-      return {
-        ok: false,
-        message: response.data?.message || 'Erro ao buscar informações da mídia.'
-      };
+      if (res?.data) {
+        const media = [];
+        if (res.data.url) {
+          media.push({
+            url: res.data.url,
+            type: res.data.url.includes('.mp4') ? 'video' : 'audio',
+            quality: 'default'
+          });
+        }
+        if (res.data.hd) media.push({ url: res.data.hd, type: 'video', quality: 'HD' });
+        if (res.data.sd) media.push({ url: res.data.sd, type: 'video', quality: 'SD' });
+
+        if (media.length > 0) {
+          return {
+            ok: true,
+            metadata: { title: res.data.title || '', thumbnail: res.data.thumbnail || '' },
+            media: media,
+            totalItems: media.length,
+            videoCount: media.filter(m => m.type === 'video').length,
+            audioCount: media.filter(m => m.type === 'audio').length,
+            imageCount: 0
+          };
+        }
+      }
+    } catch (e) {
+      console.error('[AllDL] Motor 1 falhou:', e.message);
     }
 
-    const { data } = response.data;
-
-    return {
-      ok: true,
-      metadata: data.metadata || {},
-      media: data.media || [],
-      totalItems: data.totalItems || 0,
-      videoCount: data.videoCount || 0,
-      audioCount: data.audioCount || 0,
-      imageCount: data.imageCount || 0
-    };
-
+    return { ok: false, message: 'Não foi possível extrair mídia desta URL.' };
   } catch (error) {
     console.error('Erro ao buscar formatos de mídia:', error);
-
-    // Tratar erros específicos
-    if (error.response) {
-      const status = error.response.status;
-      
-      if (status === 401 || status === 403) {
-        return {
-          ok: false,
-          message: 'Erro de autenticação da API. Verifique sua chave de API.',
-          needsNotification: true
-        };
-      }
-      
-      if (status === 404) {
-        return {
-          ok: false,
-          message: 'Conteúdo não encontrado. Verifique se o link está correto.'
-        };
-      }
-
-      return {
-        ok: false,
-        message: `Erro na API: ${error.response.data?.message || 'Erro desconhecido'}`
-      };
-    }
-
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return {
-        ok: false,
-        message: 'A solicitação demorou muito tempo. Tente novamente.'
-      };
-    }
-
-    return {
-      ok: false,
-      message: error.message || 'Erro ao processar a solicitação.'
-    };
+    return { ok: false, message: error.message || 'Erro ao processar a solicitação.' };
   }
 }
 
@@ -90,41 +68,17 @@ export async function downloadMedia(mediaUrl, type = 'video') {
   try {
     const response = await axios.get(mediaUrl, {
       responseType: 'arraybuffer',
-      timeout: 180000, // 3 minutos
+      timeout: 180000,
       maxContentLength: Infinity,
       maxBodyLength: Infinity
     });
 
     const buffer = Buffer.from(response.data);
-
-    return {
-      ok: true,
-      buffer,
-      size: buffer.length
-    };
-
+    return { ok: true, buffer, size: buffer.length };
   } catch (error) {
     console.error('Erro ao baixar mídia:', error);
-    return {
-      ok: false,
-      message: 'Erro ao baixar o arquivo.'
-    };
+    return { ok: false, message: 'Erro ao baixar o arquivo.' };
   }
 }
 
-/**
- * Notifica o dono do bot sobre erro de API key
- * @param {Object} nazu - Instância do bot
- * @param {string} nmrdn - Número do dono
- * @param {string} errorMsg - Mensagem de erro
- */
-export async function notifyOwnerAboutApiKey(nazu, nmrdn, errorMsg) {
-  try {
-    const message = `⚠️ *Alerta de API Key (AllDL)*\n\n${errorMsg}\n\nPor favor, verifique a configuração da API key no arquivo de configuração.`;
-    await nazu.sendMessage(nmrdn, { text: message });
-  } catch (error) {
-    console.error('Erro ao notificar dono sobre API key:', error);
-  }
-}
-
-export default { getAllMedia, downloadMedia, notifyOwnerAboutApiKey };
+export default { getAllMedia, downloadMedia };

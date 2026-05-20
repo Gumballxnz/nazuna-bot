@@ -1,10 +1,16 @@
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
-import fg from 'fg-senna';
 import { pipeline } from 'stream/promises';
 import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
+
+// Lazy-load fg-senna (carrega puppeteer/chromium sob demanda para economizar RAM)
+let _fg = null;
+async function getFg() {
+    if (!_fg) _fg = (await import('fg-senna')).default;
+    return _fg;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +37,7 @@ export async function downloadYT(url, type = 'audio') {
         // Fase 1: fg-senna (Motor Principal - Não depende de IP, usa scrapers web)
         try {
             console.log(`[YouTube] Fase 1: fg-senna (${type})...`);
+            const fg = await getFg();
             let res = type === 'audio' ? await fg.yta(url) : await fg.ytv(url, '720p');
             if (res && res.dl_url) {
                 dl_url = res.dl_url;
@@ -126,6 +133,7 @@ function ytdlpLocal(url, type) {
  */
 export async function getYTInfo(url) {
     try {
+        const fg = await getFg();
         let res = await fg.yta(url);
         return res;
     } catch (e) {

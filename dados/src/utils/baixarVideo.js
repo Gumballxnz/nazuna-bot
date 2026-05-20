@@ -73,34 +73,21 @@ function detectarPlataforma(url) {
 // ==================== TIKTOK ====================
 async function baixarTiktok(url) {
     try {
-        // Motor 1: Siputzx (API Leve)
-        let sip = await axios.get(`https://api.siputzx.my.id/api/d/tiktok?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        let link1 = sip?.data?.data?.play || sip?.data?.data?.hdplay || sip?.data?.play;
-        if (link1) return { type: 'video', url: link1, desc: sip?.data?.data?.title || sip?.data?.title || 'TikTok (API 1)' };
-        let urls1 = sip?.data?.data?.images || sip?.data?.images;
-        if (urls1 && urls1.length > 0) return { type: 'images', urls: urls1, desc: sip?.data?.data?.title || 'TikTok (API 1)' };
-
-        // Motor 2: Ryzendesu Fallback
-        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/ttdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        let link2 = rz?.data?.play || rz?.data?.hdplay;
-        if (link2) return { type: 'video', url: link2, desc: rz?.data?.title || 'TikTok (API 2)' };
-
-        // Motor 3: fg-senna (Último recurso)
-        const fg = await getFg();
-        const res = await fg.tiktok(url);
-        if (res && res.result) {
-            const d = res.result;
-            if (d.type === 'image' && d.images) {
-                return { type: 'images', urls: d.images, desc: d.title || 'TikTok (API 3)' };
-            }
-            if (d.play) {
-                return { type: 'video', url: d.play, desc: d.title || 'TikTok (API 3)' };
+        const tiktokMod = await import('../funcs/downloads/tiktok.js');
+        const dlFn = tiktokMod.dl || tiktokMod.default?.dl;
+        if (typeof dlFn === 'function') {
+            const res = await dlFn(url);
+            if (res && res.ok && res.urls && res.urls.length > 0) {
+                if (res.type === 'image' || res.type === 'images') {
+                    return { type: 'images', urls: res.urls, desc: res.title || 'TikTok' };
+                }
+                return { type: 'video', url: res.urls[0], desc: res.title || 'TikTok' };
             }
         }
     } catch (e) {
-        console.error('[TikTok Cascade error]', e.message);
+        console.error('[TikTok Central Dl error]', e.message);
     }
-    throw new Error('TikTok: Falha ao extrair mídia em todos os motores.');
+    throw new Error('TikTok: Falha ao extrair mídia via módulo unificado.');
 }
 
 // ==================== INSTAGRAM ====================
@@ -113,34 +100,37 @@ async function baixarInstagram(url) {
                 return { type: 'video', url: ytRes.filePath, filePath: ytRes.filePath, isFile: true, desc: 'Instagram (HD)' };
             }
         } catch (e) {
-            // yt-dlp falhou, continua para APIs
+            // yt-dlp falhou, continua para o módulo central
         }
 
-        // Motor 2: fg-senna (Galeria de multiplos resultados)
-        const fg = await getFg();
-        const res = await fg.igdl(url).catch(() => null);
-        if (res?.result && res.result.length > 1) {
-            return { type: 'images', urls: res.result.map(i => i.url), desc: 'Instagram (Galeria)' };
-        }
-        if (res && res.dl_url) {
-             return { type: 'video', url: res.dl_url, desc: 'Instagram (API 1)' };
-        }
-
-        // Motor 3: Siputzx (Fallback Leve)
-        let sip = await axios.get(`https://api.siputzx.my.id/api/d/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        if (sip && sip.data && sip.data.length > 0) {
-           return { type: sip.data[0].url.includes('.mp4') ? 'video' : 'image', url: sip.data[0].url, desc: 'Instagram (API 2)' };
-        }
-
-        // Motor 4: Ryzendesu Fallback final
-        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        if (rz && rz.data && rz.data.length > 0) {
-           return { type: rz.data[0].url.includes('.mp4') ? 'video' : 'image', url: rz.data[0].url, desc: 'Instagram (API 3)' };
+        const igdlMod = await import('../funcs/downloads/igdl.js');
+        const dlFn = igdlMod.dl || igdlMod.default?.dl;
+        if (typeof dlFn === 'function') {
+            const res = await dlFn(url);
+            if (res && res.ok && res.data && res.data.length > 0) {
+                if (res.data.length === 1) {
+                    const item = res.data[0];
+                    const id = Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+                    const ext = item.type === 'video' ? 'mp4' : 'jpg';
+                    const filePath = path.join(tmpDir, `ig_${id}.${ext}`);
+                    fs.writeFileSync(filePath, item.buff);
+                    return { type: item.type, filePath, isFile: true, desc: 'Instagram' };
+                } else {
+                    const filePaths = [];
+                    for (const [idx, item] of res.data.entries()) {
+                        const ext = item.type === 'video' ? 'mp4' : 'jpg';
+                        const filePath = path.join(tmpDir, `ig_${Date.now()}_${idx}.${ext}`);
+                        fs.writeFileSync(filePath, item.buff);
+                        filePaths.push({ type: item.type, filePath, isFile: true });
+                    }
+                    return { type: 'gallery', files: filePaths, desc: 'Instagram (Galeria)' };
+                }
+            }
         }
     } catch (e) {
-        console.error('[Instagram Cascade Error]', e.message);
+        console.error('[Instagram Central Dl Error]', e.message);
     }
-    throw new Error('Instagram: Falha ao extrair mídia via APIs.');
+    throw new Error('Instagram: Falha ao extrair mídia via módulo unificado.');
 }
 
 // ==================== YOUTUBE ====================
@@ -159,43 +149,32 @@ async function baixarYoutube(url, formato = 'video') {
 // ==================== FACEBOOK ====================
 async function baixarFacebook(url) {
     try {
-        // Fase 1: "A Tentativa de Alto Luxo" (O Motor yt-dlp)
+        // Fase 1: yt-dlp local (Alta Qualidade)
         try {
             const ytRes = await ytdlpBaixar(url, 'video');
             if (ytRes && ytRes.filePath) {
                  return { type: 'video', url: ytRes.filePath, filePath: ytRes.filePath, isFile: true, desc: 'Facebook (YT-DLP)' };
             }
         } catch (e) {
-            // Secreção Silenciosa: se falhar (bloqueio), desliza furtivamente para a Fase 2
+            // yt-dlp falhou, desliza para o módulo central
         }
 
-        // Fase 2: "O Bypass de IP" (Fallback API Tripla)
-        // Motor 1: Siputzx (API Leve)
-        let res = await axios.get(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        let link = res?.data?.url || res?.data?.hd || res?.data?.sd;
-        
-        if (link) return { type: 'video', url: link, desc: 'Facebook (API 1)' };
-
-        // Motor 2: Ryzendesu Fallback
-        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        link = rz?.url || rz?.data?.url || rz?.result?.url_hd || rz?.result?.url_sd;
-
-        if (link) return { type: 'video', url: link, desc: 'Facebook (API 2)' };
-
-        // Motor 3: fg-senna (Último recurso)
-        const fg = await getFg();
-        const fgRes = await fg.fbdl(url).catch(() => null);
-        if (fgRes && (fgRes.HD || fgRes.SD)) {
-             return { type: 'video', url: fgRes.HD || fgRes.SD, desc: 'Facebook (API 3)' };
+        const facebookMod = await import('../funcs/downloads/facebook.js');
+        const dlFn = facebookMod.dl || facebookMod.default?.downloadHD || facebookMod.default?.dl;
+        if (typeof dlFn === 'function') {
+            const res = await dlFn(url);
+            if (res && res.ok && res.buffer) {
+                const id = Date.now();
+                const filePath = path.join(tmpDir, `fb_${id}.mp4`);
+                fs.writeFileSync(filePath, res.buffer);
+                return { type: 'video', filePath, isFile: true, desc: `Facebook (${res.resolution || 'HD'})` };
+            }
         }
-
     } catch (e) {
-        console.error('[Facebook Cascade Error]', e.message);
+        console.error('[Facebook Central Dl error]', e.message);
     }
-    throw new Error('Facebook: Todos os motores de download falharam ou link privado.');
+    throw new Error('Facebook: Todos os motores de download falharam.');
 }
-
-
 
 // ==================== TWITTER/X ====================
 async function baixarTwitter(url) {
@@ -240,22 +219,23 @@ async function baixarMediafire(url) {
 // ==================== PINTEREST ====================
 async function baixarPinterest(url) {
     try {
-        // Motor 1: Siputzx
-        let sip = await axios.get(`https://api.siputzx.my.id/api/d/pinterest?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        let link1 = sip?.data?.url;
-        if (link1) return { type: link1.includes('.mp4') ? 'video' : 'image', url: link1, desc: 'Pinterest (API 1)' };
-
-        // Motor 2: Ryzendesu
-        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/pinterest?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
-        let link2 = rz?.data?.url || rz?.url;
-        if (link2) return { type: link2.includes('.mp4') ? 'video' : 'image', url: link2, desc: 'Pinterest (API 2)' };
-
+        const pinterestMod = await import('../funcs/downloads/pinterest.js');
+        const dlFn = pinterestMod.dl || pinterestMod.default?.dl;
+        if (typeof dlFn === 'function') {
+            const res = await dlFn(url);
+            if (res && res.ok && res.urls && res.urls.length > 0) {
+                return {
+                    type: res.type || (res.urls[0].includes('.mp4') ? 'video' : 'image'),
+                    url: res.urls[0],
+                    desc: res.title || 'Pinterest'
+                };
+            }
+        }
     } catch (e) {
-        console.error('[Pinterest Cascade error]', e.message);
+        console.error('[Pinterest Central Dl error]', e.message);
     }
-
     try { const r = await ytdlpBaixar(url); if (r) return r; } catch {}
-    throw new Error('Pinterest: falhou ao extrair mídia em todas as APIs.');
+    throw new Error('Pinterest: falhou ao extrair mídia via módulo unificado.');
 }
 
 // ==================== REDDIT ====================
@@ -508,6 +488,27 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                 }, { quoted: m });
                 try { fs.unlinkSync(filePath); } catch {}
             } catch {}
+    } else if (resultado.type === 'gallery') {
+        for (const fileObj of resultado.files) {
+            try {
+                if (fileObj.type === 'video') {
+                    let finalPath = await verificarEConverterCodec(fileObj.filePath);
+                    await nazu.sendMessage(from, {
+                        video: { url: finalPath },
+                        mimetype: 'video/mp4',
+                        caption: `✅ ${plataforma}${resultado.desc ? `\n📝 ${resultado.desc}` : ''}`
+                    }, { quoted: m });
+                    try { fs.unlinkSync(finalPath); } catch {}
+                } else {
+                    await nazu.sendMessage(from, {
+                        image: { url: fileObj.filePath },
+                        caption: `✅ ${plataforma}`
+                    }, { quoted: m });
+                    try { fs.unlinkSync(fileObj.filePath); } catch {}
+                }
+            } catch (e) {
+                console.error('[Gallery Send Error]', e.message);
+            }
         }
     }
 }

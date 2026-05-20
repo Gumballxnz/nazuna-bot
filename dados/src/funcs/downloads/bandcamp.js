@@ -1,137 +1,76 @@
+/**
+ * Download Bandcamp - 100% Gratuito 
+ * Motor: Siputzx + Ryzendesu
+ */
+
 import axios from 'axios';
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
 /**
  * Baixa música/álbum do Bandcamp
  * @param {string} url - URL da track ou álbum do Bandcamp
- * @param {string} apiKey - Chave da API Cognima
  * @returns {Promise<Object>} Objeto com sucesso, buffer e informações da música
  */
-export async function download(url, apiKey) {
+export async function download(url) {
   try {
-    const endpoint = 'https://cog.api.br/api/v1/bandcamp/download';
-    
-    // Fazer requisição para obter informações da música
-    const response = await axios.get(endpoint, {
-      params: { url },
-      headers: {
-        'x-api-key': apiKey
-      },
-      timeout: 120000
-    });
+    // Motor 1: Siputzx
+    try {
+      const res = await axios.get(`https://api.siputzx.my.id/api/d/bandcamp?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 30000
+      }).then(v => v.data).catch(() => null);
 
-    if (!response.data || !response.data.success) {
-      return {
-        ok: false,
-        message: response.data?.message || 'Erro ao buscar informações do Bandcamp.'
-      };
+      const link = res?.data?.url || res?.data?.dl;
+      if (link) {
+        const fileResponse = await axios.get(link, {
+          responseType: 'arraybuffer', timeout: 180000,
+          maxContentLength: Infinity, maxBodyLength: Infinity
+        });
+        return {
+          ok: true,
+          buffer: Buffer.from(fileResponse.data),
+          title: res?.data?.title || res?.data?.track || 'Bandcamp',
+          artist: res?.data?.artist || 'Desconhecido',
+          album: res?.data?.album || '',
+          thumbnail: res?.data?.thumbnail || '',
+          filename: `bandcamp_${Date.now()}.mp3`
+        };
+      }
+    } catch (e) {
+      console.error('[Bandcamp] Motor 1 falhou:', e.message);
     }
 
-    const { data } = response.data;
+    // Motor 2: Ryzendesu
+    try {
+      const res = await axios.get(`https://api.ryzendesu.vip/api/downloader/bandcamp?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 30000
+      }).then(v => v.data).catch(() => null);
 
-    // Verificar se tem URL de download
-    if (!data.downloadUrl) {
-      return {
-        ok: false,
-        message: 'Não foi possível obter o link de download do Bandcamp.'
-      };
+      const link = res?.url || res?.data?.url;
+      if (link) {
+        const fileResponse = await axios.get(link, {
+          responseType: 'arraybuffer', timeout: 180000,
+          maxContentLength: Infinity, maxBodyLength: Infinity
+        });
+        return {
+          ok: true,
+          buffer: Buffer.from(fileResponse.data),
+          title: res?.title || res?.data?.title || 'Bandcamp',
+          artist: res?.artist || 'Desconhecido',
+          filename: `bandcamp_${Date.now()}.mp3`
+        };
+      }
+    } catch (e) {
+      console.error('[Bandcamp] Motor 2 falhou:', e.message);
     }
 
-    let downloadUrl = data.downloadUrl;
-
-    // Verificar se a URL é relativa (começa com "/")
-    if (downloadUrl.startsWith('/')) {
-      downloadUrl = 'https://cog.api.br' + downloadUrl;
-    }
-
-    // Baixar o arquivo
-    const fileResponse = await axios.get(downloadUrl, {
-      responseType: 'arraybuffer',
-      timeout: 180000, // 3 minutos para download
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity
-    });
-
-    const buffer = Buffer.from(fileResponse.data);
-
-    // Determinar extensão do arquivo
-    const extension = data.ext || 'mp3';
-
-    // Gerar nome do arquivo
-    const sanitizedTitle = data.track || data.title
-      ? (data.track || data.title).replace(/[^\w\s-]/g, '').substring(0, 50)
-      : 'bandcamp_audio';
-    const filename = `${sanitizedTitle.replace(/\s+/g, '_')}.${extension}`;
-
-    return {
-      ok: true,
-      buffer,
-      title: data.title || data.track || 'Música do Bandcamp',
-      artist: data.artist || 'Desconhecido',
-      album: data.album,
-      thumbnail: data.thumbnail,
-      duration: data.duration || 0,
-      description: data.description,
-      releaseDate: data.releaseDate,
-      genre: data.genre,
-      trackNumber: data.trackNumber,
-      filename
-    };
-
+    return { ok: false, message: 'Não foi possível baixar a música do Bandcamp.' };
   } catch (error) {
     console.error('Erro ao baixar do Bandcamp:', error);
-
-    // Tratar erros específicos
-    if (error.response) {
-      const status = error.response.status;
-      
-      if (status === 401 || status === 403) {
-        return {
-          ok: false,
-          message: 'Erro de autenticação da API. Verifique sua chave de API.',
-          needsNotification: true
-        };
-      }
-      
-      if (status === 404) {
-        return {
-          ok: false,
-          message: 'Música não encontrada. Verifique se o link está correto e se a música ainda está disponível.'
-        };
-      }
-
-      return {
-        ok: false,
-        message: `Erro na API: ${error.response.data?.message || 'Erro desconhecido'}`
-      };
-    }
-
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return {
-        ok: false,
-        message: 'O download demorou muito tempo. Tente novamente.'
-      };
-    }
-
-    return {
-      ok: false,
-      message: error.message || 'Erro ao processar a solicitação.'
-    };
+    return { ok: false, message: error.message || 'Erro ao processar a solicitação.' };
   }
 }
 
-/**
- * Notifica o dono do bot sobre erro de API key
- * @param {Object} nazu - Instância do bot
- * @param {string} nmrdn - Número do dono
- * @param {string} errorMsg - Mensagem de erro
- */
-export async function notifyOwnerAboutApiKey(nazu, nmrdn, errorMsg) {
-  try {
-    const message = `⚠️ *Alerta de API Key (Bandcamp Download)*\n\n${errorMsg}\n\nPor favor, verifique a configuração da API key no arquivo de configuração.`;
-    await nazu.sendMessage(nmrdn, { text: message });
-  } catch (error) {
-    console.error('Erro ao notificar dono sobre API key:', error);
-  }
-}
-
-export default { download, notifyOwnerAboutApiKey };
+export default { download };

@@ -1,136 +1,116 @@
+/**
+ * Download Facebook - 100% Gratuito 
+ * Motor: yt-dlp + APIs públicas (Siputzx, Ryzendesu) + fg-senna
+ */
+
 import axios from 'axios';
 
-const BASE_URL = 'https://cog.api.br/api/v1/facebook';
+// Lazy-load fg-senna
+let _fg = null;
+async function getFg() {
+    if (!_fg) _fg = (await import('fg-senna')).default;
+    return _fg;
+}
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 /**
  * Faz download de vídeo do Facebook em HD
  * @param {string} url - URL do vídeo do Facebook
- * @param {string} apiKey - Chave de API da Cognima
  * @returns {Promise<Object>} Dados do download
  */
-async function downloadHD(url, apiKey) {
+async function downloadHD(url) {
   try {
-    const response = await axios.get(`${BASE_URL}/download-hd`, {
-      params: { url },
-      headers: {
-        'x-api-key': apiKey
-      },
-      timeout: 120000
-    });
+    // Motor 1: Siputzx
+    try {
+      const res = await axios.get(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 15000
+      }).then(v => v.data).catch(() => null);
 
-    if (!response.data || !response.data.success) {
-      return {
-        ok: false,
-        msg: response.data?.message || 'Erro ao processar download do Facebook'
-      };
-    }
-
-    const { video, allQualities } = response.data;
-    
-    // Procurar por vídeo válido (que não use render.php)
-    let selectedVideo = null;
-    const allVideos = allQualities && allQualities.length > 0 ? allQualities : [video];
-    
-    // Ordem de prioridade de qualidade
-    const priorities = ['1080p', '720p (HD)', '720p', '480p', '360p'];
-    
-    // Primeiro tenta pelas prioridades
-    for (const priority of priorities) {
-      const found = allVideos.find(v => 
-        v.resolution === priority && 
-        !v.url.startsWith('/') && 
-        !v.shouldRender
-      );
-      if (found) {
-        selectedVideo = found;
-        break;
+      const link = res?.data?.url || res?.data?.hd || res?.data?.sd;
+      if (link) {
+        const videoResponse = await axios.get(link, {
+          responseType: 'arraybuffer',
+          timeout: 180000,
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity
+        });
+        return {
+          ok: true,
+          buffer: Buffer.from(videoResponse.data),
+          resolution: 'HD',
+          filename: `facebook_video_hd.mp4`
+        };
       }
-    }
-    
-    // Se não encontrou pela prioridade, pega qualquer um válido
-    if (!selectedVideo) {
-      selectedVideo = allVideos.find(v => !v.url.startsWith('/') && !v.shouldRender);
-    }
-    
-    // Se não encontrou nenhum vídeo válido
-    if (!selectedVideo) {
-      return {
-        ok: false,
-        msg: 'Vídeo não disponível para download direto. O Facebook está bloqueando o acesso a este conteúdo.'
-      };
+    } catch (e) {
+      console.error('[Facebook] Motor 1 (Siputzx) falhou:', e.message);
     }
 
-    // Construir a URL completa do download
-    let downloadUrl = selectedVideo.url;
+    // Motor 2: Ryzendesu
+    try {
+      const res = await axios.get(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 15000
+      }).then(v => v.data).catch(() => null);
 
-    console.log(`[Facebook] Baixando de: ${downloadUrl}`);
-    console.log(`[Facebook] Qualidade: ${selectedVideo.resolution}`);
-
-    // Baixar o vídeo
-    const videoResponse = await axios.get(downloadUrl, {
-      responseType: 'arraybuffer',
-      timeout: 180000, // 3 minutos para vídeos maiores
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity
-    });
-
-    return {
-      ok: true,
-      buffer: Buffer.from(videoResponse.data),
-      resolution: selectedVideo.resolution,
-      thumbnail: selectedVideo.thumbnail,
-      allQualities: allQualities || [],
-      filename: `facebook_video_${selectedVideo.resolution}.mp4`
-    };
-  } catch (error) {
-    console.error('Erro no download do Facebook:', error);
-    
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      return {
-        ok: false,
-        msg: 'API key inválida ou expirada'
-      };
+      const link = res?.url || res?.data?.url || res?.result?.url_hd || res?.result?.url_sd;
+      if (link) {
+        const videoResponse = await axios.get(link, {
+          responseType: 'arraybuffer',
+          timeout: 180000,
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity
+        });
+        return {
+          ok: true,
+          buffer: Buffer.from(videoResponse.data),
+          resolution: 'HD',
+          filename: `facebook_video_hd.mp4`
+        };
+      }
+    } catch (e) {
+      console.error('[Facebook] Motor 2 (Ryzendesu) falhou:', e.message);
     }
-    
-    if (error.response?.status === 404) {
-      return {
-        ok: false,
-        msg: 'Vídeo não encontrado ou não está disponível'
-      };
-    }
-    
-    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-      return {
-        ok: false,
-        msg: 'Timeout ao baixar o vídeo. O arquivo pode ser muito grande.'
-      };
+
+    // Motor 3: fg-senna
+    try {
+      const fg = await getFg();
+      const res = await fg.fbdl(url);
+      if (res && (res.HD || res.SD)) {
+        const link = res.HD || res.SD;
+        const videoResponse = await axios.get(link, {
+          responseType: 'arraybuffer',
+          timeout: 180000,
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity
+        });
+        return {
+          ok: true,
+          buffer: Buffer.from(videoResponse.data),
+          resolution: res.HD ? 'HD' : 'SD',
+          filename: `facebook_video.mp4`
+        };
+      }
+    } catch (e) {
+      console.error('[Facebook] Motor 3 (fg-senna) falhou:', e.message);
     }
 
     return {
       ok: false,
-      msg: error.response?.data?.message || error.message || 'Erro ao baixar do Facebook'
+      msg: 'Não foi possível baixar o vídeo do Facebook. Verifique se o link está correto.'
     };
-  }
-}
-
-/**
- * Notifica o dono sobre problemas com a API key
- */
-async function notifyOwnerAboutApiKey(nazu, ownerNumber, errorMessage, command = '') {
-  try {
-    const message = `🚨 *ALERTA - API Facebook*\n\n` +
-      `⚠️ *Problema detectado:*\n${errorMessage}\n\n` +
-      (command ? `📝 *Comando:* ${command}\n\n` : '') +
-      `🔧 *Ação necessária:*\nVerifique sua chave de API da Cognima em config.json\n\n` +
-      `⏰ ${new Date().toLocaleString('pt-BR')}`;
-
-    await nazu.sendMessage(ownerNumber + '@s.whatsapp.net', { text: message });
   } catch (error) {
-    console.error('Erro ao notificar dono sobre API key do Facebook:', error);
+    console.error('Erro no download do Facebook:', error);
+
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      return { ok: false, msg: 'Timeout ao baixar o vídeo. O arquivo pode ser muito grande.' };
+    }
+
+    return { ok: false, msg: error.message || 'Erro ao baixar do Facebook' };
   }
 }
 
 export default {
-  downloadHD,
-  notifyOwnerAboutApiKey
+  downloadHD
 };

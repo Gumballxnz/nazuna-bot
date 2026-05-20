@@ -4027,12 +4027,6 @@ Código: *${roleCode}*`,
           jSoNzIn.marcou_mensagem = true;
           jSoNzIn.id_enviou_marcada = jsonO.participant;
         }
-        if (!KeyCog) {
-          nazu.sendMessage(nmrdn, {
-            text: `🤖 *Sistema de IA desativado*\n\n😅 O sistema de IA está desativado porque a API key não foi configurada.\n\n⚙️ Para configurar, use o comando: ${prefix}apikey SUA_API_KEY\n📞 Suporte: wa.me/553399285117`
-          });
-          return;
-        }
 
         console.log('🤖 Processando mensagem de assistente...');
 
@@ -19698,7 +19692,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
           if (!q) return reply('❌ Envie o link do Twitter/X.');
           (async () => {
             try {
-              const { downloadTwitter } = await import('./utils/extraDl.js');
               const twtRes = await downloadTwitter(q);
           const caption = `🐦 *Twitter/X*
 👤 *Autor:* ${twtRes.author}`;
@@ -19800,7 +19793,6 @@ return reply('🤖 *Sistema temporariamente indisponível*');
                   case 'app':
       case 'apk':
         try {
-          const { downloadAPK } = await import('./utils/extraDl.js');
           const appRes = await downloadAPK(q);
           const caption = `📱 *APK Downloader (Aptoide)*
 
@@ -19861,9 +19853,9 @@ return reply('🤖 *Sistema temporariamente indisponível*');
           }
 
           const isPinUrl = PIN_URL_REGEX.test(searchTerm);
-          // Ensure API key is configured
-          
-          const pinPromise = isPinUrl ? pinterest.dl(searchTerm, null) : pinterest.search(searchTerm, null);
+
+
+          const pinPromise = isPinUrl ? pinterest.dl(searchTerm) : pinterest.search(searchTerm);
 
           pinPromise
             .then(async (datinha) => {
@@ -28475,7 +28467,7 @@ ${prefix}calc converter 100 km mi`);
       case 'horoscopo':
       case 'signo':
         if (!iaExpanded) return reply("Sistema de horóscopo temporariamente indisponível.");
-        if (!ia || !KeyCog) return reply("❌ Sistema de IA não disponível no momento.");
+        if (!ia) return reply("❌ Sistema de IA não disponível no momento.");
 
         const signoHoroscopo = args[0]?.toLowerCase();
         if (!signoHoroscopo) {
@@ -28530,7 +28522,7 @@ Use ${prefix}horoscopo <signo> para ver a previsão!`);
       case 'debater':
       case 'debate':
         if (!iaExpanded) return reply("Sistema de debate temporariamente indisponível.");
-        if (!ia || !KeyCog) return reply("❌ Sistema de IA não disponível no momento.");
+        if (!ia) return reply("❌ Sistema de IA não disponível no momento.");
         if (!q) return reply(`💬 *Debater*\n\nUso: ${prefix}debater <tema>\n\nExemplo: ${prefix}debater redes sociais fazem bem ou mal`);
 
         reply("💬 Analisando argumentos...");
@@ -28555,7 +28547,7 @@ Use ${prefix}horoscopo <signo> para ver a previsão!`);
       case 'storyinteractive':
       case 'aventura':
         if (!iaExpanded) return reply("Sistema de história temporariamente indisponível.");
-        if (!ia || !KeyCog) return reply("❌ Sistema de IA não disponível no momento.");
+        if (!ia) return reply("❌ Sistema de IA não disponível no momento.");
 
         const subCmdStory = args[0]?.toLowerCase();
 

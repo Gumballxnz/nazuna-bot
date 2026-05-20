@@ -1,93 +1,127 @@
 /**
- * Download e Pesquisa TikTok usando API Cognima
- * Updated to use cog.api.br API
- * Otimizado com HTTP connection pooling
+ * Download e Pesquisa TikTok - 100% Gratuito 
+ * Motor: APIs públicas (Siputzx, Ryzendesu) + fg-senna
  */
 
-import { apiClient } from '../../utils/httpClient.js';
-import { notifyOwnerAboutApiKey, isApiKeyError } from '../utils/apiKeyNotifier.js';
+import axios from 'axios';
 
-// Função para pesquisar vídeos no TikTok
-async function tiktokSearch(query, apiKey) {
+// Lazy-load fg-senna
+let _fg = null;
+async function getFg() {
+    if (!_fg) _fg = (await import('fg-senna')).default;
+    return _fg;
+}
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+// Pesquisar vídeos no TikTok
+async function tiktokSearch(query) {
   try {
-    if (!apiKey) {
-      throw new Error('API key não fornecida');
+    // Motor 1: fg-senna (ttsearch)
+    try {
+      const fg = await getFg();
+      const res = await fg.ttsearch(query);
+      if (res && res.result && Array.isArray(res.result) && res.result.length > 0) {
+        return {
+          ok: true,
+          data: res.result.map(v => ({
+            title: v.title || v.desc || '',
+            url: v.play || v.url || '',
+            thumbnail: v.cover || v.thumbnail || '',
+            author: v.author || ''
+          })).filter(v => v.url)
+        };
+      }
+    } catch (e) {
+      console.error('[TikTok Search] fg-senna falhou:', e.message);
     }
 
-    const response = await apiClient.post('https://cog.api.br/api/v1/tiktok/search', {
-      query: query
-    }, {
-      headers: { 'X-API-Key': apiKey },
-      timeout: 120000
-    });
-
-    if (!response.data.success || !response.data.data) {
-      throw new Error('Resposta inválida da API');
-    }
-
-    return {
-      ok: true,
-      criador: 'Hiudy',
-      title: response.data.data.title,
-      urls: response.data.data.urls,
-      type: response.data.data.type,
-      mime: response.data.data.mime,
-      audio: response.data.data.audio
-    };
-
+    return { ok: false, msg: 'Nenhum resultado encontrado.' };
   } catch (error) {
     console.error('Erro na pesquisa TikTok:', error.message);
-    
-    if (isApiKeyError(error)) {
-      throw new Error(`API key inválida ou expirada: ${error.response?.data?.message || error.message}`);
-    }
-    
-    return { 
-      ok: false, 
-      msg: 'Erro ao pesquisar vídeo: ' + (error.response?.data?.message || error.message) 
-    };
+    return { ok: false, msg: 'Erro ao pesquisar vídeo: ' + error.message };
   }
 }
 
-// Função para baixar vídeo do TikTok
-async function tiktokDownload(url, apiKey) {
+// Baixar vídeo do TikTok
+async function tiktokDownload(url) {
   try {
-    if (!apiKey) {
-      throw new Error('API key não fornecida');
+    // Motor 1: Siputzx
+    try {
+      const res = await axios.get(`https://api.siputzx.my.id/api/d/tiktok?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 15000
+      }).then(v => v.data).catch(() => null);
+
+      const link = res?.data?.data?.play || res?.data?.data?.hdplay || res?.data?.play;
+      if (link) {
+        return {
+          ok: true,
+          title: res?.data?.data?.title || res?.data?.title || 'TikTok',
+          urls: [link],
+          type: 'video',
+          mime: 'video/mp4',
+          audio: res?.data?.data?.music || null
+        };
+      }
+
+      // Pode ser slideshow (imagens)
+      const images = res?.data?.data?.images || res?.data?.images;
+      if (images && images.length > 0) {
+        return {
+          ok: true,
+          title: res?.data?.data?.title || 'TikTok',
+          urls: images,
+          type: 'image',
+          mime: 'image/jpeg'
+        };
+      }
+    } catch (e) {
+      console.error('[TikTok DL] Motor 1 (Siputzx) falhou:', e.message);
     }
 
-    const response = await apiClient.post('https://cog.api.br/api/v1/tiktok/download', {
-      url: url
-    }, {
-      headers: { 'X-API-Key': apiKey },
-      timeout: 120000
-    });
+    // Motor 2: Ryzendesu
+    try {
+      const res = await axios.get(`https://api.ryzendesu.vip/api/downloader/ttdl?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA },
+        timeout: 15000
+      }).then(v => v.data).catch(() => null);
 
-    if (!response.data.success || !response.data.data) {
-      throw new Error('Resposta inválida da API');
+      const link = res?.data?.play || res?.data?.hdplay;
+      if (link) {
+        return {
+          ok: true,
+          title: res?.data?.title || 'TikTok',
+          urls: [link],
+          type: 'video',
+          mime: 'video/mp4'
+        };
+      }
+    } catch (e) {
+      console.error('[TikTok DL] Motor 2 (Ryzendesu) falhou:', e.message);
     }
 
-    return {
-      ok: true,
-      criador: 'Hiudy',
-      title: response.data.data.title,
-      urls: response.data.data.urls,
-      type: response.data.data.type,
-      mime: response.data.data.mime,
-      audio: response.data.data.audio
-    };
+    // Motor 3: fg-senna
+    try {
+      const fg = await getFg();
+      const res = await fg.tiktok(url);
+      if (res && res.result) {
+        const d = res.result;
+        if (d.type === 'image' && d.images) {
+          return { ok: true, title: d.title || 'TikTok', urls: d.images, type: 'image', mime: 'image/jpeg' };
+        }
+        if (d.play) {
+          return { ok: true, title: d.title || 'TikTok', urls: [d.play], type: 'video', mime: 'video/mp4' };
+        }
+      }
+    } catch (e) {
+      console.error('[TikTok DL] Motor 3 (fg-senna) falhou:', e.message);
+    }
 
+    return { ok: false, msg: 'Falha ao baixar vídeo do TikTok.' };
   } catch (error) {
     console.error('Erro no download TikTok:', error.message);
-    
-    if (isApiKeyError(error)) {
-      throw new Error(`API key inválida ou expirada: ${error.response?.data?.message || error.message}`);
-    }
-    
-    return { 
-      ok: false, 
-      msg: 'Erro ao baixar vídeo: ' + (error.response?.data?.message || error.message) 
-    };
+    return { ok: false, msg: 'Erro ao baixar vídeo: ' + error.message };
   }
 }
 
