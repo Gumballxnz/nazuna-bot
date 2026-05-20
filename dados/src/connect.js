@@ -9,8 +9,6 @@ import qrcode from 'qrcode-terminal';
 import { readFile } from 'fs/promises';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
-import crypto from 'crypto';
-import axios from 'axios';
 import { execSync } from 'child_process';
 
 import PerformanceOptimizer from './utils/performanceOptimizer.js';

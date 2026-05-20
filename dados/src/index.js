@@ -32,10 +32,7 @@ async function getParseHTML() {
 }
 import pathz from 'path';
 import fs from 'fs';
-import os from 'os';
 import https from 'https';
-import crypto from 'crypto';
-// Lazy-load node-cron (usado apenas em 2 lugares)
 import cron from 'node-cron';
 import { fileURLToPath } from 'url';
 
@@ -618,13 +615,8 @@ try {
 }
 const botVersion = packageJson.version;
 
-// Inicializa o cache JID→LID
+// Inicializa o cache JID→LID (auto-save ja esta em helpers.js)
 initJidLidCache(JID_LID_CACHE_FILE);
-
-// Salva cache periodicamente (a cada 5 minutos)
-setInterval(() => {
-  saveJidLidCache();
-}, 5 * 60 * 1000);
 
 async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirationManager = null) {
   // Log de início de processamento para debug paralelo
@@ -2775,31 +2767,31 @@ Código: *${roleCode}*`,
 
         console.log('[ANTIPALAVRA] Sistema de desbanimento automático iniciado.');
 
-        setInterval(async () => {
+        const processUnbans = async () => {
           try {
             if (!fs.existsSync(ANTIPALAVRA_UNBANS_FILE)) return;
-            
+
             let unbans = [];
             try {
               const content = fs.readFileSync(ANTIPALAVRA_UNBANS_FILE, 'utf-8');
               unbans = JSON.parse(content) || [];
             } catch (e) { return; }
-            
+
             if (unbans.length === 0) return;
-            
+
             const now = Date.now();
             const toUnban = unbans.filter(u => u.unbanAt <= now);
             const remaining = unbans.filter(u => u.unbanAt > now);
-            
+
             if (toUnban.length > 0) {
               for (const ban of toUnban) {
                 try {
                   console.log(`[ANTIPALAVRA] Executando unban automático: @${ban.userId.split('@')[0]} no grupo ${ban.groupId}`);
                   const response = await nazuInstance.groupParticipantsUpdate(ban.groupId, [ban.userId], 'add');
                   const result = response && response[0] ? String(response[0].status) : null;
-                  
+
                   if (result === '200') {
-                    await nazuInstance.sendMessage(ban.groupId, { 
+                    await nazuInstance.sendMessage(ban.groupId, {
                       text: `✅ *ANTIPALAVRA - UNBAN AUTOMÁTICO*\n\n` +
                             `👤 @${ban.userId.split('@')[0]} foi adicionado de volta após cumprir o prazo de 5 horas.`,
                       mentions: [ban.userId]
@@ -2809,11 +2801,11 @@ Código: *${roleCode}*`,
                     try {
                       const code = await nazuInstance.groupInviteCode(ban.groupId);
                       const inviteLink = `https://chat.whatsapp.com/${code}`;
-                      
+
                       await nazuInstance.sendMessage(ban.userId, {
                         text: `✅ *Seu banimento terminou!*\n\nVocê já cumpriu as 5 horas de banimento temporário do sistema antipalavra.\n\nComo o WhatsApp bloqueia que administradores adicionem de volta pessoas removidas recentemente de forma automática, por favor, clique no link abaixo para retornar ao grupo:\n\n🔗 ${inviteLink}`
                       });
-                      
+
                       await nazuInstance.sendMessage(ban.groupId, {
                         text: `✅ *ANTIPALAVRA - UNBAN CONCLUÍDO*\n\n👤 @${ban.userId.split('@')[0]} cumpriu as 5 horas de punição.\n⚠️ O WhatsApp impediu a re-adição direta, então enviei o link de convite no privado dele(a).`,
                         mentions: [ban.userId]
@@ -2826,13 +2818,57 @@ Código: *${roleCode}*`,
                   console.error(`[ANTIPALAVRA] Erro ao re-adicionar usuário ${ban.userId}:`, e.message);
                 }
               }
-              // Atualiza o arquivo removendo os processados
               fs.writeFileSync(ANTIPALAVRA_UNBANS_FILE, JSON.stringify(remaining, null, 2));
             }
           } catch (e) {
             console.error('[ANTIPALAVRA Worker] Erro inesperado:', e.message);
           }
-        }, 60 * 1000); // Verifica a cada minuto
+        };
+
+        // Calcula proximo unban e agenda com setTimeout em vez de polling
+        const scheduleNextUnban = () => {
+          try {
+            if (!fs.existsSync(ANTIPALAVRA_UNBANS_FILE)) {
+              setTimeout(scheduleNextUnban, 5 * 60 * 1000); // Re-verifica em 5min
+              return;
+            }
+            let unbans = [];
+            try {
+              const content = fs.readFileSync(ANTIPALAVRA_UNBANS_FILE, 'utf-8');
+              unbans = JSON.parse(content) || [];
+            } catch (e) {
+              setTimeout(scheduleNextUnban, 60 * 1000);
+              return;
+            }
+
+            if (unbans.length === 0) {
+              setTimeout(scheduleNextUnban, 5 * 60 * 1000); // Sem unbans, verifica em 5min
+              return;
+            }
+
+            // Processa unbans pendentes
+            processUnbans().then(() => {
+              // Recalcula proximo unban apos processar
+              try {
+                const remaining = JSON.parse(fs.readFileSync(ANTIPALAVRA_UNBANS_FILE, 'utf-8')) || [];
+                if (remaining.length > 0) {
+                  const nextTime = Math.min(...remaining.map(u => u.unbanAt));
+                  const delay = Math.max(nextTime - Date.now(), 10000); // Min 10s
+                  setTimeout(scheduleNextUnban, delay);
+                } else {
+                  setTimeout(scheduleNextUnban, 5 * 60 * 1000);
+                }
+              } catch (e) {
+                setTimeout(scheduleNextUnban, 60 * 1000);
+              }
+            });
+          } catch (e) {
+            console.error('[ANTIPALAVRA Worker] Erro ao agendar:', e.message);
+            setTimeout(scheduleNextUnban, 60 * 1000);
+          }
+        };
+
+        scheduleNextUnban();
       } catch (e) {
         console.error('[ANTIPALAVRA Worker] Falha ao iniciar:', e.message);
       }
@@ -2846,13 +2882,10 @@ Código: *${roleCode}*`,
         autoHorariosWorkerStarted = true;
         global.autoHorariosWorkerStarted = true;
 
-        setInterval(async () => {
+        // Roda 1x por hora (no minuto 0) em vez de a cada 60 segundos
+        cron.schedule('0 * * * *', async () => {
           try {
             const now = new Date();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-
-            if (minutes !== 0 || seconds > 30) return;
 
             const autoSchedulesPath = './dados/database/autohorarios.json';
             if (!fs.existsSync(autoSchedulesPath)) return;
@@ -2954,7 +2987,7 @@ Código: *${roleCode}*`,
           } catch (err) {
             console.error('Erro no auto horários worker:', err);
           }
-        }, 60 * 1000);
+        });
 
       } catch (e) {
         console.error('Erro ao iniciar auto horários worker:', e);
