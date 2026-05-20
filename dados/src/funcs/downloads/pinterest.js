@@ -37,7 +37,9 @@ class SimpleCache {
 
 const cache = new SimpleCache(500, 30 * 60 * 1000);
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+// User-Agents testados: Googlebot funciona em data center, Chrome para uso local
+const UA_GOOGLEBOT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+const UA_CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 /**
  * Pesquisa imagens no Pinterest usando API nativa do Pinterest via proxy CORS
@@ -71,7 +73,7 @@ async function pinterestSearch(query) {
     // Tentativa 1: AllOrigins
     try {
       const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`, {
-        headers: { 'User-Agent': UA },
+        headers: { 'User-Agent': UA_CHROME },
         timeout: 15000
       });
       if (res.data && res.data.contents) {
@@ -85,7 +87,7 @@ async function pinterestSearch(query) {
     if (!jsonResponse) {
       try {
         const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(searchUrl)}`, {
-          headers: { 'User-Agent': UA },
+          headers: { 'User-Agent': UA_CHROME },
           timeout: 10000
         });
         if (res.data && typeof res.data === 'object') {
@@ -102,7 +104,7 @@ async function pinterestSearch(query) {
     if (!jsonResponse) {
       try {
         const res = await axios.get(searchUrl, {
-          headers: { 'User-Agent': UA },
+          headers: { 'User-Agent': UA_CHROME },
           timeout: 10000
         });
         if (res.data) {
@@ -157,53 +159,53 @@ async function pinterestDL(url) {
 
     let html = null;
 
-    // 1. Obter HTML: Disparar Codetabs e AllOrigins em paralelo — vence quem responder primeiro com HTML válido
+    // Motor 1: Acesso direto com Googlebot UA — funciona em data center (VPS)
+    // O Pinterest serve HTML completo com __PWS_DATA__ para Googlebot
     try {
-      const fetchCodetabs = axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
-        headers: { 'User-Agent': UA },
-        timeout: 15000,
+      const res = await axios.get(url, {
+        headers: {
+          'User-Agent': UA_GOOGLEBOT,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
+        },
+        timeout: 12000,
         maxRedirects: 5
-      }).then(res => {
-        // Codetabs retorna string HTML direto
-        if (res.data && typeof res.data === 'string' && res.data.includes('__PWS_DATA__')) {
-          return res.data;
-        }
-        throw new Error('Codetabs: HTML sem __PWS_DATA__');
       });
-
-      const fetchAllOrigins = axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
-        headers: { 'User-Agent': UA },
-        timeout: 15000
-      }).then(res => {
-        // AllOrigins retorna JSON { contents: '<html...>' }
-        if (res.data && res.data.contents && res.data.contents.includes('__PWS_DATA__')) {
-          return res.data.contents;
-        }
-        throw new Error('AllOrigins: HTML sem __PWS_DATA__');
-      });
-
-      html = await Promise.any([fetchCodetabs, fetchAllOrigins]).catch(() => null);
+      if (res.data && typeof res.data === 'string' && res.data.includes('__PWS_DATA__')) {
+        html = res.data;
+      }
     } catch (e) {
-      console.error('[Pinterest DL] Proxies paralelos falharam:', e.message);
+      console.error('[Pinterest DL] Acesso Googlebot direto falhou:', e.message);
     }
 
-    // 2. Fallback: acesso direto (funciona para links longos sem encurtamento)
+    // Motor 2: AllOrigins (proxy CORS - funciona localmente)
     if (!html) {
       try {
-        const res = await axios.get(url, {
-          headers: {
-            'User-Agent': UA,
-            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
-          },
-          timeout: 10000,
+        const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+          headers: { 'User-Agent': UA_CHROME },
+          timeout: 15000
+        });
+        if (res.data && res.data.contents && res.data.contents.includes('__PWS_DATA__')) {
+          html = res.data.contents;
+        }
+      } catch (e) {
+        console.error('[Pinterest DL] AllOrigins falhou:', e.message);
+      }
+    }
+
+    // Motor 3: Codetabs (proxy CORS - alternativo)
+    if (!html) {
+      try {
+        const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
+          headers: { 'User-Agent': UA_CHROME },
+          timeout: 15000,
           maxRedirects: 5
         });
-        if (res.data && typeof res.data === 'string') {
+        if (res.data && typeof res.data === 'string' && res.data.includes('__PWS_DATA__')) {
           html = res.data;
         }
       } catch (e) {
-        console.error('[Pinterest DL] Requisição direta falhou:', e.message);
+        console.error('[Pinterest DL] Codetabs falhou:', e.message);
       }
     }
 
