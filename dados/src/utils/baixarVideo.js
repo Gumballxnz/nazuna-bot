@@ -488,6 +488,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                 }, { quoted: m });
                 try { fs.unlinkSync(filePath); } catch {}
             } catch {}
+        }
     } else if (resultado.type === 'gallery') {
         for (const fileObj of resultado.files) {
             try {
