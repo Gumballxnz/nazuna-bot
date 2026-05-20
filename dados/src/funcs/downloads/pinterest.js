@@ -1,9 +1,9 @@
 /**
  * Pinterest Download e Pesquisa - 100% Gratuito 
- * Motor: APIs públicas (Siputzx, Ryzendesu)
+ * Motor: Scraper nativo com resolvedores CORS (AllOrigins, Codetabs) e fallbacks resilientes
  * 
- * @author Hiudy (adaptado)
- * @version 4.0.0
+ * @author Hiudy & Antigravity (adaptado)
+ * @version 5.0.0
  */
 
 import axios from 'axios';
@@ -40,7 +40,7 @@ const cache = new SimpleCache(500, 30 * 60 * 1000);
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 /**
- * Pesquisa imagens no Pinterest usando APIs gratuitas
+ * Pesquisa imagens no Pinterest usando API nativa do Pinterest via proxy CORS
  * @param {string} query - Termo de pesquisa
  * @returns {Promise<Object>} - { ok: true, urls: [...], type, count, query }
  */
@@ -53,58 +53,87 @@ async function pinterestSearch(query) {
     const cached = cache.get(`search:${query.toLowerCase()}`);
     if (cached) return cached;
 
-    // Motor 1: Siputzx
+    const dataObj = {
+      options: {
+        isPrefetch: false,
+        query: query,
+        scope: 'pins',
+        no_meta: true,
+        page_size: 25
+      },
+      context: {}
+    };
+
+    const searchUrl = `https://www.pinterest.com/resource/BaseSearchResource/get/?source_url=${encodeURIComponent('/search/pins/?q=' + query)}&data=${encodeURIComponent(JSON.stringify(dataObj))}`;
+
+    let jsonResponse = null;
+
+    // Tentativa 1: AllOrigins
     try {
-      const res = await axios.get(`https://api.siputzx.my.id/api/s/pinterest?query=${encodeURIComponent(query)}`, {
+      const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`, {
         headers: { 'User-Agent': UA },
         timeout: 15000
-      }).then(v => v.data).catch(() => null);
-
-      if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-        const urls = res.data.map(item => typeof item === 'string' ? item : item.url || item.pin || '').filter(Boolean);
-        if (urls.length > 0) {
-          const result = {
-            ok: true,
-            type: 'image',
-            mime: 'image/jpeg',
-            query: query,
-            count: urls.length,
-            urls: urls
-          };
-          cache.set(`search:${query.toLowerCase()}`, result);
-          return result;
-        }
+      });
+      if (res.data && res.data.contents) {
+        jsonResponse = JSON.parse(res.data.contents);
       }
     } catch (e) {
-      console.error('[Pinterest Search] Motor 1 (Siputzx) falhou:', e.message);
+      console.error('[Pinterest Search] AllOrigins falhou:', e.message);
     }
 
-    // Motor 2: Ryzendesu
-    try {
-      const res = await axios.get(`https://api.ryzendesu.vip/api/search/pinterest?query=${encodeURIComponent(query)}`, {
-        headers: { 'User-Agent': UA },
-        timeout: 15000
-      }).then(v => v.data).catch(() => null);
+    // Tentativa 2: Codetabs
+    if (!jsonResponse) {
+      try {
+        const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(searchUrl)}`, {
+          headers: { 'User-Agent': UA },
+          timeout: 10000
+        });
+        if (res.data && typeof res.data === 'object') {
+          jsonResponse = res.data;
+        } else if (res.data && typeof res.data === 'string') {
+          jsonResponse = JSON.parse(res.data);
+        }
+      } catch (e) {
+        console.error('[Pinterest Search] Codetabs falhou:', e.message);
+      }
+    }
 
-      const urls = res?.data || res?.result || (Array.isArray(res) ? res : []);
-      const validUrls = (Array.isArray(urls) ? urls : []).map(u => typeof u === 'string' ? u : u?.url || u?.pin || '').filter(Boolean);
+    // Tentativa 3: Direto
+    if (!jsonResponse) {
+      try {
+        const res = await axios.get(searchUrl, {
+          headers: { 'User-Agent': UA },
+          timeout: 10000
+        });
+        if (res.data) {
+          jsonResponse = res.data;
+        }
+      } catch (e) {
+        console.error('[Pinterest Search] Busca direta falhou:', e.message);
+      }
+    }
 
-      if (validUrls.length > 0) {
+    const results = jsonResponse?.resource_response?.data?.results || [];
+    if (Array.isArray(results) && results.length > 0) {
+      const urls = results
+        .map(pin => pin.images?.orig?.url || pin.images?.['736x']?.url || pin.images?.['564x']?.url)
+        .filter(Boolean);
+
+      if (urls.length > 0) {
         const result = {
           ok: true,
           type: 'image',
           mime: 'image/jpeg',
           query: query,
-          count: validUrls.length,
-          urls: validUrls
+          count: urls.length,
+          urls: urls
         };
         cache.set(`search:${query.toLowerCase()}`, result);
         return result;
       }
-    } catch (e) {
-      console.error('[Pinterest Search] Motor 2 (Ryzendesu) falhou:', e.message);
     }
 
+    // Fallback rápido usando um scraper alternativo de imagem se necessário
     return { ok: false, msg: 'Nenhuma imagem encontrada. Tente outro termo.' };
   } catch (error) {
     console.error('Erro na pesquisa Pinterest:', error);
@@ -126,58 +155,194 @@ async function pinterestDL(url) {
     const cached = cache.get(`download:${url}`);
     if (cached) return cached;
 
-    // Motor 1: Siputzx
+    let html = null;
+
+    // 1. Obter HTML - Tentativa 1: AllOrigins
     try {
-      const res = await axios.get(`https://api.siputzx.my.id/api/d/pinterest?url=${encodeURIComponent(url)}`, {
+      const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
         timeout: 15000
-      }).then(v => v.data).catch(() => null);
-
-      const link = res?.data?.url || res?.data?.hd || res?.data?.sd;
-      if (link) {
-        const isVideo = link.includes('.mp4');
-        const result = {
-          ok: true,
-          title: res?.data?.title || '',
-          type: isVideo ? 'video' : 'image',
-          mime: isVideo ? 'video/mp4' : 'image/jpeg',
-          urls: [link]
-        };
-        cache.set(`download:${url}`, result);
-        return result;
+      });
+      if (res.data && res.data.contents) {
+        html = res.data.contents;
       }
     } catch (e) {
-      console.error('[Pinterest DL] Motor 1 (Siputzx) falhou:', e.message);
+      console.error('[Pinterest DL] AllOrigins falhou:', e.message);
     }
 
-    // Motor 2: Ryzendesu
-    try {
-      const res = await axios.get(`https://api.ryzendesu.vip/api/downloader/pinterest?url=${encodeURIComponent(url)}`, {
-        headers: { 'User-Agent': UA },
-        timeout: 15000
-      }).then(v => v.data).catch(() => null);
-
-      const link = res?.data?.url || res?.url || res?.result?.url;
-      if (link) {
-        const isVideo = link.includes('.mp4');
-        const result = {
-          ok: true,
-          title: res?.data?.title || res?.title || '',
-          type: isVideo ? 'video' : 'image',
-          mime: isVideo ? 'video/mp4' : 'image/jpeg',
-          urls: [link]
-        };
-        cache.set(`download:${url}`, result);
-        return result;
+    // 1. Obter HTML - Tentativa 2: Codetabs
+    if (!html) {
+      try {
+        const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
+          headers: { 'User-Agent': UA },
+          timeout: 10000
+        });
+        if (res.data && typeof res.data === 'string') {
+          html = res.data;
+        }
+      } catch (e) {
+        console.error('[Pinterest DL] Codetabs falhou:', e.message);
       }
-    } catch (e) {
-      console.error('[Pinterest DL] Motor 2 (Ryzendesu) falhou:', e.message);
     }
 
-    return { ok: false, msg: 'Não foi possível baixar este conteúdo.' };
+    // 1. Obter HTML - Tentativa 3: Direto (Útil caso não seja link encurtado e rede da VPS consiga acessar)
+    if (!html) {
+      try {
+        const res = await axios.get(url, {
+          headers: {
+            'User-Agent': UA,
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
+          },
+          timeout: 10000,
+          maxRedirects: 5
+        });
+        if (res.data && typeof res.data === 'string') {
+          html = res.data;
+        }
+      } catch (e) {
+        console.error('[Pinterest DL] Requisição direta falhou:', e.message);
+      }
+    }
+
+    if (!html) {
+      return { ok: false, msg: 'Não foi possível carregar a página do Pinterest.' };
+    }
+
+    // 2. Tenta parsear dados do __PWS_DATA__
+    const pwsMatch = html.match(/<script id="__PWS_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+    if (pwsMatch) {
+      try {
+        const json = JSON.parse(pwsMatch[1]);
+        const pins = json.props?.initialReduxState?.pins;
+        if (pins) {
+          const pinIds = Object.keys(pins);
+          if (pinIds.length > 0) {
+            const pinData = pins[pinIds[0]];
+            const title = pinData.title || pinData.grid_title || '';
+
+            // Caso A: É um vídeo
+            if (pinData.videos && pinData.videos.video_list) {
+              const videoList = pinData.videos.video_list;
+              const bestVideo = videoList.V_720P || videoList.V_HLSV4 || Object.values(videoList)[0];
+              if (bestVideo && bestVideo.url) {
+                const result = {
+                  ok: true,
+                  title: title,
+                  type: 'video',
+                  mime: 'video/mp4',
+                  urls: [bestVideo.url]
+                };
+                cache.set(`download:${url}`, result);
+                return result;
+              }
+            }
+
+            // Caso B: Story Pin Data (carrosséis / coleções)
+            if (pinData.story_pin_data?.pages) {
+              const pages = pinData.story_pin_data.pages;
+              const urls = [];
+              let hasVideo = false;
+
+              for (const page of pages) {
+                if (page.blocks && page.blocks.length > 0) {
+                  const videoBlock = page.blocks.find(b => b.type === 'VIDEO' && b.video_data?.video_list);
+                  if (videoBlock) {
+                    const vList = videoBlock.video_data.video_list;
+                    const vUrl = vList.V_720P?.url || Object.values(vList)[0]?.url;
+                    if (vUrl) {
+                      urls.push(vUrl);
+                      hasVideo = true;
+                      continue;
+                    }
+                  }
+                  
+                  const imgBlock = page.blocks.find(b => b.type === 'IMAGE');
+                  if (imgBlock && imgBlock.image_spec) {
+                    const bestImg = imgBlock.image_spec.orig?.url || imgBlock.image_spec['736x']?.url || imgBlock.image_spec['564x']?.url;
+                    if (bestImg) {
+                      urls.push(bestImg);
+                    }
+                  }
+                }
+              }
+
+              if (urls.length > 0) {
+                const result = {
+                  ok: true,
+                  title: title,
+                  type: hasVideo ? 'video' : 'image',
+                  mime: hasVideo ? 'video/mp4' : 'image/jpeg',
+                  urls: urls
+                };
+                cache.set(`download:${url}`, result);
+                return result;
+              }
+            }
+
+            // Caso C: É uma imagem normal
+            if (pinData.images) {
+              const images = pinData.images;
+              const orig = images.orig || images['736x'] || images['564x'];
+              if (orig && orig.url) {
+                const result = {
+                  ok: true,
+                  title: title,
+                  type: 'image',
+                  mime: 'image/jpeg',
+                  urls: [orig.url]
+                };
+                cache.set(`download:${url}`, result);
+                return result;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[Pinterest DL] Erro ao parsear __PWS_DATA__:', err.message);
+      }
+    }
+
+    // 3. Fallback de Metatags OG se __PWS_DATA__ não for encontrado ou falhar
+    const ogVideo = html.match(/<meta\s+property=["']og:video["']\s+content=["']([^"']+)["']/i) ||
+                    html.match(/<meta\s+name=["']twitter:player["']\s+content=["']([^"']+)["']/i);
+    const ogImage = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                    html.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
+    const ogTitle = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i) ||
+                    html.match(/<title>([^<]+)<\/title>/i);
+
+    const title = ogTitle ? ogTitle[1].replace(' | Pinterest', '').trim() : '';
+
+    if (ogVideo && ogVideo[1]) {
+      const videoUrl = ogVideo[1].replace(/&amp;/g, '&');
+      const result = {
+        ok: true,
+        title: title,
+        type: 'video',
+        mime: 'video/mp4',
+        urls: [videoUrl]
+      };
+      cache.set(`download:${url}`, result);
+      return result;
+    }
+
+    if (ogImage && ogImage[1]) {
+      const imageUrl = ogImage[1].replace(/&amp;/g, '&');
+      const result = {
+        ok: true,
+        title: title,
+        type: 'image',
+        mime: 'image/jpeg',
+        urls: [imageUrl]
+      };
+      cache.set(`download:${url}`, result);
+      return result;
+    }
+
+    return { ok: false, msg: 'Não foi possível extrair a mídia deste Pin.' };
   } catch (error) {
     console.error('Erro no download Pinterest:', error);
-    return { ok: false, msg: 'Ocorreu um erro ao baixar o conteúdo.' };
+    return { ok: false, msg: 'Ocorreu um erro ao processar o download do Pinterest.' };
   }
 }
 
