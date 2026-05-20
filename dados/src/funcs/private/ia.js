@@ -1433,8 +1433,11 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
       );
 
       let resContent = response.data?.content || response.data?.text || response.data?.message;
-      
+
       if (!resContent) throw new Error('Falha no resContent da API Principal');
+      if (typeof resContent !== 'string') {
+        resContent = (typeof resContent === 'object') ? JSON.stringify(resContent) : String(resContent);
+      }
 
       // Mantendo o formato original da API da Cognima/OpenAI para compatibilidade
       return {
@@ -1456,6 +1459,9 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
         
         let sipContent = sipRes?.data || sipRes?.message || sipRes?.result;
         if (sipContent) {
+           if (typeof sipContent !== 'string') {
+             sipContent = (typeof sipContent === 'object') ? JSON.stringify(sipContent) : String(sipContent);
+           }
            return { data: { choices: [ { message: { content: sipContent.trim() } } ] } };
         }
       } catch (fallbackError) {

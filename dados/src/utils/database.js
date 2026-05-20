@@ -1226,7 +1226,7 @@ function loadEconomy() {
     // Se houve mudanças, salva automaticamente
     if (needsSave) {
       console.log('🔧 Sistema de migração detectou e corrigiu dados faltantes/incorretos');
-      saveEconomy(data);
+      saveEconomy(data).catch(e => console.error('❌ Erro ao salvar economy (migração):', e.message));
     }
     
     return data;
@@ -1236,18 +1236,18 @@ function loadEconomy() {
   }
 }
 
-function saveEconomy(data) {
+async function saveEconomy(data) {
   try {
     if (!data || typeof data !== 'object') {
       console.error('❌ Tentativa de salvar economia com dados inválidos');
       return false;
     }
-    
+
     // Usa função segura com backup automático
-    return saveJsonFileSafe(ECONOMY_FILE, data, true);
-  } catch (e) { 
-    console.error('❌ Erro ao salvar economy.json:', e.message); 
-    return false; 
+    return await saveJsonFileSafe(ECONOMY_FILE, data, true);
+  } catch (e) {
+    console.error('❌ Erro ao salvar economy.json:', e.message);
+    return false;
   }
 }
 
@@ -2023,18 +2023,18 @@ function loadLevelingSafe() {
 /**
  * Salva dados de leveling com proteção
  */
-function saveLevelingSafe(data) {
+async function saveLevelingSafe(data) {
   try {
     if (!data || typeof data !== 'object') {
       console.error('❌ Tentativa de salvar leveling com dados inválidos');
       return false;
     }
-    
+
     // Garante estrutura mínima
     data.users = data.users || {};
     data.patents = data.patents || DEFAULT_PATENTS;
-    
-    return saveJsonFileSafe(LEVELING_FILE, data, true);
+
+    return await saveJsonFileSafe(LEVELING_FILE, data, true);
   } catch (error) {
     console.error('❌ Erro ao salvar leveling:', error.message);
     return false;
@@ -2089,7 +2089,7 @@ function checkLevelUp(userId, userData, levelingData, nazu, from) {
       userData.patent = getPatent(userData.level, levelingData.patents || DEFAULT_PATENTS);
       
       // Usa salvamento seguro
-      saveLevelingSafe(levelingData);
+      saveLevelingSafe(levelingData).catch(e => console.error('❌ Erro ao salvar leveling:', e.message));
       
       let levelUpText = `╭━━━⊱ ⭐ *LEVEL UP!* ⭐ ⊱━━━╮\n`;
       levelUpText += `│\n`;

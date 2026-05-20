@@ -239,7 +239,7 @@ const processMessage = async (groupId, userId, message, aiFunction = null) => {
     }
     
     // Verificar cooldown
-    const userKey = `${groupId}:${odIUserId}`;
+    const userKey = `${groupId}:${userId}`;
     if (data.userWarnings[userKey]) {
         const lastWarning = data.userWarnings[userKey].lastWarning;
         if (Date.now() - lastWarning < CONFIG.COOLDOWN_MS) {

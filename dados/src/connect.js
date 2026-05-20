@@ -1236,7 +1236,7 @@ async function createBotSocket(authDir) {
             NazunaSock.ev.on('messages.upsert', async (m) => {
                 if (!m.messages || !Array.isArray(m.messages)) return;
                 
-                console.log(`[MSG-DEBUG] Upsert received: type=${m.type}, msgCount=${m.messages.length}`);
+                if (DEBUG_MODE) console.log(`[MSG-DEBUG] Upsert received: type=${m.type}, msgCount=${m.messages.length}`);
 
                 // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
                 if (m.type === 'append') {

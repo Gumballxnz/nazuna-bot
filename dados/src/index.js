@@ -27952,7 +27952,8 @@ Use ${prefix}inventario para ver seus itens!`);
         }
 
         // Precisa do sistema de economia para caixas pagas
-        const userEco = getEcoUser(sender);
+        const econ = loadEconomy();
+        const userEco = getEcoUser(econ, sender);
 
         let resultBox;
         if (tipoBox === 'diaria' || tipoBox === 'daily') {
@@ -27962,14 +27963,14 @@ Use ${prefix}inventario para ver seus itens!`);
           resultBox = gifts.openBox(sender, 'rara');
           if (resultBox.success) {
             userEco.gold -= 500;
-            saveEconomy();
+            saveEconomy(econ).catch(e => console.error('❌ Erro ao salvar economy (caixa):', e.message));
           }
         } else if (tipoBox === 'lendaria' || tipoBox === 'legendary') {
           if (userEco.gold < 2000) return reply("❌ Você precisa de 2000 gold para abrir uma caixa lendária!");
           resultBox = gifts.openBox(sender, 'lendaria');
           if (resultBox.success) {
             userEco.gold -= 2000;
-            saveEconomy();
+            saveEconomy(econ).catch(e => console.error('❌ Erro ao salvar economy (caixa):', e.message));
           }
         } else {
           return reply(`❌ Tipo inválido! Use: diaria, rara ou lendaria`);
