@@ -181,61 +181,44 @@ async function pinterestDL(url) {
 
     // === FASE 1: Resolver URL (converter links curtos pin.it em URL longa) ===
     let resolvedUrl = url;
+    let oembedData = null; // guardamos o oEmbed para usar como fallback de imagem na FASE 3
 
-    // Se for link curto (pin.it), precisa resolver para a URL completa do pin
-    if (url.includes('pin.it/')) {
-      // Motor A: curl via Codetabs — curl bypassa TLS fingerprinting do axios
-      // Comprovado via testes diretos na VPS que curl+codetabs funciona 100%
-      const resolveViaCurlCodetabs = fetchViaCurl(
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-      ).then(html => {
-        const m = html.match(/pinterest\.com\/pin\/([0-9]+)/);
-        if (m) return m[1];
-        throw new Error('Pin ID não encontrado via Codetabs curl');
+    // Se for link curto (pin.it) ou qualquer URL do Pinterest, usa a API oEmbed oficial
+    // oEmbed é uma API pública do Pinterest, funciona de qualquer IP sem bloqueio
+    // Retorna: { html: '<a href="pinterest.com/pin/ID/">...', thumbnail_url, title, ... }
+    try {
+      const oembedRes = await axios.get(`https://www.pinterest.com/oembed/?url=${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': UA_CHROME },
+        timeout: 10000
       });
-
-      // Motor B: curl via Googlebot direto — resolve via redirect do codetabs
-      const resolveViaAllOriginsCurl = fetchViaCurl(
-        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-      ).then(txt => {
-        try {
-          const data = JSON.parse(txt);
-          const m = (data.contents || '').match(/pinterest\.com\/pin\/([0-9]+)/);
-          if (m) return m[1];
-        } catch (e) { /* ignora */ }
-        throw new Error('Pin ID não encontrado via AllOrigins curl');
-      });
-
-      // Motor C: axios como fallback (funciona localmente)
-      const resolveViaAxios = Promise.any([
-        axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
-          headers: { 'User-Agent': UA_CHROME }, timeout: 10000
-        }).then(res => {
-          const m = (res.data?.contents || '').match(/pinterest\.com\/pin\/([0-9]+)/);
-          if (m) return m[1];
-          throw new Error('sem ID');
-        }),
-        axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
-          headers: { 'User-Agent': UA_CHROME }, timeout: 10000, maxRedirects: 5
-        }).then(res => {
-          const m = (typeof res.data === 'string' ? res.data : '').match(/pinterest\.com\/pin\/([0-9]+)/);
-          if (m) return m[1];
-          throw new Error('sem ID');
-        })
-      ]);
-
-      try {
-        const pinId = await Promise.any([resolveViaCurlCodetabs, resolveViaAllOriginsCurl, resolveViaAxios]).catch(() => null);
-        if (pinId) {
-          resolvedUrl = `https://www.pinterest.com/pin/${pinId}/`;
-          console.log('[Pinterest DL] Short link resolvido para:', resolvedUrl);
-        } else {
-          console.error('[Pinterest DL] Todos os motores falharam ao resolver short link');
+      if (oembedRes.data) {
+        oembedData = oembedRes.data;
+        // Extrai pin ID do campo html do oEmbed
+        const pinMatch = (oembedRes.data.html || '').match(/pinterest\.com\/pin\/([0-9]+)/);
+        if (pinMatch) {
+          resolvedUrl = `https://www.pinterest.com/pin/${pinMatch[1]}/`;
+          console.log('[Pinterest DL] oEmbed resolvido:', resolvedUrl);
         }
-      } catch (e) {
-        console.error('[Pinterest DL] Erro ao resolver short link:', e.message);
+      }
+    } catch (e) {
+      console.error('[Pinterest DL] oEmbed falhou:', e.message);
+      // Fallback: tentar via curl se axios falhar
+      try {
+        const oembedRaw = await fetchViaCurl(`https://www.pinterest.com/oembed/?url=${encodeURIComponent(url)}`);
+        const data = JSON.parse(oembedRaw);
+        if (data) {
+          oembedData = data;
+          const pinMatch = (data.html || '').match(/pinterest\.com\/pin\/([0-9]+)/);
+          if (pinMatch) {
+            resolvedUrl = `https://www.pinterest.com/pin/${pinMatch[1]}/`;
+            console.log('[Pinterest DL] oEmbed (curl) resolvido:', resolvedUrl);
+          }
+        }
+      } catch (e2) {
+        console.error('[Pinterest DL] oEmbed curl falhou:', e2.message);
       }
     }
+
 
     // === FASE 2: Buscar HTML do pin com URL resolvida ===
 
@@ -428,6 +411,19 @@ async function pinterestDL(url) {
         type: 'image',
         mime: 'image/jpeg',
         urls: [imageUrl]
+      };
+      cache.set(`download:${url}`, result);
+      return result;
+    }
+
+    // Fallback final: thumbnail do oEmbed (sempre retorna pelo menos uma imagem)
+    if (oembedData && oembedData.thumbnail_url) {
+      const result = {
+        ok: true,
+        title: oembedData.title || '',
+        type: 'image',
+        mime: 'image/jpeg',
+        urls: [oembedData.thumbnail_url]
       };
       cache.set(`download:${url}`, result);
       return result;
