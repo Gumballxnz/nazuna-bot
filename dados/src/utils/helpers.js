@@ -1,4 +1,5 @@
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import pathz from 'path';
 
 // Cache global de JID → LID em memória (para acesso rápido)
@@ -746,7 +747,7 @@ function loadJsonFileSafe(filePath, defaultValue = {}, expectedStructure = null)
 /**
  * Salva arquivo JSON com proteção contra corrupção
  */
-function saveJsonFileSafe(filePath, data, createBackupFile = true) {
+async function saveJsonFileSafe(filePath, data, createBackupFile = true) {
   try {
     // Valida dados antes de salvar
     if (data === undefined) {
@@ -779,25 +780,25 @@ function saveJsonFileSafe(filePath, data, createBackupFile = true) {
     // Garante que diretório existe
     const dirPath = pathz.dirname(filePath);
     if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
+      await fsPromises.mkdir(dirPath, { recursive: true });
     }
     
-    // Escreve em arquivo temporário primeiro
+    // Escreve em arquivo temporário primeiro (assíncrono — não bloqueia event loop)
     const tempPath = filePath + '.tmp';
-    fs.writeFileSync(tempPath, jsonString, 'utf-8');
+    await fsPromises.writeFile(tempPath, jsonString, 'utf-8');
     
     // Verifica se arquivo temporário foi escrito corretamente
-    const writtenContent = fs.readFileSync(tempPath, 'utf-8');
+    const writtenContent = await fsPromises.readFile(tempPath, 'utf-8');
     try {
       JSON.parse(writtenContent);
     } catch (verifyError) {
       console.error(`❌ Verificação falhou para ${filePath}, abortando`);
-      fs.unlinkSync(tempPath);
+      await fsPromises.unlink(tempPath);
       return false;
     }
     
-    // Move arquivo temporário para destino final (operação atômica)
-    fs.renameSync(tempPath, filePath);
+    // Move arquivo temporário para destino final (assíncrono)
+    await fsPromises.rename(tempPath, filePath);
     
     return true;
     
@@ -808,7 +809,7 @@ function saveJsonFileSafe(filePath, data, createBackupFile = true) {
     try {
       const tempPath = filePath + '.tmp';
       if (fs.existsSync(tempPath)) {
-        fs.unlinkSync(tempPath);
+        await fsPromises.unlink(tempPath);
       }
     } catch (e) {}
     

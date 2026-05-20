@@ -86,6 +86,11 @@ class RentalExpirationManager {
 
   async checkExpiredRentals() {
     try {
+      // Guard: não executa se o socket ainda não foi atribuído
+      if (!this.nazu) {
+        await this.log('Skipping rental check: socket not connected yet');
+        return;
+      }
       const startTime = Date.now();
       await this.log('Starting rental expiration check...');
       
@@ -166,6 +171,7 @@ class RentalExpirationManager {
 
   async processExpiredRental(groupId, groupInfo, rentalData) {
     try {
+      if (!this.nazu) return;
       const groupMetadata = await this.nazu.groupMetadata(groupId).catch(() => null);
 
       if (!groupMetadata) {
@@ -195,6 +201,7 @@ class RentalExpirationManager {
 
   async sendExpirationNotification(groupId, type, daysUntilExpiry) {
     try {
+      if (!this.nazu) return;
       const groupMetadata = await this.nazu.groupMetadata(groupId).catch(() => null);
       if (!groupMetadata) return;
 
@@ -283,6 +290,7 @@ ${footer}
 
   async performAutoCleanup(groupId, groupMetadata) {
     try {
+      if (!this.nazu) return;
       // Send final goodbye message
       const goodbyeMessage = `
 👋 **ATÉ LOGO, ${groupMetadata.subject.toUpperCase()}!**
@@ -475,9 +483,11 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
             const durationTxt = info.duration === 'permanent' ? 'Permanente ✨' : `${info.duration} dias ⏳`;
             const msg = `⚠️ *CÓDIGO EXPIRADO (24H)*\n\nO código *${code}* não foi usado em 24h e agora está inválido.\n\n📅 *Gerado em:* ${createdAt.toLocaleString('pt-BR')}\n⏳ *Duração:* ${durationTxt}`;
             
-            await this.nazu.sendMessage(ownerJid, { text: msg }).catch(err => {
-               console.error("Erro ao enviar notificação de código expirado ao dono:", err.message);
-            });
+            if (this.nazu) {
+              await this.nazu.sendMessage(ownerJid, { text: msg }).catch(err => {
+                 console.error("Erro ao enviar notificação de código expirado ao dono:", err.message);
+              });
+            }
             
             info.expiredNotified = true;
             hasChanges = true;

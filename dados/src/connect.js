@@ -1337,9 +1337,17 @@ async function createBotSocket(authDir) {
                 isReconnecting = false;
                 reconnectAttempts = 0;
                 forbidden403Attempts = 0;
-                consecutive428Count = 0; 
+                // NÃO resetar consecutive428Count aqui!
+                // O 428 chega logo após o open, criando loop infinito se resetar.
+                // Em vez disso, reseta após 60s de conexão estável.
+                if (global._428ResetTimer) clearTimeout(global._428ResetTimer);
+                global._428ResetTimer = setTimeout(() => {
+                    if (consecutive428Count > 0) {
+                        console.log(`✅ Conexão estável por 60s. Resetando contador 428 (era ${consecutive428Count}).`);
+                        consecutive428Count = 0;
+                    }
+                }, 60000);
 
-                // Watchdog inteligente para detectar conexões silenciosamente mortas
                 if (global.nazuWatchdog) clearInterval(global.nazuWatchdog);
                 global.nazuWatchdog = setInterval(async () => {
                     if (!NazunaSock) return;
