@@ -99,19 +99,32 @@ async function baixarTiktok(url) {
 // ==================== INSTAGRAM ====================
 async function baixarInstagram(url) {
     try {
-        // Motor 1: fg-senna (Prioridade Máxima - Estabilidade Senna)
+        // Motor 1: fg-senna (Galeria de múltiplos resultados)
         const res = await fg.igdl(url).catch(() => null);
+        if (res?.result && res.result.length > 1) {
+            return { type: 'images', urls: res.result.map(i => i.url), desc: 'Instagram (Galeria)' };
+        }
         if (res && res.dl_url) {
              return { type: 'video', url: res.dl_url, desc: 'Instagram (API 1)' };
         }
 
-        // Motor 2: Siputzx (Fallback Leve)
+        // Motor 2: yt-dlp local (Alta Qualidade - principal fallback)
+        try {
+            const ytRes = await ytdlpBaixar(url, 'video');
+            if (ytRes && ytRes.filePath) {
+                return { type: 'video', url: ytRes.filePath, filePath: ytRes.filePath, isFile: true, desc: 'Instagram (HD)' };
+            }
+        } catch (e) {
+            // yt-dlp falhou, continua para APIs
+        }
+
+        // Motor 3: Siputzx (Fallback Leve)
         let sip = await axios.get(`https://api.siputzx.my.id/api/d/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
         if (sip && sip.data && sip.data.length > 0) {
            return { type: sip.data[0].url.includes('.mp4') ? 'video' : 'image', url: sip.data[0].url, desc: 'Instagram (API 2)' };
         }
 
-        // Motor 3: Ryzendesu Fallback final
+        // Motor 4: Ryzendesu Fallback final
         let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
         if (rz && rz.data && rz.data.length > 0) {
            return { type: rz.data[0].url.includes('.mp4') ? 'video' : 'image', url: rz.data[0].url, desc: 'Instagram (API 3)' };
