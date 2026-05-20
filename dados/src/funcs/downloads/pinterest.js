@@ -164,23 +164,37 @@ async function pinterestDL(url) {
 
     // Se for link curto (pin.it), precisa resolver para a URL completa do pin
     if (url.includes('pin.it/')) {
-      // AllOrigins consegue resolver pin.it mesmo na VPS (retorna HTML com link canônico)
+      // Usa Promise.any para tentar AllOrigins e Codetabs em paralelo — quem retornar o pin ID primeiro vence
       try {
-        const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+        const extractPinId = (htmlContent) => {
+          const m = htmlContent.match(/pinterest\.com\/pin\/([0-9]+)/);
+          if (m) return m[1];
+          throw new Error('Pin ID não encontrado no HTML');
+        };
+
+        const resolveViaAllOrigins = axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
           headers: { 'User-Agent': UA_CHROME },
-          timeout: 15000
-        });
-        const contents = res.data?.contents || '';
-        // Extrai pin ID do link canônico ou de qualquer URL de pin
-        const pinMatch = contents.match(/pinterest\.com\/pin\/([0-9]+)/);
-        if (pinMatch) {
-          resolvedUrl = `https://www.pinterest.com/pin/${pinMatch[1]}/`;
+          timeout: 12000
+        }).then(res => extractPinId(res.data?.contents || ''));
+
+        const resolveViaCodetabs = axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {
+          headers: { 'User-Agent': UA_CHROME },
+          timeout: 12000,
+          maxRedirects: 5
+        }).then(res => extractPinId(typeof res.data === 'string' ? res.data : ''));
+
+        const pinId = await Promise.any([resolveViaAllOrigins, resolveViaCodetabs]).catch(() => null);
+        if (pinId) {
+          resolvedUrl = `https://www.pinterest.com/pin/${pinId}/`;
           console.log('[Pinterest DL] Short link resolvido para:', resolvedUrl);
+        } else {
+          console.error('[Pinterest DL] Falha ao resolver short link com todos os proxies');
         }
       } catch (e) {
-        console.error('[Pinterest DL] Falha ao resolver short link:', e.message);
+        console.error('[Pinterest DL] Erro inesperado ao resolver short link:', e.message);
       }
     }
+
 
     // === FASE 2: Buscar HTML do pin com URL resolvida ===
 
