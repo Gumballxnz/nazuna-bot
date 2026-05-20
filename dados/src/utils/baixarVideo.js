@@ -18,9 +18,15 @@ import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
 import util from 'util';
 const execPromise = util.promisify(exec);
-import fg from 'fg-senna';
 import { pipeline } from 'stream/promises';
 import { downloadYT, getYTInfo } from './ytHelper.js';
+
+// Lazy-load fg-senna (carrega puppeteer/chromium em memoria)
+let _fg = null;
+async function getFg() {
+    if (!_fg) _fg = (await import('fg-senna')).default;
+    return _fg;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,6 +86,7 @@ async function baixarTiktok(url) {
         if (link2) return { type: 'video', url: link2, desc: rz?.data?.title || 'TikTok (API 2)' };
 
         // Motor 3: fg-senna (Último recurso)
+        const fg = await getFg();
         const res = await fg.tiktok(url);
         if (res && res.result) {
             const d = res.result;
@@ -110,6 +117,7 @@ async function baixarInstagram(url) {
         }
 
         // Motor 2: fg-senna (Galeria de multiplos resultados)
+        const fg = await getFg();
         const res = await fg.igdl(url).catch(() => null);
         if (res?.result && res.result.length > 1) {
             return { type: 'images', urls: res.result.map(i => i.url), desc: 'Instagram (Galeria)' };
@@ -175,6 +183,7 @@ async function baixarFacebook(url) {
         if (link) return { type: 'video', url: link, desc: 'Facebook (API 2)' };
 
         // Motor 3: fg-senna (Último recurso)
+        const fg = await getFg();
         const fgRes = await fg.fbdl(url).catch(() => null);
         if (fgRes && (fgRes.HD || fgRes.SD)) {
              return { type: 'video', url: fgRes.HD || fgRes.SD, desc: 'Facebook (API 3)' };
@@ -191,6 +200,7 @@ async function baixarFacebook(url) {
 // ==================== TWITTER/X ====================
 async function baixarTwitter(url) {
     try {
+        const fg = await getFg();
         const res = await fg.twitter(url);
         if (res && (res.HD || res.SD)) {
              return { type: 'video', url: res.HD || res.SD, desc: res.desc || 'Twitter/X' };
@@ -216,6 +226,7 @@ async function baixarMediafire(url) {
         }
 
         // Motor 3: fg-senna
+        const fg = await getFg();
         const res = await fg.mediafire(url);
         if (res && res.url) {
              return { type: 'document', url: res.url, filename: res.filename, ext: res.ext, desc: 'Mediafire (API 3)' };

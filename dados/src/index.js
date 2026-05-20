@@ -22,13 +22,20 @@ const getContentType = (content) => {
 }
 
 const execAsync = promisify(exec);
-import { parseHTML } from 'linkedom';
 import axios from 'axios';
+
+// Lazy-load linkedom (pesado, usado raramente)
+let _parseHTML = null;
+async function getParseHTML() {
+    if (!_parseHTML) _parseHTML = (await import('linkedom')).parseHTML;
+    return _parseHTML;
+}
 import pathz from 'path';
 import fs from 'fs';
 import os from 'os';
 import https from 'https';
 import crypto from 'crypto';
+// Lazy-load node-cron (usado apenas em 2 lugares)
 import cron from 'node-cron';
 import { fileURLToPath } from 'url';
 
@@ -624,7 +631,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   const msgId = info?.key?.id?.slice(-6) || 'unknown';
   const from = info?.key?.remoteJid || 'unknown';
 
-  let config = loadJsonFile(CONFIG_FILE, {});
+  let config = loadJsonFile(CONFIG_FILE, {}, true);
   ensureDatabaseIntegrity({ log: Boolean(config?.debug) });
 
   // Verificação e correção do prefixo reservado $ ao inicializar
@@ -12706,7 +12713,8 @@ Entre em contato com o dono do bot:
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; Bot/1.0)'
             }
-          }).then((response) => {
+          }).then(async (response) => {
+            const parseHTML = await getParseHTML();
             const { document } = parseHTML(response.data);
             document.querySelectorAll('script, style, noscript, iframe').forEach(el => el.remove());
             const cleanText = document.body.textContent.replace(/\s+/g, ' ').trim();

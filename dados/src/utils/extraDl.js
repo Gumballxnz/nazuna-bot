@@ -1,8 +1,14 @@
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
-import fg from 'fg-senna';
 import { pipeline } from 'stream/promises';
+
+// Lazy-load fg-senna (carrega puppeteer/chromium em memoria)
+let _fg = null;
+async function getFg() {
+    if (!_fg) _fg = (await import('fg-senna')).default;
+    return _fg;
+}
 
 /**
  * Download de Twitter via VxTwitter API
@@ -27,6 +33,7 @@ export async function downloadTwitter(url) {
  * Download de APK via APKPure (Motor Senna Bot)
  */
 export async function downloadAPK(query) {
+    const fg = await getFg();
     // Fase 1: Pesquisa no APKPure (Motor de Confiança do Senna)
     const searchRes = await fg.apks(query).catch(() => null);
     if (!searchRes || searchRes.length === 0) throw new Error('App não encontrado no Google Play/APKPure.');
@@ -72,6 +79,7 @@ export async function downloadAPK(query) {
  * Download de GDrive via fg-senna
  */
 export async function downloadGDrive(url) {
+    const fg = await getFg();
     const res = await fg.gdrive(url).catch(() => null);
     if (!res || !res.downloadUrl) throw new Error('Falha ao obter link do GDrive');
     return res; 
@@ -82,6 +90,7 @@ export async function downloadGDrive(url) {
  * Download de MediaFire via fg-senna
  */
 export async function downloadMediafire(url) {
+    const fg = await getFg();
     const res = await fg.mediafire(url).catch(() => null);
     if (!res || !res.url) throw new Error('Falha ao extrair do Mediafire');
     return res;
