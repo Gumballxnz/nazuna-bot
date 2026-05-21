@@ -12,6 +12,37 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+const COBALT_INSTANCES = [
+  'https://api.cobalt.tools/api/json',
+  'https://cobalt-api.kwiatusheq.xyz/api/json',
+  'https://api.cobalt.club/api/json'
+];
+
+async function tryCobaltDL(url) {
+  const payload = {
+    url: url,
+    downloadMode: 'auto'
+  };
+  for (const api of COBALT_INSTANCES) {
+    try {
+      const response = await axios.post(api, payload, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        timeout: 10000
+      });
+      if (response.data && response.data.url) {
+        return response.data.url;
+      }
+    } catch (err) {
+      console.error(`[Pinterest Cobalt] Instância ${api} falhou:`, err.message);
+    }
+  }
+  return null;
+}
+
 /**
  * Busca via curl nativo (bypassa TLS fingerprint do Node.js)
  * Curl usa libcurl que tem fingerprint diferente do axios/node-fetch
@@ -120,7 +151,19 @@ async function pinterestSearch(query) {
       }
     }
 
-    // Tentativa 3: Direto
+    // Tentativa 3: Direto via curl (contorna TLS fingerprint)
+    if (!jsonResponse) {
+      try {
+        const rawRes = await fetchViaCurl(searchUrl, UA_CHROME);
+        if (rawRes) {
+          jsonResponse = JSON.parse(rawRes);
+        }
+      } catch (e) {
+        console.error('[Pinterest Search] Busca direta via curl falhou:', e.message);
+      }
+    }
+
+    // Tentativa 4: Direto via axios (legado)
     if (!jsonResponse) {
       try {
         const res = await axios.get(searchUrl, {
@@ -131,7 +174,7 @@ async function pinterestSearch(query) {
           jsonResponse = res.data;
         }
       } catch (e) {
-        console.error('[Pinterest Search] Busca direta falhou:', e.message);
+        console.error('[Pinterest Search] Busca direta via axios falhou:', e.message);
       }
     }
 
@@ -427,6 +470,26 @@ async function pinterestDL(url) {
       };
       cache.set(`download:${url}`, result);
       return result;
+    }
+
+    // Fallback absoluto via Cobalt API (excelente para vídeos e imagens que falharam no scraper local)
+    try {
+      console.log('[Pinterest DL] Tentando fallback absoluto via Cobalt...');
+      const cobaltUrl = await tryCobaltDL(url);
+      if (cobaltUrl) {
+        const isVideo = cobaltUrl.includes('.mp4') || cobaltUrl.includes('video');
+        const result = {
+          ok: true,
+          title: oembedData?.title || 'Pinterest Media',
+          type: isVideo ? 'video' : 'image',
+          mime: isVideo ? 'video/mp4' : 'image/jpeg',
+          urls: [cobaltUrl]
+        };
+        cache.set(`download:${url}`, result);
+        return result;
+      }
+    } catch (e) {
+      console.error('[Pinterest DL] Fallback Cobalt falhou:', e.message);
     }
 
     return { ok: false, msg: 'Não foi possível extrair a mídia deste Pin.' };
