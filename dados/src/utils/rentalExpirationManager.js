@@ -34,6 +34,10 @@ class RentalExpirationManager {
   }
 
   async initialize() {
+    if (this.isRunning) {
+      await this.log('RentalExpirationManager already running. Skipping initialization.');
+      return true;
+    }
     try {
       // Ensure logs directory exists
       const logDir = path.dirname(this.config.logFile);

@@ -639,10 +639,16 @@ export async function playAudio(nazu, from, m, q, reply) {
         // Enviar thumbnail do vídeo se disponível
         const thumb = video.image || video.thumbnail;
         if (thumb) {
-            await nazu.sendMessage(from, {
-                image: { url: thumb },
-                caption: msg
-            }, { quoted: m });
+            try {
+                await nazu.sendMessage(from, {
+                    image: { url: thumb },
+                    caption: msg
+                }, { quoted: m });
+            } catch (thumbErr) {
+                // Thumbnail 404 ou indisponível — envia só texto
+                console.warn(`[play] Thumbnail falhou (${thumbErr.message?.substring(0, 60)}), enviando texto`);
+                await nazu.sendMessage(from, { text: msg }, { quoted: m });
+            }
         } else {
             await nazu.sendMessage(from, { text: msg }, { quoted: m });
         }

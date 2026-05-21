@@ -2640,15 +2640,22 @@ Código: *${roleCode}*`,
                 try {
                   return await action();
                 } catch (e) {
-                  const is428 = e?.output?.statusCode === 428 || String(e?.message || '').includes('Connection Closed');
-                  const is403 = e?.output?.statusCode === 403 || String(e?.message || '').toLowerCase().includes('forbidden');
+                  const msg = String(e?.message || '');
+                  const is428 = e?.output?.statusCode === 428 || msg.includes('Connection Closed');
+                  const is403 = e?.output?.statusCode === 403 || msg.toLowerCase().includes('forbidden');
+                  const isNotFound = msg.includes('item-not-found') || msg.includes('not-authorized');
+                  
+                  // Erros esperados: grupo não existe mais, bot removido, etc — silenciar
+                  if (is403 || isNotFound) {
+                    // Log discreto, não é erro real
+                    return null;
+                  }
+                  
                   if (is428 && attempt < maxRetries) {
                     console.warn(`[Cron] ⚠️ Conexão fechada ao ${actionLabel} ${groupId.substring(0, 15)}... Tentativa ${attempt}/${maxRetries}. Retry em 10s...`);
                     await new Promise(r => setTimeout(r, 10000));
-                  } else if (!is403) {
-                    console.error(`[Cron Error] ${actionLabel} ${groupId}:`, e?.message || e);
-                    throw e;
                   } else {
+                    console.error(`[Cron Error] ${actionLabel} ${groupId}:`, e?.message || e);
                     throw e;
                   }
                 }

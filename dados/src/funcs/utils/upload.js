@@ -62,38 +62,89 @@ class FileTypeDetector {
 // --- CLASSE INTERNA PARA GERENCIAR A LÓGICA ---
 class UploaderService {
     constructor(config) {
-        if (!config.GITHUB.TOKEN) throw new Error('Token do GitHub não configurado.');
-        this.uploader = new GitHubUploader(config.GITHUB.TOKEN, config.GITHUB.REPO);
         this.maxSizeBytes = config.MAX_FILE_SIZE_MB * 1024 * 1024;
+        // Permite inicializar sem crashar se o token não existir ou for o de exemplo
+        if (config.GITHUB.TOKEN && config.GITHUB.TOKEN.trim() !== '' && !config.GITHUB.TOKEN.includes('ghp_exemplo')) {
+            this.uploader = new GitHubUploader(config.GITHUB.TOKEN, config.GITHUB.REPO);
+        } else {
+            console.warn('[Uploader] Token do GitHub não configurado ou inválido. Usando Catbox como uploader padrão.');
+            this.uploader = null;
+        }
     }
 
     async upload(buffer, deleteAfter10Min = false) {
         if (!Buffer.isBuffer(buffer)) throw new Error('Entrada inválida: O dado fornecido não é um Buffer.');
         if (buffer.length > this.maxSizeBytes) throw new Error(`Arquivo muito grande. O limite é ${CONFIG.MAX_FILE_SIZE_MB}MB.`);
 
-        const { ext } = FileTypeDetector.detect(buffer);
+        const { ext, mime } = FileTypeDetector.detect(buffer);
         const folder = EXTENSION_TO_FOLDER_MAP.get(ext) || 'outros';
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
         const filePath = `${folder}/${fileName}`;
 
-        try {
-            const { download_url, sha } = await this.uploader.upload(buffer, filePath);
-            if (!download_url) throw new Error("A API do GitHub não retornou uma URL de download.");
+        // Tenta usar GitHub se disponível
+        if (this.uploader) {
+            try {
+                const { download_url, sha } = await this.uploader.upload(buffer, filePath);
+                if (!download_url) throw new Error("A API do GitHub não retornou uma URL de download.");
 
-            if (deleteAfter10Min) {
-                setTimeout(async () => {
-                    try {
-                        await this.uploader.delete(filePath, sha);
-                    } catch (deleteError) {
-                        console.error(`[Uploader] Falha ao deletar arquivo temporário ${filePath}:`, deleteError.message);
-                    }
-                }, 10 * 60 * 1000);
+                if (deleteAfter10Min) {
+                    setTimeout(async () => {
+                        try {
+                            await this.uploader.delete(filePath, sha);
+                        } catch (deleteError) {
+                            console.error(`[Uploader] Falha ao deletar arquivo temporário ${filePath}:`, deleteError.message);
+                        }
+                    }, 10 * 60 * 1000);
+                }
+                return download_url;
+            } catch (error) {
+                const errorMessage = error.response?.data?.message || error.message;
+                console.error(`[Uploader] Falha no upload para o GitHub (${errorMessage}). Tentando fallback Catbox/Litterbox...`);
             }
-            return download_url;
-        } catch (error) {
-            const errorMessage = error.response?.data?.message || error.message;
-            throw new Error(`Falha no upload para o GitHub: ${errorMessage}`);
         }
+
+        // Fallback para Catbox (permanente) ou Litterbox (temporário de 1 hora)
+        try {
+            return await this.uploadToCatbox(buffer, fileName, mime, deleteAfter10Min);
+        } catch (catboxError) {
+            throw new Error(`Falha no upload (GitHub e Catbox falharam): ${catboxError.message}`);
+        }
+    }
+
+    async uploadToCatbox(buffer, fileName, mime, deleteAfter10Min = false) {
+        const formData = new FormData();
+        const blob = new Blob([buffer], { type: mime });
+
+        let url;
+        if (deleteAfter10Min) {
+            formData.append('reqtype', 'fileupload');
+            formData.append('time', '1h'); // Litterbox armazena temporariamente por 1 hora
+            formData.append('fileToUpload', blob, fileName);
+
+            const response = await axios.post('https://litterbox.catbox.moe/resources/internals/api.php', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+                timeout: CONFIG.DEFAULT_TIMEOUT_MS
+            });
+            url = response.data;
+        } else {
+            formData.append('reqtype', 'fileupload');
+            formData.append('fileToUpload', blob, fileName);
+
+            const response = await axios.post('https://catbox.moe/user/api.php', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+                timeout: CONFIG.DEFAULT_TIMEOUT_MS
+            });
+            url = response.data;
+        }
+
+        if (typeof url === 'string' && url.trim().startsWith('http')) {
+            return url.trim();
+        }
+        throw new Error(`Resposta inesperada do servidor de upload: ${url}`);
     }
 }
 

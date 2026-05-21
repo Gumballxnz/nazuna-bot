@@ -1429,7 +1429,7 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
       const response = await axios.post(
         'https://aichat-api.vercel.app/chatgpt',
         { messages },
-        { timeout: 20000 }
+        { timeout: 15000 }
       );
 
       const rawContent = response.data?.content ?? response.data?.text ?? response.data?.message;
@@ -1448,11 +1448,11 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
     } catch (error) {
       console.warn(`Tentativa de IA Vercel ${attempt + 1} falhou. Motivo:`, error.message);
       
-      // Fase 2: Siputzx Llama/GPT API Fallback Mapeamento Cego
+      // Fase 2: Siputzx Llama/GPT API Fallback
       try {
         let plainText = messages.map(m => m.content).join("\\n");
         let queryUrl = `https://api.siputzx.my.id/api/ai/llama33?prompt=${encodeURIComponent(plainText)}`;
-        let sipRes = await axios.get(queryUrl, { timeout: 15000 }).then(r => r.data);
+        let sipRes = await axios.get(queryUrl, { timeout: 12000 }).then(r => r.data);
         
         const sipRaw = sipRes?.data ?? sipRes?.message ?? sipRes?.result;
         if (sipRaw != null && sipRaw !== '') {
@@ -1463,11 +1463,47 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
         console.warn(`Tentativa de IA Siputzx Llama ${attempt + 1} falhou.`);
       }
 
+      // Fase 3: DuckDuckGo AI Chat (Gratuito, sem autenticação)
+      try {
+        const duckRes = await axios.post('https://duckduckgo.com/duckchat/v1/chat', {
+          model: 'gpt-4o-mini',
+          messages: messages.map(m => ({ role: m.role, content: m.content }))
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-vqd-accept': '1'
+          },
+          timeout: 12000
+        }).then(r => r.data).catch(() => null);
+
+        const duckRaw = duckRes?.message ?? duckRes?.content ?? duckRes?.text;
+        if (duckRaw != null && duckRaw !== '') {
+          return { data: { choices: [ { message: { content: String(duckRaw).trim() } } ] } };
+        }
+      } catch (duckErr) {
+        // silencioso
+      }
+
+      // Fase 4: BlackBox AI (Gratuito)
+      try {
+        const bbRes = await axios.post('https://api.blackbox.ai/api/chat', {
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          model: 'blackboxai'
+        }, { timeout: 12000 }).then(r => r.data).catch(() => null);
+
+        const bbRaw = typeof bbRes === 'string' ? bbRes : bbRes?.message ?? bbRes?.content;
+        if (bbRaw != null && bbRaw !== '') {
+          return { data: { choices: [ { message: { content: String(bbRaw).trim() } } ] } };
+        }
+      } catch (bbErr) {
+        // silencioso
+      }
+
       if (attempt === retries - 1) {
         throw new Error(`Falha na requisição após ${retries} tentativas: as APIs gratuitas estão indisponíveis.`);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 }
