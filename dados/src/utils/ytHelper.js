@@ -77,38 +77,45 @@ export async function resolverUrlYT(url, type = 'audio') {
         }
     }
 
-    // Fase 2: Cobalt API (Robusto, datacenter-friendly, pré-transcodificado H.264)
+    // Fase 2: Cobalt API (Robusto, datacenter-friendly, formato v10)
     if (motorDisponivel('cobalt')) {
         try {
             console.log(`[YouTube Resolver] Fase 2: Cobalt API (v10)...`);
             const cobaltApis = [
-                'https://api.cobalt.tools/',
-                'https://cobalt-api.kwiatusheq.xyz/',
-                'https://api.cobalt.club/'
+                'https://nuko-c.meowing.de/',
+                'https://melon.clxxped.lol/',
+                'https://cobalt.alpha.wolfy.love/',
+                'https://grapefruit.clxxped.lol/',
+                'https://lime.clxxped.lol/',
+                'https://api.qwkuns.me/',
+                'https://dog.kittycat.boo/'
             ];
             for (const api of cobaltApis) {
                 try {
                     const cobaltRes = await axios.post(api, {
                         url: url,
-                        vCodec: 'h264',
-                        vQuality: '720',
-                        aFormat: 'mp3',
-                        isAudioOnly: type === 'audio'
+                        videoQuality: '720',
+                        audioFormat: 'mp3',
+                        downloadMode: type === 'audio' ? 'audio' : 'auto'
                     }, {
                         headers: {
                             'Accept': 'application/json',
                             'Content-Type': 'application/json',
                             'User-Agent': 'Mozilla/5.0'
                         },
-                        timeout: 8000
-                    }).then(r => r.data).catch(() => null);
+                        timeout: 12000
+                    }).then(r => r.data);
 
-                    if (cobaltRes && cobaltRes.url && cobaltRes.url.startsWith('http')) {
+                    if (cobaltRes && (cobaltRes.status === 'redirect' || cobaltRes.status === 'tunnel') && cobaltRes.url) {
                         dl_url = cobaltRes.url;
                         title = cobaltRes.filename || 'YouTube Video';
                         marcarSucesso('cobalt');
                         console.log(`[YouTube Resolver] ✅ Fase 2 OK (${api})`);
                         return { dl_url, title };
+                    } else if (cobaltRes && cobaltRes.status === 'error') {
+                        console.log(`[YouTube Resolver] Cobalt API ${api} retornou erro: ${cobaltRes.error?.code || cobaltRes.error}`);
+                    } else {
+                        console.log(`[YouTube Resolver] Cobalt API ${api} retornou status desconhecido: ${cobaltRes?.status}`);
                     }
                 } catch (apiErr) {
                     console.log(`[YouTube Resolver] Cobalt API ${api} falhou: ${apiErr.message}`);
@@ -251,8 +258,20 @@ function ytdlpLocal(url, type) {
             ? '-x --audio-format mp3 --audio-quality 0'
             : '-f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4';
         
+        // Verifica se há cookies.txt na raiz ou na pasta dados da VPS para evitar detecção de bot
+        const rootCookiesPath = path.join(__dirname, '..', '..', '..', 'cookies.txt');
+        const dadosCookiesPath = path.join(__dirname, '..', '..', 'cookies.txt');
+        let cookiesArg = '';
+        if (fs.existsSync(rootCookiesPath)) {
+            cookiesArg = `--cookies "${rootCookiesPath}"`;
+            console.log(`[YouTube ytdlpLocal] Utilizando cookies de: ${rootCookiesPath}`);
+        } else if (fs.existsSync(dadosCookiesPath)) {
+            cookiesArg = `--cookies "${dadosCookiesPath}"`;
+            console.log(`[YouTube ytdlpLocal] Utilizando cookies de: ${dadosCookiesPath}`);
+        }
+
         // Exportando PATH para garantir que encontre o yt-dlp e ffmpeg na VPS
-        const cmd = `export PATH=/usr/bin:/usr/local/bin:/usr/sbin:/sbin:/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate --extractor-args "youtube:player_client=android,web" -q ${formatArg} -o "${filePath}" "${url}"`;
+        const cmd = `export PATH=/usr/bin:/usr/local/bin:/usr/sbin:/sbin:/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate ${cookiesArg} --extractor-args "youtube:player_client=android,web" -q ${formatArg} -o "${filePath}" "${url}"`;
 
         console.log(`[YouTube ytdlpLocal] Executando download local da URL: ${url}`);
         exec(cmd, { timeout: 60000 }, (error, stdout, stderr) => {
