@@ -19,7 +19,7 @@ import { exec } from 'child_process';
 import util from 'util';
 const execPromise = util.promisify(exec);
 import { pipeline } from 'stream/promises';
-import { downloadYT, getYTInfo } from './ytHelper.js';
+import { downloadYT, getYTInfo, resolverUrlYT } from './ytHelper.js';
 
 // Lazy-load fg-senna (carrega puppeteer/chromium em memoria)
 let _fg = null;
@@ -136,9 +136,54 @@ async function baixarInstagram(url) {
 // ==================== YOUTUBE ====================
 async function baixarYoutube(url, formato = 'video') {
     try {
+        console.log(`[baixarYoutube] Iniciando resolução híbrida para: ${url}`);
+        
+        // 1. Tentar resolver a URL direta de streaming síncrono super rápido via resolvedores externos
+        let resolved = null;
+        try {
+            resolved = await resolverUrlYT(url, formato);
+        } catch (resErr) {
+            console.warn(`[baixarYoutube] Falha rápida ao obter URL direta: ${resErr.message}`);
+        }
+
+        if (resolved && resolved.dl_url) {
+            const dl_url = resolved.dl_url;
+            const title = resolved.title || 'YouTube';
+            console.log(`[baixarYoutube] URL direta obtida: ${dl_url.substring(0, 80)}...`);
+
+            // 2. Tentar HEAD request para ler o content-length
+            let sizeBytes = 0;
+            try {
+                const headRes = await axios.head(dl_url, { timeout: 3000, headers: { 'User-Agent': 'Mozilla/5.0' } });
+                sizeBytes = parseInt(headRes.headers['content-length'] || '0', 10);
+                console.log(`[baixarYoutube] HEAD request retornou tamanho: ${(sizeBytes / (1024 * 1024)).toFixed(2)} MB`);
+            } catch (headErr) {
+                console.log(`[baixarYoutube] HEAD request falhou ou não retornou tamanho: ${headErr.message}`);
+            }
+
+            const sizeMB = sizeBytes / (1024 * 1024);
+
+            // 3. Regra Híbrida de Decisão
+            // Se o tamanho for maior ou igual a 15MB, ou se não conseguirmos obter o tamanho (segurança), enviamos via Streaming Direto como documento!
+            if (sizeBytes === 0 || sizeMB >= 15) {
+                console.log(`[baixarYoutube] Vídeo grande (${sizeMB.toFixed(2)} MB >= 15MB ou indefinido). Ativando Modo Ultra Velocidade (Streaming Direto + Documento)`);
+                return {
+                    type: 'document',
+                    url: dl_url,
+                    streamingDireto: true,
+                    filename: `YouTube - ${title.replace(/[^a-zA-Z0-9\s-_]/g, '')}.mp4`,
+                    desc: title,
+                    isUltra: true
+                };
+            } else {
+                console.log(`[baixarYoutube] Vídeo pequeno (${sizeMB.toFixed(2)} MB < 15MB). Efetuando download tradicional para reprodução em chat...`);
+            }
+        }
+
+        // 4. Download físico tradicional se for vídeo pequeno ou falhar a resolução ultra-rápida
         const dl = await downloadYT(url, formato);
         if (dl && dl.filePath) {
-            return { type: formato, url: dl.filePath, filePath: dl.filePath, desc: 'YouTube', isFile: true };
+            return { type: formato, url: dl.filePath, filePath: dl.filePath, desc: dl.title || 'YouTube', isFile: true };
         }
     } catch (e) {
         console.error('[YouTube ytHelper]', e.message);
@@ -422,14 +467,37 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
         // --- A MÁGICA FINAL: Fase 3 ---
         // Se o video não for compativel com WhatsApp, nós ressucitamos!
         if (finalFilePath) {
-            finalFilePath = await verificarEConverterCodec(finalFilePath);
-            
-            await nazu.sendMessage(from, {
-                video: { url: finalFilePath },
-                mimetype: 'video/mp4',
-                caption: `✅ ${plataforma}${resultado.desc ? `\n📝 ${resultado.desc}` : ''}`,
-                ...extraAttrs
-            }, { quoted: m });
+            let stats = null;
+            try { stats = fs.statSync(finalFilePath); } catch {}
+            const limit = 15 * 1024 * 1024; // 15MB
+            const isBig = stats && stats.size >= limit;
+
+            if (isBig) {
+                // Vídeo grande (>= 15MB) -> Envio instantâneo como Documento MP4 limpo! (Pula re-encoding pesado para economizar CPU)
+                console.log(`[enviarMidia] Vídeo grande (${stats ? (stats.size / 1024 / 1024).toFixed(2) : '?'}MB >= 15MB). Modo Ultra Velocidade (Documento) ativo.`);
+                await nazu.sendMessage(from, {
+                    document: { url: finalFilePath },
+                    mimetype: 'video/mp4',
+                    fileName: resultado.filename || path.basename(finalFilePath) || 'video.mp4'
+                });
+            } else {
+                // Vídeo pequeno (< 15MB) -> SEMPRE como Player de Vídeo Nativo no Chat!
+                console.log(`[enviarMidia] Vídeo pequeno (${stats ? (stats.size / 1024 / 1024).toFixed(2) : '?'}MB < 15MB). Garantindo player nativo no chat.`);
+                
+                // Converte o codec se for incompatível para que o player nativo do WhatsApp funcione perfeitamente
+                finalFilePath = await verificarEConverterCodec(finalFilePath);
+
+                // Sanitizar a legenda: remover qualquer link http/https para não ser bloqueado pelo WhatsApp
+                let descSanitizada = resultado.desc ? resultado.desc.replace(/https?:\/\/[^\s]+/gi, '').trim() : '';
+                const captionMsg = `✅ ${plataforma}${descSanitizada ? `\n📝 ${descSanitizada}` : ''}`;
+
+                // Envia como player nativo sem citação (quoted: m) e sem extraAttrs (zero links que barram a entrega)
+                await nazu.sendMessage(from, {
+                    video: { url: finalFilePath },
+                    mimetype: 'video/mp4',
+                    caption: captionMsg
+                });
+            }
             
             // Auto Destruição do rastro
             try { fs.unlinkSync(finalFilePath); } catch {}
@@ -452,14 +520,36 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
             try { fs.unlinkSync(filePath); } catch {}
         }
     } else if (resultado.type === 'document') {
-        // Ex.: Mediafire
-        if (resultado.filePath) {
+        // Ex.: Mediafire ou YouTube Ultra Velocidade
+        if (resultado.streamingDireto) {
+            console.log(`[enviarMidia] Baixando stream da URL externa em disco para envio seguro: ${resultado.url.substring(0, 80)}...`);
+            let tempPath = null;
+            try {
+                // Baixa o arquivo em bloco direto no disco de forma ultra rápida e leve em RAM
+                tempPath = await baixarStreamLocal(resultado.url, 'mp4');
+                console.log(`[enviarMidia] Download do stream concluído. Enviando documento local: ${tempPath}`);
+
+                await nazu.sendMessage(from, {
+                    document: { url: tempPath },
+                    mimetype: 'video/mp4',
+                    fileName: resultado.filename || 'video.mp4',
+                    ...extraAttrs
+                });
+            } catch (errStream) {
+                console.error(`[enviarMidia] Erro no stream do documento:`, errStream.message);
+                throw errStream;
+            } finally {
+                if (tempPath && fs.existsSync(tempPath)) {
+                    try { fs.unlinkSync(tempPath); } catch {}
+                }
+            }
+        } else if (resultado.filePath) {
             await nazu.sendMessage(from, {
                 document: { url: resultado.filePath },
                 mimetype: 'application/octet-stream',
                 fileName: resultado.filename || `arquivo.${resultado.ext || 'bin'}`,
                 ...extraAttrs
-            }, { quoted: m });
+            });
             try { fs.unlinkSync(resultado.filePath); } catch {}
         } else {
             const filePath = await baixarStreamLocal(resultado.url, resultado.ext || 'bin');
@@ -468,7 +558,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                 mimetype: 'application/octet-stream',
                 fileName: resultado.filename || `arquivo.${resultado.ext || 'bin'}`,
                 ...extraAttrs
-            }, { quoted: m });
+            });
             try { fs.unlinkSync(filePath); } catch {}
         }
     } else if (resultado.type === 'image') {
@@ -711,18 +801,14 @@ export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
                 }, { quoted: m });
                 try { fs.unlinkSync(finalPath); } catch {}
             } else {
-                // Vídeo passa pelo codec sniffer
-                let finalPath = dl.filePath;
-                finalPath = await verificarEConverterCodec(finalPath);
-                
-                await nazu.sendMessage(from, {
-                    video: { url: finalPath },
-                    mimetype: 'video/mp4',
-                    caption: `✅ *${pending.title}*`
-                }, { quoted: m });
-                
-                if (finalPath !== dl.filePath) {
-                    try { fs.unlinkSync(finalPath); } catch {}
+                // Vídeo usa a lógica híbrida inteligente de ultra velocidade!
+                const resultado = await baixarYoutube(pending.url, 'video');
+                if (resultado) {
+                    // Garantir que a legenda correta do play seja exibida
+                    resultado.desc = pending.title;
+                    await enviarMidia(nazu, from, m, resultado, 'YouTube');
+                } else {
+                    throw new Error('Falha ao obter vídeo no play.');
                 }
             }
             try { if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath); } catch {}

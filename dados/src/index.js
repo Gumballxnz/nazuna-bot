@@ -37,6 +37,24 @@ import cron from 'node-cron';
 import { fileURLToPath } from 'url';
 
 import { PerformanceOptimizer, getPerformanceOptimizer } from './utils/performanceOptimizer.js';
+
+// Monkey-patch fs.writeFileSync para invalidar automaticamente o cache de grupos quando gravado no disco
+const optimizer = getPerformanceOptimizer();
+const originalWriteFileSync = fs.writeFileSync;
+fs.writeFileSync = (filePath, data, options) => {
+  originalWriteFileSync(filePath, data, options);
+  try {
+    if (typeof filePath === 'string' && filePath.includes('database/grupos')) {
+      const filename = pathz.basename(filePath, '.json');
+      if (filename.endsWith('@g.us')) {
+        optimizer.invalidateGroup(filename);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Erro no interceptador de salvamento do cache do grupo:', err.message);
+  }
+};
+
 import * as ia from './funcs/private/ia.js';
 import * as vipCommandsManager from './utils/vipCommandsManager.js';
 // apiKeyNotifier removido - sistema agora é 100% gratuito

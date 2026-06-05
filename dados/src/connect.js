@@ -800,6 +800,8 @@ async function scanForJids(directory) {
             for (const entry of entries) {
                 const fullPath = join(dirPath, entry.name);
                 if (entry.isDirectory()) {
+                    // Ignora a pasta de sessão do Baileys para evitar spam e erros de ENOENT
+                    if (entry.name === 'qr-code' || entry.name === 'session') continue;
                     await scanDir(fullPath);
                 } else if (entry.name.endsWith('.json')) {
                     await checkAndScanFilename(fullPath);
@@ -1432,6 +1434,12 @@ async function createBotSocket(authDir) {
 
                 console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage} | Tentativa: ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
 
+                // Cancela o watchdog ao fechar a conexão para evitar falsos restarts no watchdog
+                if (global.nazuWatchdog) {
+                    clearInterval(global.nazuWatchdog);
+                    global.nazuWatchdog = null;
+                }
+
                 // Limpa recursos antes de reconectar
                 // Watchdog removido
                 if (cacheCleanupInterval) {
@@ -1546,17 +1554,34 @@ async function createBotSocket(authDir) {
                     process.exit(1);
                 }
 
-                // Para garantir que o PM2 reinicie de forma totalmente limpa e evite sockets zumbis/memory leak:
-                console.log(`🔄 Reiniciando processo via PM2 para limpeza de memória...`);
-                
-                // Se for rate limit (428), esperamos antes de encerrar para não causar loop no PM2
-                if (reason === 428) {
-                    const delay428 = Math.min(10000 * Math.pow(2, consecutive428Count - 1), MAX_RECONNECT_DELAY);
-                    console.log(`⏳ Aguardando ${Math.round(delay428 / 1000)}s antes de reiniciar (anti-loop 428)...`);
-                    setTimeout(() => process.exit(1), delay428);
+                // Erros de rede comuns que podem ser reconectados internamente
+                const transientErrors = [
+                    DisconnectReason.connectionLost,   // 503
+                    DisconnectReason.connectionClosed, // 1006
+                    DisconnectReason.timedOut,         // 408
+                    DisconnectReason.restartRequired   // 515
+                ];
+
+                if (transientErrors.includes(reason)) {
+                    const delayTime = Math.min(RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttempts - 1), MAX_RECONNECT_DELAY);
+                    console.log(`🔄 Erro temporário de rede detectado (${reasonMessage}). Tentando reconectar internamente em ${delayTime / 1000}s (Sem reiniciar processo)...`);
+                    if (reconnectTimer) clearTimeout(reconnectTimer);
+                    reconnectTimer = setTimeout(() => {
+                        startNazu();
+                    }, delayTime);
                 } else {
-                    // Outros erros menores
-                    setTimeout(() => process.exit(1), 3000);
+                    // Para garantir que o PM2 reinicie de forma totalmente limpa e evite sockets zumbis/memory leak:
+                    console.log(`🔄 Reiniciando processo via PM2 para limpeza de memória...`);
+                    
+                    // Se for rate limit (428), esperamos antes de encerrar para não causar loop no PM2
+                    if (reason === 428) {
+                        const delay428 = Math.min(10000 * Math.pow(2, consecutive428Count - 1), MAX_RECONNECT_DELAY);
+                        console.log(`⏳ Aguardando ${Math.round(delay428 / 1000)}s antes de reiniciar (anti-loop 428)...`);
+                        setTimeout(() => process.exit(1), delay428);
+                    } else {
+                        // Outros erros menores
+                        setTimeout(() => process.exit(1), 3000);
+                    }
                 }
             }
         });
