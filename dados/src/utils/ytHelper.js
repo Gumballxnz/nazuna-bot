@@ -82,13 +82,8 @@ export async function resolverUrlYT(url, type = 'audio') {
         try {
             console.log(`[YouTube Resolver] Fase 2: Cobalt API (v10)...`);
             const cobaltApis = [
-                'https://nuko-c.meowing.de/',
-                'https://melon.clxxped.lol/',
-                'https://cobalt.alpha.wolfy.love/',
-                'https://grapefruit.clxxped.lol/',
-                'https://lime.clxxped.lol/',
-                'https://api.qwkuns.me/',
-                'https://dog.kittycat.boo/'
+                'https://cobaltapi.kittycat.boo/',
+                'https://api.cobalt.tools/'
             ];
             for (const api of cobaltApis) {
                 try {
