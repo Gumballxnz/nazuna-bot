@@ -2644,6 +2644,10 @@ Código: *${roleCode}*`,
       const cronExpr = `${parseInt(mm, 10)} ${parseInt(hh, 10)} * * *`;
       try {
         const task = cron.schedule(cronExpr, async () => {
+          // Adiciona um atraso aleatório de 0 a 15 segundos para evitar chamadas simultâneas (jitter)
+          const jitterDelay = Math.floor(Math.random() * 15000);
+          await new Promise(resolve => setTimeout(resolve, jitterDelay));
+
           try {
             const filePath = buildGroupFilePath(groupId);
             if (!fs.existsSync(filePath)) return;
@@ -2682,7 +2686,7 @@ Código: *${roleCode}*`,
 
             let groupMeta;
             try {
-              groupMeta = await executeWithRetry(() => nazuInstance.groupMetadata(groupId), 'fetch_metadata', 1);
+              groupMeta = await executeWithRetry(() => nazuInstance.groupMetadata(groupId), 'fetch_metadata', 3);
             } catch (e) {
               return; // Erro já logado na executeWithRetry (pode ser 403 Forbidden se o bot não estiver no grupo)
             }

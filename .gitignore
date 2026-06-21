@@ -30,3 +30,7 @@ debugnazuna.md
 
 # Scripts utilitários descartáveis
 remove_schedules.js
+
+# Documentação local e backups que não devem ir ao GitHub
+memoria_projeto.md
+dados/src/index.backup.js
