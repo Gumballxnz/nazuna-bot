@@ -2,7 +2,6 @@ node_modules/
 .env
 *.pem
 bot-chave-nova.pem
-package-lock.json
 dados/database/qr-code
 dados/database/auth
 dados/src/.scripts/node_modules
