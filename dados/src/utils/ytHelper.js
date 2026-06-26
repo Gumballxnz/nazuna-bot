@@ -48,39 +48,10 @@ export async function resolverUrlYT(url, type = 'audio') {
     let dl_url = null;
     let title = 'YouTube';
 
-    // Fase 1: fg-senna (Não depende de IP, usa scrapers web)
-    if (motorDisponivel('fg-senna')) {
-        try {
-            console.log(`[YouTube Resolver] Fase 1: fg-senna (${type})...`);
-            const fg = await getFg();
-            let res = null;
-            if (type === 'audio') {
-                if (typeof fg.yta === 'function') res = await fg.yta(url);
-                else if (typeof fg.ytmp3 === 'function') res = await fg.ytmp3(url);
-                else if (typeof fg.youtube === 'function') res = await fg.youtube(url);
-            } else {
-                if (typeof fg.ytv === 'function') res = await fg.ytv(url, '720p');
-                else if (typeof fg.ytmp4 === 'function') res = await fg.ytmp4(url);
-                else if (typeof fg.youtube === 'function') res = await fg.youtube(url);
-            }
-
-            if (res && res.dl_url && res.dl_url.startsWith('http')) {
-                dl_url = res.dl_url;
-                title = res.title || title;
-                marcarSucesso('fg-senna');
-                console.log(`[YouTube Resolver] ✅ Fase 1 OK: ${title}`);
-                return { dl_url, title };
-            }
-        } catch (e) {
-            marcarFalha('fg-senna');
-            console.log(`[YouTube Resolver] Fase 1 falhou: ${e.message?.substring(0, 80)}`);
-        }
-    }
-
-    // Fase 2: Cobalt API (Robusto, datacenter-friendly, formato v10)
+    // Fase 1: Cobalt API (Robusto, datacenter-friendly, formato v10)
     if (motorDisponivel('cobalt')) {
         try {
-            console.log(`[YouTube Resolver] Fase 2: Cobalt API (v10)...`);
+            console.log(`[YouTube Resolver] Fase 1: Cobalt API (v10)...`);
             const cobaltApis = [
                 'https://cobaltapi.kittycat.boo/',
                 'https://api.cobalt.tools/'
@@ -105,7 +76,7 @@ export async function resolverUrlYT(url, type = 'audio') {
                         dl_url = cobaltRes.url;
                         title = cobaltRes.filename || 'YouTube Video';
                         marcarSucesso('cobalt');
-                        console.log(`[YouTube Resolver] ✅ Fase 2 OK (${api})`);
+                        console.log(`[YouTube Resolver] ✅ Fase 1 OK (${api})`);
                         return { dl_url, title };
                     } else if (cobaltRes && cobaltRes.status === 'error') {
                         console.log(`[YouTube Resolver] Cobalt API ${api} retornou erro: ${cobaltRes.error?.code || cobaltRes.error}`);
@@ -118,6 +89,35 @@ export async function resolverUrlYT(url, type = 'audio') {
             }
         } catch (e) {
             marcarFalha('cobalt');
+            console.log(`[YouTube Resolver] Fase 1 falhou: ${e.message?.substring(0, 80)}`);
+        }
+    }
+
+    // Fase 2: fg-senna (Não depende de IP, usa scrapers web)
+    if (motorDisponivel('fg-senna')) {
+        try {
+            console.log(`[YouTube Resolver] Fase 2: fg-senna (${type})...`);
+            const fg = await getFg();
+            let res = null;
+            if (type === 'audio') {
+                if (typeof fg.yta === 'function') res = await fg.yta(url);
+                else if (typeof fg.ytmp3 === 'function') res = await fg.ytmp3(url);
+                else if (typeof fg.youtube === 'function') res = await fg.youtube(url);
+            } else {
+                if (typeof fg.ytv === 'function') res = await fg.ytv(url, '720p');
+                else if (typeof fg.ytmp4 === 'function') res = await fg.ytmp4(url);
+                else if (typeof fg.youtube === 'function') res = await fg.youtube(url);
+            }
+
+            if (res && res.dl_url && res.dl_url.startsWith('http')) {
+                dl_url = res.dl_url;
+                title = res.title || title;
+                marcarSucesso('fg-senna');
+                console.log(`[YouTube Resolver] ✅ Fase 2 OK: ${title}`);
+                return { dl_url, title };
+            }
+        } catch (e) {
+            marcarFalha('fg-senna');
             console.log(`[YouTube Resolver] Fase 2 falhou: ${e.message?.substring(0, 80)}`);
         }
     }

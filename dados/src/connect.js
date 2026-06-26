@@ -1375,11 +1375,11 @@ async function createBotSocket(authDir) {
                 attachMessagesListener();
                 startCacheCleanup(); // Inicia o sistema de limpeza de cache
 
-                // Envia mensagem de boas-vindas para o dono
+                // Envia mensagem de boas-vindas para o dono (apenas uma vez por inicialização do processo)
                 try {
                     const msgBotOnConfig = loadMsgBotOn();
 
-                    if (msgBotOnConfig.enabled) {
+                    if (msgBotOnConfig.enabled && !global.hasSentWelcomeMessage) {
                         // Aguarda 3 segundos para garantir que o bot está totalmente conectado
                         setTimeout(async () => {
                             try {
@@ -1387,11 +1387,14 @@ async function createBotSocket(authDir) {
                                 await NazunaSock.sendMessage(ownerJid, {
                                     text: msgBotOnConfig.message
                                 });
+                                global.hasSentWelcomeMessage = true;
                                 console.log('✅ Mensagem de inicialização enviada para o dono');
                             } catch (sendError) {
                                 console.error('❌ Erro ao enviar mensagem de inicialização:', sendError.message);
                             }
                         }, 3000);
+                    } else if (msgBotOnConfig.enabled) {
+                        console.log('ℹ️ Conexão reestabelecida. Mensagem de inicialização pulada (já enviada nesta sessão).');
                     } else {
                         console.log('ℹ️ Mensagem de inicialização desativada');
                     }

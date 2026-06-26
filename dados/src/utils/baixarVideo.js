@@ -28,6 +28,47 @@ async function getFg() {
     return _fg;
 }
 
+// Motor de download universal via Cobalt (Fase 1 global)
+async function baixarCobaltGenerico(url, formato = 'video') {
+    const cobaltApis = [
+        'https://cobaltapi.kittycat.boo/',
+        'https://api.cobalt.tools/'
+    ];
+    for (const api of cobaltApis) {
+        try {
+            console.log(`[Cobalt Generico] Tentando download via: ${api}`);
+            const cobaltRes = await axios.post(api, {
+                url: url,
+                videoQuality: '720',
+                audioFormat: 'mp3',
+                downloadMode: formato === 'audio' ? 'audio' : 'auto'
+            }, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0'
+                },
+                timeout: 10000
+            }).then(r => r.data);
+
+            if (cobaltRes) {
+                if ((cobaltRes.status === 'redirect' || cobaltRes.status === 'tunnel') && cobaltRes.url) {
+                    if (formato === 'audio') {
+                        return { type: 'audio', url: cobaltRes.url, desc: cobaltRes.filename || 'Audio' };
+                    }
+                    return { type: 'video', url: cobaltRes.url, desc: cobaltRes.filename || 'Video' };
+                } else if (cobaltRes.status === 'picker' && cobaltRes.picker && cobaltRes.picker.length > 0) {
+                    const urls = cobaltRes.picker.map(item => item.url);
+                    return { type: 'images', urls: urls, desc: 'Galeria' };
+                }
+            }
+        } catch (apiErr) {
+            console.warn(`[Cobalt Generico] API ${api} falhou: ${apiErr.message}`);
+        }
+    }
+    return null;
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -626,16 +667,28 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
 
         let resultado;
         try {
-            switch (plataforma) {
-                case 'TikTok':      resultado = await baixarTiktok(url); break;
-                case 'YouTube':     resultado = await baixarYoutube(url, 'video'); break;
-                case 'Instagram':   resultado = await baixarInstagram(url); break;
-                case 'Facebook':    resultado = await baixarFacebook(url); break;
-                case 'Twitter/X':   resultado = await baixarTwitter(url); break;
-                case 'Pinterest':   resultado = await baixarPinterest(url); break;
-                case 'Reddit':      resultado = await baixarReddit(url); break;
-                case 'Mediafire':   resultado = await baixarMediafire(url); break;
-                default:            resultado = await baixarGenerico(url, plataforma); break;
+            // Tenta Cobalt em primeiro lugar para todas as plataformas exceto Mediafire e Spotify
+            if (plataforma !== 'Mediafire' && plataforma !== 'Spotify') {
+                try {
+                    console.log(`[downloader] Tentando Cobalt em primeiro lugar para ${plataforma}...`);
+                    resultado = await baixarCobaltGenerico(url, 'video');
+                } catch (cobaltErr) {
+                    console.warn(`[downloader] Cobalt falhou, usando fallback: ${cobaltErr.message}`);
+                }
+            }
+
+            if (!resultado) {
+                switch (plataforma) {
+                    case 'TikTok':      resultado = await baixarTiktok(url); break;
+                    case 'YouTube':     resultado = await baixarYoutube(url, 'video'); break;
+                    case 'Instagram':   resultado = await baixarInstagram(url); break;
+                    case 'Facebook':    resultado = await baixarFacebook(url); break;
+                    case 'Twitter/X':   resultado = await baixarTwitter(url); break;
+                    case 'Pinterest':   resultado = await baixarPinterest(url); break;
+                    case 'Reddit':      resultado = await baixarReddit(url); break;
+                    case 'Mediafire':   resultado = await baixarMediafire(url); break;
+                    default:            resultado = await baixarGenerico(url, plataforma); break;
+                }
             }
         } catch (err) {
             console.error(`[Download ${plataforma}] Erro:`, err.message);
