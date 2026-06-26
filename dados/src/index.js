@@ -1430,61 +1430,18 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const groupMetadata = !isGroup ? {} : await getCachedGroupMetadata(from).catch(() => ({}));
     const groupName = groupMetadata?.subject || '';
     if (isGroup) {
-      // Otimização: Verificar existência com cache
-      const fileExists = await optimizer.fileExists(groupFile);
-      if (!fileExists) {
-        writeJsonFile(groupFile, {
-          mark: {},
-          createdAt: new Date().toISOString(),
-          groupName: groupName
-        });
-        // Invalida cache de exists após criar arquivo
-        optimizer.invalidateJson(groupFile);
+      // Inicializa estrutura se os dados carregados do cache (linha 1308) estiverem vazios
+      if (!groupData || typeof groupData !== 'object') {
+        groupData = { mark: {} };
       }
-      try {
-        // Carregamento seguro e assíncrono de dados do grupo
-        let rawContent = '';
-        try {
-          rawContent = await fsPromises.readFile(groupFile, 'utf-8');
-        } catch (readError) {
-          if (readError.code !== 'ENOENT') {
-            console.error(`❌ Erro ao ler arquivo do grupo ${from}:`, readError.message);
-          }
-          rawContent = '';
-        }
-
-        if (!rawContent || rawContent.trim() === '') {
-          console.warn(`⚠️ Arquivo de grupo vazio para ${from}, criando novo`);
-          groupData = { mark: {}, createdAt: new Date().toISOString() };
-        } else {
-          // Remove BOM e caracteres inválidos
-          rawContent = rawContent.replace(/^\uFEFF/, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-
-          try {
-            groupData = JSON.parse(rawContent);
-          } catch (parseError) {
-            console.error(`❌ JSON inválido no grupo ${from}, tentando recuperar:`, parseError.message);
-
-            // Tenta remover trailing commas e parsear novamente
-            try {
-              rawContent = rawContent.replace(/,\s*([\]}])/g, '$1');
-              groupData = JSON.parse(rawContent);
-              console.log(`✅ Dados do grupo ${from} recuperados após sanitização`);
-            } catch (retryError) {
-              console.error(`❌ Falha na recuperação do grupo ${from}, usando dados padrão`);
-              groupData = { mark: {}, createdAt: new Date().toISOString(), recovered: true };
-            }
-          }
-        }
-
-        // Validação básica
-        if (!groupData || typeof groupData !== 'object') {
-          groupData = { mark: {} };
-        }
-      } catch (error) {
-        console.error(`❌ Erro crítico ao carregar dados do grupo ${from}:`, error.message);
-        groupData = { mark: {}, error: true };
-      };
+      if (!groupData.createdAt) {
+        groupData.mark = groupData.mark || {};
+        groupData.createdAt = new Date().toISOString();
+        groupData.groupName = groupName;
+        // Salva arquivo inicial
+        writeJsonFile(groupFile, groupData);
+        optimizer.invalidateGroup(from);
+      }
       // default flags
       groupData.modorpg = typeof groupData.modorpg === 'boolean' ? groupData.modorpg : false;
       groupData.minMessage = groupData.minMessage || null;
@@ -23078,7 +23035,7 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!isGroupAdmin) return reply("Apenas administradores podem resetar o rank de atividade.");
           const oldCount = (groupData.contador || []).length;
           groupData.contador = [];
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`🔄 Reset do rank de atividade concluído!\n\nRemovidas ${oldCount} entradas de usuários. O rank agora está vazio.`);
         } catch (e) {
           console.error('Erro no comando resetarrank:', e);
@@ -23261,7 +23218,7 @@ ${prefix}togglecmdvip premium_ia off`);
             });
 
             // Save updated data
-            fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+            persistGroupData();
           } else {
             // Se preservação estiver ativada, apenas filtra para validUsers sem remover do contador
             validUsers = (groupData.contador || []).filter(user => {
@@ -23328,7 +23285,7 @@ ${prefix}togglecmdvip premium_ia off`);
             });
 
             // Save updated data
-            fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+            persistGroupData();
           } else {
             // Se preservação estiver ativada, apenas filtra para validUsers sem remover do contador
             validUsers = (groupData.contador || []).filter(user => {
@@ -24661,7 +24618,7 @@ ${prefix}togglecmdvip premium_ia off`);
               groupData.mark = {};
             }
             groupData.mark[sender] = q.toLowerCase();
-            fs.writeFileSync(buildGroupFilePath(from), JSON.stringify(groupData, null, 2));
+            persistGroupData();
             return reply(`*${options[q.toLowerCase()]}*`);
           }
           reply(`❌ Opção inválida! Use *${prefix}mention* para ver as opções.`);
@@ -24712,7 +24669,7 @@ ${prefix}togglecmdvip premium_ia off`);
             reason,
             timestamp: Date.now()
           };
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Usuário @${getUserName(menc_os3)} bloqueado no grupo!\nMotivo: ${reason}`, {
             mentions: [menc_os3]
           });
@@ -24737,7 +24694,7 @@ ${prefix}togglecmdvip premium_ia off`);
             });
           }
           delete groupData.blockedUsers[userToUnblock];
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Usuário @${getUserName(menc_os2)} desbloqueado no grupo!`, {
             mentions: [menc_os2]
           });
@@ -25151,7 +25108,7 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!isGroupAdmin) return reply("Comando restrito a Administradores 💔");
 
           groupData.autoAcceptRequests = !groupData.autoAcceptRequests;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
 
           const status = groupData.autoAcceptRequests ? 'ativado' : 'desativado';
           const emoji = groupData.autoAcceptRequests ? '✅' : '❌';
@@ -25183,7 +25140,7 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!isGroupAdmin) return reply("Comando restrito a Administradores 💔");
 
           groupData.captchaEnabled = !groupData.captchaEnabled;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
 
           const status = groupData.captchaEnabled ? 'ativado' : 'desativado';
           const emoji = groupData.captchaEnabled ? '🔐' : '❌';
@@ -26244,7 +26201,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
           groupData.antilinkhard = !groupData.antilinkhard;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Antilinkhard ${groupData.antilinkhard ? 'ativado' : 'desativado'}! Qualquer link enviado resultará em banimento.`);
         } catch (e) {
           console.error(e);
@@ -26351,7 +26308,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
           groupData.antibtn = !groupData.antibtn;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Anti Botão ${groupData.antibtn ? 'ativado' : 'desativado'}!`);
         } catch (e) {
           console.error(e);
@@ -26365,7 +26322,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
 
           groupData.antistatus = !groupData.antistatus;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Anti Status ${groupData.antistatus ? 'ativado' : 'desativado'}!`);
         } catch (e) {
           console.error(e);
@@ -26379,7 +26336,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
 
           groupData.antidel = !groupData.antidel;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Antidelete ${groupData.antidel ? 'ativado' : 'desativado'}!`);
         } catch (e) {
           console.error(e);
@@ -26393,7 +26350,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
 
           groupData.autodl = !groupData.autodl;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
 
           const platforms = [
             '🎥 YouTube',
@@ -26428,7 +26385,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
 
           groupData.antidoc = !groupData.antidoc;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Antidoc ${groupData.antidoc ? 'ativado' : 'desativado'}! Documentos enviados resultarão em banimento.`);
         } catch (e) {
           console.error(e);
@@ -26477,7 +26434,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
             warnings: groupData.messageLimit?.warnings || {},
             users: groupData.messageLimit?.users || {}
           };
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           const actionText = action === 'ban' ? 'banimento direto' : 'advertências (ban após 3)';
           await reply(`✅ Limite de mensagens configurado: ${limit} mensagens a cada ${timeInput} com ${actionText}!`);
         } catch (e) {
@@ -26493,7 +26450,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
             return reply("📴 O limite de mensagens não está ativo neste grupo.");
           }
           delete groupData.messageLimit;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply("🗑️ Sistema de limite de mensagens desativado com sucesso!");
         } catch (e) {
           console.error('Erro no comando dellimitmessage:', e);
@@ -26523,7 +26480,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           }
 
           groupData.customPrefix = newPrefix;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
 
           // Se não foi convertido, envia mensagem normal
           if (newPrefix !== '/') {
@@ -26915,12 +26872,10 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            welcome: {}
-          };
+          groupData.welcome = groupData.welcome || {};
           if (!groupData.welcome?.image) return reply("❌ Não há imagem de boas-vindas configurada.");
           delete groupData.welcome.image;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           reply("✅ A imagem de boas-vindas foi removida com sucesso!");
         } catch (e) {
           console.error(e);
@@ -26935,12 +26890,10 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            exit: {}
-          };
+          groupData.exit = groupData.exit || {};
           if (!groupData.exit?.image) return reply("❌ Não há imagem de saída configurada.");
           delete groupData.exit.image;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           reply("✅ A imagem de saída foi removida com sucesso!");
         } catch (e) {
           console.error(e);
@@ -26964,7 +26917,7 @@ Exemplos:
             groupData.exit.enabled = true;
 
             groupData.exit.text = q;
-            fs.writeFileSync(buildGroupFilePath(from), JSON.stringify(groupData, null, 2));
+            persistGroupData();
             await reply('✅ Mensagem de saída configurada com sucesso!\n\n📝 Mensagem definida como:\n' + q);
           } catch (error) {
             console.error(error);
@@ -26984,7 +26937,7 @@ Exemplos:
             }
 
             groupData.exit.enabled = !groupData.exit.enabled;
-            fs.writeFileSync(buildGroupFilePath(from), JSON.stringify(groupData, null, 2));
+            persistGroupData();
             await reply(groupData.exit.enabled ? '✅ Mensagens de saída ativadas!' : '❌ Mensagens de saída desativadas!');
           } catch (error) {
             console.error(error);
@@ -27109,7 +27062,7 @@ Exemplos:
           groupData.antifig = groupData.antifig || {};
 
           groupData.antifig.enabled = !groupData.antifig.enabled;
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           const status = groupData.antifig.enabled ? "ativado" : "desativado";
           await reply(`✅ Antifig ${status}! Figurinhas ${groupData.antifig.enabled ? "serão apagadas e o remetente receberá advertências" : "agora são permitidas"}.`);
         } catch (e) {
@@ -27125,9 +27078,7 @@ Exemplos:
           if (!menc_os2) return reply("Marque um usuário 🙄");
           const reason = q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Motivo não informado";
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            blacklist: {}
-          };
+          groupData.blacklist = groupData.blacklist || {};
 
           groupData.blacklist = groupData.blacklist || {};
           if (groupData.blacklist[menc_os2]) return reply("❌ Este usuário já está na blacklist.");
@@ -27136,7 +27087,7 @@ Exemplos:
             reason,
             timestamp: Date.now()
           };
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           reply(`✅ @${getUserName(menc_os2)} foi adicionado à blacklist.\nMotivo: ${reason}`, {
             mentions: [menc_os2]
           });
@@ -27152,14 +27103,12 @@ Exemplos:
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           if (!menc_os2) return reply("Marque um usuário 🙄");
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            blacklist: {}
-          };
+          groupData.blacklist = groupData.blacklist || {};
 
           groupData.blacklist = groupData.blacklist || {};
           if (!groupData.blacklist[menc_os2]) return reply("❌ Este usuário não está na blacklist.");
           delete groupData.blacklist[menc_os2];
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           reply(`✅ @${getUserName(menc_os2)} foi removido da blacklist.`, {
             mentions: [menc_os2]
           });
@@ -27173,9 +27122,7 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            blacklist: {}
-          };
+          groupData.blacklist = groupData.blacklist || {};
 
           groupData.blacklist = groupData.blacklist || {};
           if (Object.keys(groupData.blacklist).length === 0) return reply("📋 A blacklist está vazia.");
@@ -27201,9 +27148,7 @@ Exemplos:
           if (menc_os2 === botNumber) return reply("❌ Não posso advertir a mim mesma!");
           const reason = q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Motivo não informado";
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            warnings: {}
-          };
+          groupData.warnings = groupData.warnings || {};
 
           groupData.warnings = groupData.warnings || {};
 
@@ -27214,11 +27159,11 @@ Exemplos:
             issuer: sender
           });
           const warningCount = groupData.warnings[menc_os2].length;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           if (warningCount >= 3) {
             await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
             delete groupData.warnings[menc_os2];
-            fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+            persistGroupData();
             reply(`🚫 @${getUserName(menc_os2)} recebeu 3 advertências e foi banido!\nÚltima advertência: ${reason}`, {
               mentions: [menc_os2]
             });
@@ -27240,15 +27185,13 @@ Exemplos:
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           if (!menc_os2) return reply("Marque um usuário 🙄");
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            warnings: {}
-          };
+          groupData.warnings = groupData.warnings || {};
 
           groupData.warnings = groupData.warnings || {};
           if (!groupData.warnings[menc_os2] || groupData.warnings[menc_os2].length === 0) return reply("❌ Este usuário não tem advertências.");
           groupData.warnings[menc_os2].pop();
           if (groupData.warnings[menc_os2].length === 0) delete groupData.warnings[menc_os2];
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           reply(`✅ Uma advertência foi removida de @${getUserName(menc_os2)}. Advertências restantes: ${groupData.warnings[menc_os2]?.length || 0}/3`, {
             mentions: [menc_os2]
           });
@@ -27263,9 +27206,7 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = buildGroupFilePath(from);
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            warnings: {}
-          };
+          groupData.warnings = groupData.warnings || {};
 
           groupData.warnings = groupData.warnings || {};
           if (Object.keys(groupData.warnings).length === 0) return reply("📋 Não há advertências ativas no grupo.");
@@ -27305,7 +27246,7 @@ Exemplos:
 
             groupData.soadm = !groupData.soadm;
           }
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           if (groupData.soadm) {
             await reply(`✅ *Modo apenas adm ativado!* Agora apenas administrdores do grupo poderam utilizar o bot*`);
           } else {
@@ -27338,7 +27279,7 @@ Exemplos:
               delete groupData.modoliteOff;
             }
           }
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           if (groupData.modolite) {
             await reply('👶 *Modo Lite ativado!* O conteúdo inapropriado para crianças será filtrado neste grupo.');
           } else {
@@ -27376,12 +27317,10 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            antilinkgp: false
-          };
+          if (groupData.antilinkgp === undefined) groupData.antilinkgp = false;
 
           groupData.antilinkgp = !groupData.antilinkgp;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           const message = groupData.antilinkgp ? `✅ *Antilinkgp foi ativado com sucesso!*\n\nAgora, se alguém enviar links de outros grupos, será banido automaticamente. Mantenha o grupo seguro! 🛡️` : `✅ *Antilinkgp foi desativado.*\n\nLinks de outros grupos não serão mais bloqueados. Use com cuidado! ⚠️`;
           reply(`${message}`);
         } catch (e) {
@@ -27396,12 +27335,10 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            antilinkcanal: false
-          };
+          if (groupData.antilinkcanal === undefined) groupData.antilinkcanal = false;
 
           groupData.antilinkcanal = !groupData.antilinkcanal;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           const message = groupData.antilinkcanal ? `✅ *Antilinkcanal foi ativado com sucesso!*\n\nAgora, se alguém enviar links de canais do WhatsApp, será banido automaticamente. Mantenha o grupo seguro! 🛡️` : `✅ *Antilinkcanal foi desativado.*\n\nLinks de canais não serão mais bloqueados. Use com cuidado! ⚠️`;
           reply(`${message}`);
         } catch (e) {
@@ -27414,12 +27351,10 @@ Exemplos:
           if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            antilinksoft: false
-          };
+          if (groupData.antilinksoft === undefined) groupData.antilinksoft = false;
 
           groupData.antilinksoft = !groupData.antilinksoft;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           const message = groupData.antilinksoft ? `✅ *Antilinksoft foi ativado com sucesso!*\n\nAgora, se alguém enviar links, a mensagem será apagada automaticamente (sem banir o usuário).` : `✅ *Antilinksoft foi desativado.*\n\nLinks não serão mais bloqueados.`;
           reply(`${message}`);
         } catch (e) {
@@ -27433,12 +27368,10 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            antiporn: false
-          };
+          if (groupData.antiporn === undefined) groupData.antiporn = false;
 
           groupData.antiporn = !groupData.antiporn;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           const message = groupData.antiporn ? `✅ *Antiporn foi ativado com sucesso!*\n\nAgora, se alguém enviar conteúdo adulto (NSFW), será banido automaticamente. Mantenha o grupo seguro e adequado! 🛡️` : `✅ *Antiporn foi desativado.*\n\nConteúdo adulto não será mais bloqueado. Use com responsabilidade! ⚠️`;
           reply(`${message}`);
         } catch (e) {
@@ -27451,10 +27384,10 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {};
+          
 
           groupData.autoSticker = !groupData.autoSticker;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           reply(`✅ Auto figurinhas ${groupData.autoSticker ? 'ativadas' : 'desativadas'}! ${groupData.autoSticker ? 'Todas as imagens e vídeos serão convertidos em figurinhas.' : ''}`);
         } catch (e) {
           console.error(e);
@@ -27467,10 +27400,10 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {};
+          
 
           groupData.autorepo = !groupData.autorepo;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           reply(`✅ Auto resposta ${groupData.autorepo ? 'ativada' : 'desativada'}!`);
         } catch (e) {
           console.error(e);
@@ -27485,7 +27418,7 @@ Exemplos:
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
 
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {};
+          
 
           // Se não tem argumento, apenas ativa/desativa
           if (!q) {
@@ -27497,7 +27430,7 @@ Exemplos:
               // Se ativar sem especificar, usa padrão
               groupData.assistentePersonality = groupData.assistentePersonality || 'nazuna';
             }
-            fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+            persistGroupData();
 
             const statusMsg = groupData.assistente
               ? `✅ *Assistente ativada com sucesso!*\n\n` +
@@ -27527,7 +27460,7 @@ Exemplos:
 
           groupData.assistente = true;
           groupData.assistentePersonality = personality;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+          persistGroupData();
 
           const personalityNames = {
             'nazuna': '🌙 *Nazuna* - Vampira moderna com personalidade tsundere',
@@ -27552,12 +27485,10 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            antigore: false
-          };
+          if (groupData.antigore === undefined) groupData.antigore = false;
 
           groupData.antigore = !groupData.antigore;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           const message = groupData.antigore ? `✅ *Antigore foi ativado com sucesso!*\n\nAgora, se alguém enviar conteúdo gore, será banido automaticamente. Mantenha o grupo seguro e saudável! 🛡️` : `✅ *Antigore foi desativado.*\n\nConteúdo gore não será mais bloqueado. Use com cuidado! ⚠️`;
           reply(`${message}`);
         } catch (e) {
@@ -27575,7 +27506,7 @@ Exemplos:
           if (!q) return reply(`📝 *Configuração da Mensagem de Boas-Vindas*\n\nPara definir uma mensagem personalizada, digite o comando seguido do texto desejado. Você pode usar as seguintes variáveis:\n\n- *#numerodele#* → Marca o novo membro.\n- *#nomedogp#* → Nome do grupo.\n- *#desc#* → Descrição do grupo.\n- *#membros#* → Número total de membros no grupo.\n\n📌 *Exemplo:*\n${prefixo}legendabv Bem-vindo(a) #numerodele# ao grupo *#nomedogp#*! Agora somos #membros# membros. Leia a descrição: #desc#`);
 
           groupData.textbv = q;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           reply(`✅ *Mensagem de boas-vindas configurada com sucesso!*\n\n📌 Nova mensagem:\n"${groupData.textbv}"`);
         } catch (e) {
           console.error(e);
@@ -27590,14 +27521,12 @@ Exemplos:
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
           if (!menc_os2) return reply("Marque alguém 🙄");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            mutedUsers: {}
-          };
+          groupData.mutedUsers = groupData.mutedUsers || {};
 
           groupData.mutedUsers = groupData.mutedUsers || {};
 
           groupData.mutedUsers[menc_os2] = true;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           await nazu.sendMessage(from, {
             text: `✅ @${getUserName(menc_os2)} foi mutado. Se enviar mensagens, será banido.`,
             mentions: [menc_os2]
@@ -27617,14 +27546,12 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!menc_os2) return reply("Marque alguém 🙄");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            mutedUsers: {}
-          };
+          groupData.mutedUsers = groupData.mutedUsers || {};
 
           groupData.mutedUsers = groupData.mutedUsers || {};
           if (groupData.mutedUsers[menc_os2]) {
             delete groupData.mutedUsers[menc_os2];
-            fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+            persistGroupData();
             await nazu.sendMessage(from, {
               text: `✅ @${getUserName(menc_os2)} foi desmutado e pode enviar mensagens novamente.`,
               mentions: [menc_os2]
@@ -27646,14 +27573,12 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!menc_os2) return reply("Marque alguém 🙄");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            mutedUsers2: {}
-          };
+          groupData.mutedUsers2 = groupData.mutedUsers2 || {};
 
           groupData.mutedUsers2 = groupData.mutedUsers2 || {};
 
           groupData.mutedUsers2[menc_os2] = true;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           await nazu.sendMessage(from, {
             text: `✅ @${getUserName(menc_os2)} foi mutado. Suas mensagens serão apagadas automaticamente.`,
             mentions: [menc_os2]
@@ -27673,14 +27598,12 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!menc_os2) return reply("Marque alguém 🙄");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            mutedUsers2: {}
-          };
+          groupData.mutedUsers2 = groupData.mutedUsers2 || {};
 
           groupData.mutedUsers2 = groupData.mutedUsers2 || {};
           if (groupData.mutedUsers2[menc_os2]) {
             delete groupData.mutedUsers2[menc_os2];
-            fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+            persistGroupData();
             await nazu.sendMessage(from, {
               text: `✅ @${getUserName(menc_os2)} foi desmutado e pode enviar mensagens novamente.`,
               mentions: [menc_os2]
@@ -27702,14 +27625,12 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!q) return reply(`❌ Digite o comando que deseja bloquear. Exemplo: ${prefix}blockcmd sticker`);
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            blockedCommands: {}
-          };
+          groupData.blockedCommands = groupData.blockedCommands || {};
 
           groupData.blockedCommands = groupData.blockedCommands || {};
 
           groupData.blockedCommands[q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll(prefix, '')] = true;
-          fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+          persistGroupData();
           reply(`✅ O comando *${q.trim()}* foi bloqueado e só pode ser usado por administradores.`);
         } catch (e) {
           console.error(e);
@@ -27723,14 +27644,12 @@ Exemplos:
           if (!isGroupAdmin) return reply("você precisa ser adm 💔");
           if (!q) return reply(`❌ Digite o comando que deseja desbloquear. Exemplo: ${prefix}unblockcmd sticker`);
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
-            blockedCommands: {}
-          };
+          groupData.blockedCommands = groupData.blockedCommands || {};
 
           groupData.blockedCommands = groupData.blockedCommands || {};
           if (groupData.blockedCommands[q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll(prefix, '')]) {
             delete groupData.blockedCommands[q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll(prefix, '')];
-            fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
+            persistGroupData();
             reply(`✅ O comando *${q.trim()}* foi desbloqueado e pode ser usado por todos.`);
           } else {
             reply('❌ Este comando não está bloqueado.');
@@ -30216,7 +30135,7 @@ ${nivelSorte >= 70 ? '🎉 Hoje é seu dia de sorte!' : nivelSorte >= 40 ? '🤔
             reason: reason || 'Não especificado',
             since: Date.now()
           };
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           let afkSetMessage = `😴 Você está AFK.`;
           if (reason) {
             afkSetMessage += `
@@ -30233,7 +30152,7 @@ Motivo: ${reason}`;
           if (!isGroup) return reply("Este comando só funciona em grupos.");
           if (groupData.afkUsers && groupData.afkUsers[sender]) {
             delete groupData.afkUsers[sender];
-            fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+            persistGroupData();
             await reply(`👋 Bem-vindo(a) de volta! Seu status AFK foi removido.`);
           } else {
             await reply("Você não estava AFK.");
@@ -30271,7 +30190,7 @@ Motivo: ${reason}`;
 
           groupData.rules = groupData.rules || [];
           groupData.rules.push(q);
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Regra adicionada com sucesso!
 ${groupData.rules.length}. ${q}`);
         } catch (e) {
@@ -30292,7 +30211,7 @@ ${groupData.rules.length}. ${q}`);
             return reply(`❌ Número de regra inválido. Use ${prefix}regras para ver a lista. Atualmente existem ${groupData.rules.length} regras.`);
           }
           const removedRule = groupData.rules.splice(ruleNumber - 1, 1);
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`🗑️ Regra "${removedRule}" removida com sucesso!`);
         } catch (e) {
           console.error('Erro no comando delregra:', e);
@@ -30311,7 +30230,7 @@ ${groupData.rules.length}. ${q}`);
             });
           }
           groupData.moderators.push(modToAdd);
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ @${getUserName(modToAdd)} foi promovido a moderador do grupo!`, {
             mentions: [modToAdd]
           });
@@ -30333,7 +30252,7 @@ ${groupData.rules.length}. ${q}`);
             });
           }
           groupData.moderators.splice(modIndex, 1);
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ @${getUserName(modToRemove)} não é mais um moderador do grupo.`, {
             mentions: [modToRemove]
           });
@@ -30374,7 +30293,7 @@ ${groupData.rules.length}. ${q}`);
             return reply(`Comando "${cmdToAllow}" já está permitido para moderadores.`);
           }
           groupData.allowedModCommands.push(cmdToAllow);
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Moderadores agora podem usar o comando: ${prefix}${cmdToAllow}`);
         } catch (e) {
           console.error('Erro no comando grantmodcmd:', e);
@@ -30393,7 +30312,7 @@ ${groupData.rules.length}. ${q}`);
             return reply(`Comando "${cmdToDeny}" não estava permitido para moderadores.`);
           }
           groupData.allowedModCommands.splice(cmdIndex, 1);
-          fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+          persistGroupData();
           await reply(`✅ Moderadores não podem mais usar o comando: ${prefix}${cmdToDeny}`);
         } catch (e) {
           console.error('Erro no comando revokemodcmd:', e);
@@ -30554,7 +30473,7 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
           if (!args[0]) return reply(`Uso: ${prefix}minmessage <mínimo de dígitos> <ban/adv> ou ${prefix}minmessage off`);
           if (args[0].toLowerCase() === 'off') {
             delete groupData.minMessage;
-            fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+            persistGroupData();
             await reply(`✅ Sistema de legenda mínima desativado.`);
           } else {
             const minDigits = parseInt(args[0]);
@@ -30563,7 +30482,7 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
               return reply(`Formato inválido. Use: ${prefix}minmessage <número positivo> <ban/adv>`);
             }
             groupData.minMessage = { minDigits, action };
-            fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+            persistGroupData();
             await reply(`✅ Configurado: Mínimo de ${minDigits} caracteres em legendas de fotos/vídeos. Ação em violação: ${action === 'ban' ? 'banir' : 'advertir'}.`);
           }
         } catch (e) {
