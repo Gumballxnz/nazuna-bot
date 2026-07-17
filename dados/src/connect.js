@@ -1252,6 +1252,10 @@ async function createBotSocket(authDir) {
                 try {
 
                     const messageProcessingPromises = m.messages.map(info => {
+                        // Marca a mensagem recebida como lida (envia confirmação de dois pontinhos azuis)
+                        if (info.key && !info.key.fromMe) {
+                            NazunaSock.readMessages([info.key]).catch(() => {});
+                        }
                         // Watchdog removido
                         return messageQueue.add(info, processMessage).catch(err => {
                             console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
@@ -1333,6 +1337,13 @@ async function createBotSocket(authDir) {
             }
             if (connection === 'open') {
                 console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
+                // Força presença online
+                try {
+                    NazunaSock.sendPresenceUpdate('available');
+                    console.log('🟢 Presença definida como ONLINE');
+                } catch (presenceErr) {
+                    console.error('⚠️ Falha ao definir presença:', presenceErr.message);
+                }
 
                 // Reset de flags apenas quando conexão REALMENTE abre
                 codeMode = false; // Desativa o modo de pareamento permanentemente após o sucesso
