@@ -1289,7 +1289,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         return message.buttonsResponseMessage.selectedButtonId;
       }
 
-      return message.conversation || message.extendedTextMessage?.text || message.imageMessage?.caption || message.videoMessage?.caption || message.documentWithCaptionMessage?.message?.documentMessage?.caption || message.viewOnceMessage?.message?.imageMessage?.caption || message.viewOnceMessage?.message?.videoMessage?.caption || message.viewOnceMessageV2?.message?.imageMessage?.caption || message.viewOnceMessageV2?.message?.videoMessage?.caption || message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || '';
+      return message.conversation || message.extendedTextMessage?.text || message.imageMessage?.caption || message.videoMessage?.caption || message.documentWithCaptionMessage?.message?.documentMessage?.caption || message.viewOnceMessage?.message?.imageMessage?.caption || message.viewOnceMessage?.message?.videoMessage?.caption || message.viewOnceMessageV2?.message?.imageMessage?.caption || message.viewOnceMessageV2?.message?.videoMessage?.caption || message.viewOnceMessageV2Extension?.message?.imageMessage?.caption || message.viewOnceMessageV2Extension?.message?.videoMessage?.caption || message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || '';
     };
     const body = getMessageText(info.message) || info?.text || '';
 
@@ -3199,6 +3199,14 @@ Código: *${roleCode}*`,
       };
       if (message.viewOnceMessageV2?.message?.videoMessage) return {
         media: message.viewOnceMessageV2.message.videoMessage,
+        type: 'video'
+      };
+      if (message.viewOnceMessageV2Extension?.message?.imageMessage) return {
+        media: message.viewOnceMessageV2Extension.message.imageMessage,
+        type: 'image'
+      };
+      if (message.viewOnceMessageV2Extension?.message?.videoMessage) return {
+        media: message.viewOnceMessageV2Extension.message.videoMessage,
         type: 'video'
       };
       return null;
@@ -24380,8 +24388,8 @@ ${prefix}togglecmdvip premium_ia off`);
       case 's':
         try {
           var RSM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-          var boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage;
-          var boij = RSM?.videoMessage || info.message?.videoMessage || RSM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSM?.viewOnceMessage?.message?.videoMessage;
+          var boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage || info.message?.viewOnceMessageV2Extension?.message?.imageMessage || RSM?.viewOnceMessageV2Extension?.message?.imageMessage || RSM?.message?.imageMessage || RSM?.message?.viewOnceMessage?.message?.imageMessage || RSM?.message?.viewOnceMessageV2?.message?.imageMessage || RSM?.message?.viewOnceMessageV2Extension?.message?.imageMessage;
+          var boij = RSM?.videoMessage || info.message?.videoMessage || RSM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSM?.viewOnceMessage?.message?.videoMessage || info.message?.viewOnceMessageV2Extension?.message?.videoMessage || RSM?.viewOnceMessageV2Extension?.message?.videoMessage || RSM?.message?.videoMessage || RSM?.message?.viewOnceMessage?.message?.videoMessage || RSM?.message?.viewOnceMessageV2?.message?.videoMessage || RSM?.message?.viewOnceMessageV2Extension?.message?.videoMessage;
           if (!boij && !boij2) return reply(`Marque uma imagem ou um vídeo de até 9.9 segundos para fazer figurinha, com o comando: ${prefix + command} (mencionando a mídia)`);
           var isVideo2 = !!boij;
           if (isVideo2 && boij.seconds > 9.9) return reply(`O vídeo precisa ter no máximo 9.9 segundos para ser convertido em figurinha.`);
@@ -24406,8 +24414,8 @@ ${prefix}togglecmdvip premium_ia off`);
       case 's2':
         try {
           var RSM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-          var boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage;
-          var boij = RSM?.videoMessage || info.message?.videoMessage || RSM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSM?.viewOnceMessage?.message?.videoMessage;
+          var boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage || info.message?.viewOnceMessageV2Extension?.message?.imageMessage || RSM?.viewOnceMessageV2Extension?.message?.imageMessage || RSM?.message?.imageMessage || RSM?.message?.viewOnceMessage?.message?.imageMessage || RSM?.message?.viewOnceMessageV2?.message?.imageMessage || RSM?.message?.viewOnceMessageV2Extension?.message?.imageMessage;
+          var boij = RSM?.videoMessage || info.message?.videoMessage || RSM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSM?.viewOnceMessage?.message?.videoMessage || info.message?.viewOnceMessageV2Extension?.message?.videoMessage || RSM?.viewOnceMessageV2Extension?.message?.videoMessage || RSM?.message?.videoMessage || RSM?.message?.viewOnceMessage?.message?.videoMessage || RSM?.message?.viewOnceMessageV2?.message?.videoMessage || RSM?.message?.viewOnceMessageV2Extension?.message?.videoMessage;
           if (!boij && !boij2) return reply(`Marque uma imagem ou um vídeo de até 9.9 segundos para fazer figurinha, com o comando: ${prefix + command} (mencionando a mídia)`);
           var isVideo2 = !!boij;
           if (isVideo2 && boij.seconds > 9.9) return reply(`O vídeo precisa ter no máximo 9.9 segundos para ser convertido em figurinha.`);
