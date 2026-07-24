@@ -1,8 +1,8 @@
 # 📋 PRD / Diário — Bot Nazuna
 
-> **Última atualização:** 2026-02-12 12:26 CAT
+> **Última atualização:** 2026-07-24 07:28 CAT
 > **Autor:** Gumball × Antigravity
-> **Status:** � Online — Conectado via PM2
+> **Status:** 🟢 Online — Conectado via PM2
 
 ---
 
@@ -29,7 +29,7 @@
 | Campo | Valor |
 |---|---|
 | **IP Público** | `148.116.85.247` |
-| **Chave SSH** | `ssh-key-2026-04-14.key` (local: `f:\BOTS\nazuna\ssh-key-2026-04-14.key`) |
+| **Chave SSH** | `ssh-key-2026-04-14.key` (local: `d:\BOTS\nazuna-bot\ssh-key-2026-04-14.key`) |
 | **Gerenciador** | PM2 |
 | **OS do Servidor** | Linux (Ubuntu) |
 | **Node.js Req.** | >= 20.0.0 |
@@ -151,6 +151,22 @@ Na linha 1393 do handler `connection.close`, `reconnectAttempts = 0` é chamado 
 
 #### 🟨 Médio — `process.exit(1)` em `uncaughtException`
 Na linha 1532, qualquer erro não capturado (mesmo inofensivo) mata o processo completamente. Se o PM2 reinicia, a sessão pode ficar corrompida.
+
+#### 🟨 Médio — Sem Monitoramento de Heartbeat
+O `keepAliveIntervalMs: 60_000` envia pings, mas não há verificação se o WhatsApp respondeu. Se o servidor ignorar os pings, o bot não detecta que está "morto" até o próximo timeout.
+
+#### 🟦 Baixo — Browser Fingerprint
+`['Ubuntu', 'Chrome', '20.0.04']` é um user-agent incomum que pode ser flaggeado pelo WhatsApp como suspeito.
+
+---
+
+## 📝 Histórico de Atualizações
+
+### 2026-07-24 — Legenda Limpa nos Downloads + Deploy
+- ✅ Modificado [baixarVideo.js](file:///d:/BOTS/nazuna-bot/dados/src/utils/baixarVideo.js) para enviar apenas `✅ [Plataforma]` na legenda de vídeos/mídias (removida descrição estendida/legenda do post original).
+- ✅ Commit realizado e enviado para a branch `main` no GitHub (`5f0c758`).
+- ✅ Deploy via SSH (`ubuntu@148.116.85.247`) executado com sucesso (`git pull` + `pm2 restart nazuna`).
+- ✅ Bot reiniciado e online no PM2 (processo ID 47, consumo RAM ~116MB).2 reinicia, a sessão pode ficar corrompida.
 
 #### 🟨 Médio — Sem Monitoramento de Heartbeat
 O `keepAliveIntervalMs: 60_000` envia pings, mas não há verificação se o WhatsApp respondeu. Se o servidor ignorar os pings, o bot não detecta que está "morto" até o próximo timeout.
