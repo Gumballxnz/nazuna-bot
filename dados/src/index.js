@@ -1507,12 +1507,10 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     };
     const groupPrefix = groupData.customPrefix || prefixo;
     prefix = groupPrefix;
-    const recognizedPrefixes = [groupPrefix, '.', '/', '#'];
-    const matchedPrefix = recognizedPrefixes.find(p => body.trim().startsWith(p));
-    var isCmd = !!matchedPrefix;
+    var isCmd = body.trim().startsWith(groupPrefix);
 
-    // Suporte para "! comando" ou ". comando" (com espaço após o prefixo)
-    const bodyWithoutPrefix = matchedPrefix ? body.trim().slice(matchedPrefix.length).trimStart() : body.trim();
+    // Suporte para "prefixo comando" (com espaço após o prefixo)
+    const bodyWithoutPrefix = isCmd ? body.trim().slice(groupPrefix.length).trimStart() : body.trim();
 
     const aliases = loadCommandAliases();
     const matchedAlias = aliases.find(item => normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()) === item.alias);
@@ -1526,15 +1524,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       args.push(...combinedParams.split(/ +/));
     }
 
-    const stickerDirectCmds = ['s', 'st', 'stk', 'sticker', 'fig', 'figurinha'];
-    const trimmedBodyLower = body.trim().toLowerCase();
-    var command = null;
-    if (!isCmd && (isImage || isVideo || isVisuU || isVisuU2 || type === 'viewOnceMessageV2Extension') && stickerDirectCmds.includes(trimmedBodyLower)) {
-      isCmd = true;
-      command = 's';
-    } else {
-      command = isCmd ? matchedAlias ? matchedAlias.command : normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()).replace(/\s+/g, '') : null;
-    }
+    var command = isCmd ? matchedAlias ? matchedAlias.command : normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()).replace(/\s+/g, '') : null;
 
     // Recalcular args usando bodyWithoutPrefix para suportar "! comando" (com espaço)
     if (isCmd && !matchedAlias) {
