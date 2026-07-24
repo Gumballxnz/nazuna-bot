@@ -528,9 +528,8 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                 // Converte o codec se for incompatível para que o player nativo do WhatsApp funcione perfeitamente
                 finalFilePath = await verificarEConverterCodec(finalFilePath);
 
-                // Sanitizar a legenda: remover qualquer link http/https para não ser bloqueado pelo WhatsApp
-                let descSanitizada = resultado.desc ? resultado.desc.replace(/https?:\/\/[^\s]+/gi, '').trim() : '';
-                const captionMsg = `✅ ${plataforma}${descSanitizada ? `\n📝 ${descSanitizada}` : ''}`;
+                // Legenda limpa: apenas o selo de confirmação e a plataforma
+                const captionMsg = `✅ ${plataforma}`;
 
                 // Envia como player nativo sem citação (quoted: m) e sem extraAttrs (zero links que barram a entrega)
                 await nazu.sendMessage(from, {
@@ -628,7 +627,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                     await nazu.sendMessage(from, {
                         video: { url: finalPath },
                         mimetype: 'video/mp4',
-                        caption: `✅ ${plataforma}${resultado.desc ? `\n📝 ${resultado.desc}` : ''}`
+                        caption: `✅ ${plataforma}`
                     }, { quoted: m });
                     try { fs.unlinkSync(finalPath); } catch {}
                 } else {
