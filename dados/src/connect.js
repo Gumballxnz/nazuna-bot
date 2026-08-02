@@ -1060,7 +1060,7 @@ async function createBotSocket(authDir) {
 
         const NazunaSock = makeWASocket({
             version,
-            browser: Browsers.ubuntu('Chrome'),
+            browser: ['Mac OS', 'Chrome', '131.0.0.0'],
             emitOwnEvents: true,
             fireInitQueries: false,
             generateHighQualityLinkPreview: false,
