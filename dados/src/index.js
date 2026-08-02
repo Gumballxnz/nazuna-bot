@@ -15164,7 +15164,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           }).catch(() => {
             console.log("API primária do dicionário falhou, tentando IA...");
             const prompt = `Defina a palavra "${palavra}" em português de forma completa e fofa. Inclua a classe gramatical, os principais significados e um exemplo de uso em uma frase curta e bonitinha.`;
-            axios.get(`https://api.ryzendesu.vip/api/ai/chatgpt?text=${encodeURIComponent(prompt)}`).then((bahz) => {
+            axios.get(`https://api.ryzumi.net/api/ai/chatgpt?text=${encodeURIComponent(prompt)}`).then((bahz) => {
               reply(formatAIResponse(bahz.data?.response || bahz.data || 'Erro ao processar.'));
             }).catch((e) => {
               console.error("Erro geral ao buscar no dicionário:", e);

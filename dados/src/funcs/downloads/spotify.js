@@ -37,9 +37,9 @@ async function download(url) {
       console.error('[Spotify] Motor 1 falhou:', e.message);
     }
 
-    // Motor 2: Ryzendesu
+    // Motor 2: Ryzumi
     try {
-      const res = await axios.get(`https://api.ryzendesu.vip/api/downloader/spotify?url=${encodeURIComponent(url)}`, {
+      const res = await axios.get(`https://api.ryzumi.net/api/downloader/spotify?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
         timeout: 30000
       }).then(v => v.data).catch(() => null);

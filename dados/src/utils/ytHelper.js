@@ -125,8 +125,8 @@ export async function resolverUrlYT(url, type = 'audio') {
     // Fase 3: Ryzendesu Fallback
     if (motorDisponivel('ryzendesu')) {
         try {
-            console.log(`[YouTube Resolver] Fase 3: Ryzendesu...`);
-            let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/${type === 'audio' ? 'ytmp3' : 'ytmp4'}?url=${encodeURIComponent(url)}`, { timeout: 8000 }).then(v => v.data).catch(() => null);
+            console.log(`[YouTube Resolver] Fase 3: Ryzumi...`);
+            let rz = await axios.get(`https://api.ryzumi.net/api/downloader/${type === 'audio' ? 'ytmp3' : 'ytmp4'}?url=${encodeURIComponent(url)}`, { timeout: 8000 }).then(v => v.data).catch(() => null);
             dl_url = rz?.url || rz?.data?.url;
             if (dl_url) {
                 title = rz?.title || rz?.data?.title || title;
@@ -266,7 +266,7 @@ function ytdlpLocal(url, type) {
         }
 
         // Exportando PATH para garantir que encontre o yt-dlp e ffmpeg na VPS
-        const cmd = `export PATH=/usr/bin:/usr/local/bin:/usr/sbin:/sbin:/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate ${cookiesArg} --extractor-args "youtube:player_client=android,web" -q ${formatArg} -o "${filePath}" "${url}"`;
+        const cmd = `export PATH=/usr/bin:/usr/local/bin:/usr/sbin:/sbin:/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate ${cookiesArg} -q ${formatArg} -o "${filePath}" "${url}"`;
 
         console.log(`[YouTube ytdlpLocal] Executando download local da URL: ${url}`);
         exec(cmd, { timeout: 60000 }, (error, stdout, stderr) => {

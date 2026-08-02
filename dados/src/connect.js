@@ -1602,7 +1602,8 @@ async function createBotSocket(authDir) {
         return NazunaSock;
     } catch (err) {
         console.error(`❌ Erro ao criar socket do bot: ${err.message}`);
-        process.exit(1);
+        console.log('⏳ Aguardando 45 segundos para evitar loop de reinicialização no PM2...');
+        setTimeout(() => process.exit(1), 45000);
     }
 }
 

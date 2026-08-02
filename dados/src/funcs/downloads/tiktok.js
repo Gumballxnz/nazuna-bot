@@ -80,9 +80,9 @@ async function tiktokDownload(url) {
       console.error('[TikTok DL] Motor 1 (Siputzx) falhou:', e.message);
     }
 
-    // Motor 2: Ryzendesu
+    // Motor 2: Ryzumi
     try {
-      const res = await axios.get(`https://api.ryzendesu.vip/api/downloader/ttdl?url=${encodeURIComponent(url)}`, {
+      const res = await axios.get(`https://api.ryzumi.net/api/downloader/ttdl?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
         timeout: 15000
       }).then(v => v.data).catch(() => null);

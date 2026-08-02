@@ -284,8 +284,8 @@ async function baixarMediafire(url) {
             return { type: 'document', url: sip.data.url, filename: sip.data.name, ext: sip.data.ext, desc: 'Mediafire (API 1)' };
         }
 
-        // Motor 2: Ryzendesu
-        let rz = await axios.get(`https://api.ryzendesu.vip/api/downloader/mediafire?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
+        // Motor 2: Ryzumi
+        let rz = await axios.get(`https://api.ryzumi.net/api/downloader/mediafire?url=${encodeURIComponent(url)}`).then(v => v.data).catch(() => null);
         if (rz && rz.url) {
              return { type: 'document', url: rz.url, filename: rz.fileName || rz.nome || 'arquivo', ext: rz.ext || 'bin', desc: 'Mediafire (API 2)' };
         }
