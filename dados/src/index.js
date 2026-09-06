@@ -3658,7 +3658,6 @@ Código: *${roleCode}*`,
     }
     const botStateFile = pathz.join(DATABASE_DIR, 'botState.json');
     if (botState.status === 'off' && !isOwner) return;
-    if (botState.viewMessages) nazu.readMessages([info.key]);
     try {
       if (budy2 && budy2.length > 1) {
         const timestamp = new Date().toLocaleTimeString('pt-BR', {
@@ -15595,7 +15594,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const botStateFile = DATABASE_DIR + '/botState.json';
           let botState = loadJsonFile(botStateFile, {
             status: 'on',
-            viewMessages: true
+            viewMessages: false
           });
           if (q.toLowerCase() === 'on') {
             botState.viewMessages = true;

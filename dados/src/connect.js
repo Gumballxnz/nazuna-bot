@@ -1252,10 +1252,6 @@ async function createBotSocket(authDir) {
                 try {
 
                     const messageProcessingPromises = m.messages.map(info => {
-                        // Marca a mensagem recebida como lida (envia confirmação de dois pontinhos azuis)
-                        if (info.key && !info.key.fromMe) {
-                            NazunaSock.readMessages([info.key]).catch(() => {});
-                        }
                         // Watchdog removido
                         return messageQueue.add(info, processMessage).catch(err => {
                             console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
