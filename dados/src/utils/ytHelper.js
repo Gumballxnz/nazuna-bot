@@ -4,8 +4,11 @@ import axios from 'axios';
 import { pipeline } from 'stream/promises';
 import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
+import { promisify } from 'util';
 
-// Lazy-load fg-senna (carrega puppeteer/chromium sob demanda para economizar RAM)
+const execAsync = promisify(exec);
+
+// Lazy-load fg-senna (carrega sob demanda para economizar RAM)
 let _fg = null;
 async function getFg() {
     if (!_fg) _fg = (await import('fg-senna')).default;
@@ -15,13 +18,77 @@ async function getFg() {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ajustar para a pasta tmp da Nazuna
-const TEMP_DIR = path.join(__dirname, '..', 'tmp')
-if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+// Pasta temporária da Nazuna
+const TEMP_DIR = path.join(__dirname, '..', 'tmp');
+if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
-// Circuit breaker simples — pula motores que falharam nos últimos 3 min
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
+
+let COBALT_APIS = [
+    'https://cobalt.api.scity.gov.mn',
+    'https://co.wuk.sh',
+    'https://nuko-c.meowing.de',
+    'https://subito-c.meowing.de',
+    'https://melon.clxxped.lol',
+    'https://api-cobalt.eversiege.network',
+    'https://api.qwkuns.me',
+    'https://kitty.tame.gg'
+];
+
+export async function refreshCobaltApis() {
+    try {
+        const res = await axios.get('https://cobalt.directory/api/working?type=api', {
+            headers: { 'User-Agent': USER_AGENT },
+            timeout: 6000
+        });
+        const list = res.data?.data?.youtube || res.data?.data?.general;
+        if (Array.isArray(list) && list.length > 0) {
+            COBALT_APIS = [...new Set([...list, ...COBALT_APIS])];
+        }
+    } catch (_) {
+        try {
+            const res2 = await axios.get('https://instances.hyper.lol/instances.json', {
+                headers: { 'User-Agent': USER_AGENT },
+                timeout: 6000
+            });
+            if (Array.isArray(res2.data)) {
+                const active = res2.data.filter(i => i.api && i.online).map(i => i.api);
+                if (active.length > 0) {
+                    COBALT_APIS = [...new Set([...active, ...COBALT_APIS])];
+                }
+            }
+        } catch (_) {}
+    }
+}
+refreshCobaltApis().catch(() => {});
+setInterval(() => refreshCobaltApis().catch(() => {}), 30 * 60 * 1000);
+
+export function getCobaltApis() {
+    return COBALT_APIS;
+}
+
+function cleanMediaUrl(rawUrl) {
+    if (!rawUrl) return '';
+    try {
+        let u = new URL(rawUrl.trim());
+        if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+            if (u.searchParams.has('v')) {
+                const v = u.searchParams.get('v');
+                return `https://www.youtube.com/watch?v=${v}`;
+            } else if (u.hostname.includes('youtu.be')) {
+                const id = u.pathname.replace('/', '');
+                if (id) return `https://www.youtube.com/watch?v=${id}`;
+            }
+        }
+        return rawUrl.trim().split('?')[0] || rawUrl.trim();
+    } catch (e) {
+        return rawUrl.trim();
+    }
+}
+
+// Circuit breaker simples
 const motorFailures = new Map();
-const CIRCUIT_COOLDOWN = 3 * 60 * 1000; // 3 minutos
+const CIRCUIT_COOLDOWN = 2 * 60 * 1000;
 
 function motorDisponivel(nome) {
     const lastFail = motorFailures.get(nome);
@@ -36,250 +103,210 @@ function marcarFalha(nome) {
 function marcarSucesso(nome) {
     motorFailures.delete(nome);
 }
+
 /**
- * Resolve a URL direta do YouTube e metadados usando a cascata de motores públicos.
- * Útil para Streaming Direto (Buffer Passthrough) sem tocar no disco da VPS.
- * 
- * @param {string} url YouTube URL
- * @param {string} type 'audio' or 'video'
- * @returns {Promise<{dl_url: string, title: string}>}
+ * Resolve a URL direta do YouTube e metadados usando fg-senna e Cobalt API.
  */
 export async function resolverUrlYT(url, type = 'audio') {
+    const targetUrl = cleanMediaUrl(url);
     let dl_url = null;
     let title = 'YouTube';
 
-    // Fase 1: Cobalt API (Robusto, datacenter-friendly, formato v10)
-    if (motorDisponivel('cobalt')) {
-        try {
-            console.log(`[YouTube Resolver] Fase 1: Cobalt API (v10)...`);
-            const cobaltApis = [
-                'https://cobaltapi.kittycat.boo/',
-                'https://api.cobalt.tools/'
-            ];
-            for (const api of cobaltApis) {
-                try {
-                    const cobaltRes = await axios.post(api, {
-                        url: url,
-                        videoQuality: '720',
-                        audioFormat: 'mp3',
-                        downloadMode: type === 'audio' ? 'audio' : 'auto'
-                    }, {
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'User-Agent': 'Mozilla/5.0'
-                        },
-                        timeout: 12000
-                    }).then(r => r.data);
-
-                    if (cobaltRes && (cobaltRes.status === 'redirect' || cobaltRes.status === 'tunnel') && cobaltRes.url) {
-                        dl_url = cobaltRes.url;
-                        title = cobaltRes.filename || 'YouTube Video';
-                        marcarSucesso('cobalt');
-                        console.log(`[YouTube Resolver] ✅ Fase 1 OK (${api})`);
-                        return { dl_url, title };
-                    } else if (cobaltRes && cobaltRes.status === 'error') {
-                        console.log(`[YouTube Resolver] Cobalt API ${api} retornou erro: ${cobaltRes.error?.code || cobaltRes.error}`);
-                    } else {
-                        console.log(`[YouTube Resolver] Cobalt API ${api} retornou status desconhecido: ${cobaltRes?.status}`);
-                    }
-                } catch (apiErr) {
-                    console.log(`[YouTube Resolver] Cobalt API ${api} falhou: ${apiErr.message}`);
-                }
-            }
-        } catch (e) {
-            marcarFalha('cobalt');
-            console.log(`[YouTube Resolver] Fase 1 falhou: ${e.message?.substring(0, 80)}`);
-        }
-    }
-
-    // Fase 2: fg-senna (Não depende de IP, usa scrapers web)
+    // Fase 1: fg-senna (Scraper de alta velocidade)
     if (motorDisponivel('fg-senna')) {
         try {
-            console.log(`[YouTube Resolver] Fase 2: fg-senna (${type})...`);
+            console.log(`[YouTube Resolver] Fase 1: fg-senna (${type})...`);
             const fg = await getFg();
             let res = null;
             if (type === 'audio') {
-                if (typeof fg.yta === 'function') res = await fg.yta(url);
-                else if (typeof fg.ytmp3 === 'function') res = await fg.ytmp3(url);
-                else if (typeof fg.youtube === 'function') res = await fg.youtube(url);
+                if (typeof fg.yta === 'function') res = await fg.yta(targetUrl);
+                else if (typeof fg.ytmp3 === 'function') res = await fg.ytmp3(targetUrl);
             } else {
-                if (typeof fg.ytv === 'function') res = await fg.ytv(url, '720p');
-                else if (typeof fg.ytmp4 === 'function') res = await fg.ytmp4(url);
-                else if (typeof fg.youtube === 'function') res = await fg.youtube(url);
+                if (typeof fg.ytv === 'function') res = await fg.ytv(targetUrl, '720p');
+                else if (typeof fg.ytmp4 === 'function') res = await fg.ytmp4(targetUrl);
             }
 
             if (res && res.dl_url && res.dl_url.startsWith('http')) {
                 dl_url = res.dl_url;
                 title = res.title || title;
                 marcarSucesso('fg-senna');
-                console.log(`[YouTube Resolver] ✅ Fase 2 OK: ${title}`);
+                console.log(`[YouTube Resolver] ✅ Fase 1 OK via fg-senna: ${title}`);
                 return { dl_url, title };
             }
         } catch (e) {
             marcarFalha('fg-senna');
-            console.log(`[YouTube Resolver] Fase 2 falhou: ${e.message?.substring(0, 80)}`);
+            console.log(`[YouTube Resolver] Fase 1 (fg-senna) falhou: ${e.message?.substring(0, 80)}`);
         }
     }
 
-    // Fase 3: Ryzendesu Fallback
-    if (motorDisponivel('ryzendesu')) {
+    // Fase 2: Cobalt API (Pool dinâmico de instâncias ativas)
+    if (motorDisponivel('cobalt')) {
         try {
-            console.log(`[YouTube Resolver] Fase 3: Ryzumi...`);
-            let rz = await axios.get(`https://api.ryzumi.net/api/downloader/${type === 'audio' ? 'ytmp3' : 'ytmp4'}?url=${encodeURIComponent(url)}`, { timeout: 8000 }).then(v => v.data).catch(() => null);
-            dl_url = rz?.url || rz?.data?.url;
-            if (dl_url) {
-                title = rz?.title || rz?.data?.title || title;
-                marcarSucesso('ryzendesu');
-                console.log(`[YouTube Resolver] ✅ Fase 3 OK`);
+            console.log(`[YouTube Resolver] Fase 2: Cobalt API...`);
+            const payload = type === 'audio' ? {
+                url: targetUrl,
+                videoQuality: '720',
+                downloadMode: 'audio',
+                audioFormat: 'mp3'
+            } : {
+                url: targetUrl,
+                videoQuality: '720'
+            };
+
+            const promises = COBALT_APIS.slice(0, 6).map(async (api) => {
+                try {
+                    const response = await axios.post(api, payload, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'User-Agent': USER_AGENT
+                        },
+                        timeout: 9000
+                    });
+                    const data = response.data;
+                    if (data && (data.status === 'tunnel' || data.status === 'redirect') && data.url) {
+                        return { data, api };
+                    }
+                    throw new Error(`Status: ${data?.status}`);
+                } catch (err) {
+                    throw new Error(`API ${api}: ${err.message}`);
+                }
+            });
+
+            const resolvedCobalt = await Promise.any(promises);
+            if (resolvedCobalt?.data?.url) {
+                dl_url = resolvedCobalt.data.url;
+                title = resolvedCobalt.data.filename || title;
+                marcarSucesso('cobalt');
+                console.log(`[YouTube Resolver] ✅ Fase 2 OK via Cobalt (${resolvedCobalt.api})`);
                 return { dl_url, title };
             }
         } catch (e) {
-            marcarFalha('ryzendesu');
-            console.log(`[YouTube Resolver] Fase 3 falhou: ${e.message?.substring(0, 80)}`);
+            marcarFalha('cobalt');
+            console.log(`[YouTube Resolver] Fase 2 (Cobalt) falhou.`);
         }
     }
 
-    // Fase 4: BigAPI
-    if (motorDisponivel('bigapi')) {
-        try {
-            console.log(`[YouTube Resolver] Fase 4: BigAPI...`);
-            const endpoint = type === 'audio' ? 'ytmp3' : 'ytmp4';
-            let bg = await axios.get(`https://api.bigapi.my.id/api/download/${endpoint}?url=${encodeURIComponent(url)}`, { timeout: 8000 }).then(v => v.data).catch(() => null);
-            dl_url = bg?.result?.url || bg?.data?.url || bg?.url;
-            if (dl_url) {
-                title = bg?.result?.title || title;
-                marcarSucesso('bigapi');
-                console.log(`[YouTube Resolver] ✅ Fase 4 OK`);
-                return { dl_url, title };
-            }
-        } catch (e) {
-            marcarFalha('bigapi');
-            console.log(`[YouTube Resolver] Fase 4 falhou: ${e.message?.substring(0, 80)}`);
-        }
-    }
-
-    // Fase 5: Siputzx
-    if (motorDisponivel('siputzx')) {
-        try {
-            console.log(`[YouTube Resolver] Fase 5: Siputzx...`);
-            let sp = await axios.get(`https://api.siputzx.my.id/api/d/youtube?url=${encodeURIComponent(url)}`, { timeout: 8000 }).then(v => v.data).catch(() => null);
-            dl_url = sp?.data?.dl || sp?.data?.url;
-            if (dl_url) {
-                title = sp?.data?.title || title;
-                marcarSucesso('siputzx');
-                console.log(`[YouTube Resolver] ✅ Fase 5 OK`);
-                return { dl_url, title };
-            }
-        } catch (e) {
-            marcarFalha('siputzx');
-            console.log(`[YouTube Resolver] Fase 5 falhou: ${e.message?.substring(0, 80)}`);
-        }
-    }
-
-    throw new Error('Todas as fases de resolução externa falharam.');
+    throw new Error('Não foi possível resolver link direto do YouTube.');
 }
 
 /**
- * Download from YouTube usando cascata de resolvedores + fallback local
- * 
- * @param {string} url YouTube URL
- * @param {string} type 'audio' or 'video'
- * @returns {Promise<{filePath: string, title: string, size: number}>}
+ * Downloads a YouTube video or audio with streaming to local disk.
  */
 export async function downloadYT(url, type = 'audio') {
-    const filename = `yt_${Date.now()}.${type === 'audio' ? 'mp3' : 'mp4'}`
-    const filePath = path.join(TEMP_DIR, filename)
+    const filename = `yt_${Date.now()}`;
+    const ext = type === 'audio' ? 'mp3' : 'mp4';
+    const filePath = path.join(TEMP_DIR, `${filename}.${ext}`);
+    const targetUrl = cleanMediaUrl(url);
 
+    let dl_url = null;
+    let title = 'YouTube';
+
+    // 1. Tenta resolver via APIs de streaming (fg-senna / Cobalt)
     try {
-        let dl_url = null;
-        let title = 'YouTube';
+        const resolved = await resolverUrlYT(targetUrl, type);
+        dl_url = resolved.dl_url;
+        title = resolved.title;
+    } catch (resolveErr) {
+        console.log(`[YouTube Downloader] Streaming direto falhou: ${resolveErr.message}. Tentando yt-dlp local...`);
+    }
 
+    // Se resolveu a URL externa com sucesso, baixa o arquivo para a VPS
+    if (dl_url) {
         try {
-            const resolved = await resolverUrlYT(url, type);
-            dl_url = resolved.dl_url;
-            title = resolved.title;
-        } catch (resolveErr) {
-            console.log(`[YouTube Helper] Falha ao resolver URL em cascata externa: ${resolveErr.message}. Tentando yt-dlp local...`);
-        }
+            console.log(`[YouTube Downloader] Baixando stream da URL resolvida para o disco...`);
+            const writer = fs.createWriteStream(filePath);
+            const streamResponse = await axios({
+                method: 'get',
+                url: dl_url,
+                responseType: 'stream',
+                headers: { 'User-Agent': USER_AGENT },
+                timeout: 180000,
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity
+            });
 
-        // Se falhar na cascata de APIs externas, tenta o yt-dlp local (Fase 6)
-        if (!dl_url) {
-            try {
-                console.log(`[YouTube] Fase 6: yt-dlp (último recurso)...`);
-                const dlpRes = await ytdlpLocal(url, type);
-                if (dlpRes && dlpRes.filePath) {
-                    const stats = fs.statSync(dlpRes.filePath);
-                    if (stats.size > 1000) {
-                        console.log(`[YouTube] ✅ Fase 6 OK via yt-dlp`);
-                        return { filePath: dlpRes.filePath, title: dlpRes.title || title, size: stats.size };
-                    }
+            await pipeline(streamResponse.data, writer);
+
+            if (fs.existsSync(filePath)) {
+                const stats = fs.statSync(filePath);
+                if (stats.size > 100) {
+                    const cleanTitle = (title || filename).replace(/[^\w\s\-\.]/gi, '');
+                    console.log(`[YouTube Downloader] ✅ Download concluído: ${cleanTitle} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
+                    return { filePath, title: cleanTitle, size: stats.size };
                 }
-            } catch (e) {
-                console.log(`[YouTube] Fase 6 falhou: ${e.message?.substring(0, 80)}`);
+            }
+        } catch (downloadErr) {
+            console.error(`[YouTube Downloader] Erro ao gravar stream no disco: ${downloadErr.message}`);
+            if (fs.existsSync(filePath)) {
+                try { fs.unlinkSync(filePath); } catch {}
             }
         }
-
-        if (!dl_url) throw new Error('Todas as fases de download falharam no servidor.');
-
-        // Baixar o arquivo via stream seguro
-        console.log(`[YouTube Helper] Efetuando download físico no disco da VPS a partir do resolvedor...`);
-        let dl = await axios({ method: 'get', url: dl_url, responseType: 'stream', timeout: 120000 });
-        if (dl.status !== 200) throw new Error(`HTTP ${dl.status}`);
-
-        await pipeline(dl.data, fs.createWriteStream(filePath));
-
-        let stats = fs.statSync(filePath);
-        if (stats.size < 100) throw new Error('Arquivo baixado é muito pequeno ou vazio.');
-
-        return { filePath, title, size: stats.size };
-    } catch (e) {
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        console.error(`[YouTube Helper] ERRO FINAL: ${e.message}`);
-        throw e;
     }
+
+    // 2. Se falhou na resolução de stream, executa yt-dlp local na VPS
+    try {
+        console.log(`[YouTube Downloader] Executando yt-dlp local na VPS...`);
+        const dlpRes = await ytdlpLocal(targetUrl, type, filePath);
+        if (dlpRes && dlpRes.filePath && fs.existsSync(dlpRes.filePath)) {
+            const stats = fs.statSync(dlpRes.filePath);
+            if (stats.size > 100) {
+                console.log(`[YouTube Downloader] ✅ yt-dlp local concluído: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+                return { filePath: dlpRes.filePath, title: dlpRes.title || title, size: stats.size };
+            }
+        }
+    } catch (dlpErr) {
+        console.error(`[YouTube Downloader] yt-dlp local falhou:`, dlpErr.message);
+    }
+
+    if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch {}
+    }
+    throw new Error('Todas as fases de download falharam no servidor.');
 }
 
 /**
- * yt-dlp wrapper local (rebaixado para Fase 6)
- * Usa extractor-args para Android client que tem menos bloqueios
+ * yt-dlp wrapper local com suporte a cookies
  */
-function ytdlpLocal(url, type) {
+function ytdlpLocal(url, type, targetPath) {
     return new Promise((resolve) => {
         const id = Date.now();
         const ext = type === 'audio' ? 'mp3' : 'mp4';
-        const filePath = path.join(TEMP_DIR, `yt_dlp_${id}.${ext}`);
-        const formatArg = type === 'audio'
-            ? '-x --audio-format mp3 --audio-quality 0'
-            : '-f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4';
+        const filePath = targetPath || path.join(TEMP_DIR, `yt_dlp_${id}.${ext}`);
         
-        // Verifica se há cookies.txt na raiz ou na pasta dados da VPS para evitar detecção de bot
-        const rootCookiesPath = path.join(__dirname, '..', '..', '..', 'cookies.txt');
-        const dadosCookiesPath = path.join(__dirname, '..', '..', 'cookies.txt');
+        // Formato otimizado
+        const formatArg = type === 'audio'
+            ? '-f "ba[ext=m4a]/ba/b" --extract-audio --audio-format mp3 --audio-quality 128k'
+            : '-f "bv*[height<=720][ext=mp4]+ba[ext=m4a]/bv*[height<=720]+ba/b[height<=720]/b" --merge-output-format mp4';
+
+        // Localizar cookies
+        const possibleCookiePaths = [
+            path.join(__dirname, '..', '..', '..', 'cookies.txt'),
+            path.join(__dirname, '..', '..', 'cookies.txt'),
+            path.join(__dirname, '..', 'cookies.txt'),
+            '/home/ubuntu/senna-bot/cookies.txt',
+            '/home/ubuntu/nazuna-bot/cookies.txt'
+        ];
+
         let cookiesArg = '';
-        if (fs.existsSync(rootCookiesPath)) {
-            cookiesArg = `--cookies "${rootCookiesPath}"`;
-            console.log(`[YouTube ytdlpLocal] Utilizando cookies de: ${rootCookiesPath}`);
-        } else if (fs.existsSync(dadosCookiesPath)) {
-            cookiesArg = `--cookies "${dadosCookiesPath}"`;
-            console.log(`[YouTube ytdlpLocal] Utilizando cookies de: ${dadosCookiesPath}`);
+        for (const cp of possibleCookiePaths) {
+            if (fs.existsSync(cp)) {
+                cookiesArg = `--cookies "${cp}"`;
+                break;
+            }
         }
 
-        // Exportando PATH para garantir que encontre o yt-dlp e ffmpeg na VPS
         const cmd = `export PATH=/usr/bin:/usr/local/bin:/usr/sbin:/sbin:/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate ${cookiesArg} -q ${formatArg} -o "${filePath}" "${url}"`;
 
-        console.log(`[YouTube ytdlpLocal] Executando download local da URL: ${url}`);
-        exec(cmd, { timeout: 60000 }, (error, stdout, stderr) => {
+        exec(cmd, { timeout: 120000 }, (error, stdout, stderr) => {
             if (error) {
                 console.error(`[YouTube ytdlpLocal] Erro ao executar yt-dlp:`, error.message);
-                console.error(`[YouTube ytdlpLocal] Stderr:`, stderr);
                 if (fs.existsSync(filePath)) {
                     try { fs.unlinkSync(filePath); } catch {}
                 }
                 return resolve(null);
             }
             if (!fs.existsSync(filePath)) {
-                console.error(`[YouTube ytdlpLocal] Download concluído mas arquivo destino não existe: ${filePath}`);
                 return resolve(null);
             }
             resolve({ filePath, title: 'YouTube' });
@@ -294,7 +321,7 @@ export async function getYTInfo(url) {
     try {
         const fg = await getFg();
         let res = await fg.yta(url);
-        return res;
+        return res || { title: 'video' };
     } catch (e) {
         return { title: 'video' };
     }

@@ -28,16 +28,16 @@
 
 | Campo | Valor |
 |---|---|
-| **IP Público** | `148.116.85.247` |
-| **Chave SSH** | `ssh-key-2026-04-14.key` (local: `d:\BOTS\nazuna-bot\ssh-key-2026-04-14.key`) |
+| **IP Público** | `5.189.173.150` (Contabo) |
+| **Chave SSH** | `vps_contabo.key` (local: `d:\BOTS\vps_contabo.key`) |
 | **Gerenciador** | PM2 |
-| **OS do Servidor** | Linux (Ubuntu) |
+| **OS do Servidor** | Linux (Ubuntu 24.04 LTS) |
 | **Node.js Req.** | >= 20.0.0 |
 | **npm Req.** | >= 9.0.0 |
 
 ### Comando SSH
 ```bash
-ssh -i ssh-key-2026-04-14.key ubuntu@148.116.85.247
+ssh -i "d:\BOTS\vps_contabo.key" root@5.189.173.150
 ```
 
 ### GitHub
@@ -222,7 +222,7 @@ O `keepAliveIntervalMs: 60_000` envia pings, mas não há verificação se o Wha
 
 | Recurso | Localização |
 |---|---|
-| **SSH Key** | `f:\BOTS\nazuna\ssh-key-2026-04-14.key` |
+| **SSH Key** | `d:\BOTS\vps_contabo.key` (root@5.189.173.150) |
 | **SSH Key (backup)** | `f:\BOTS\nazuna\key.pem` |
 | **API Key** | Vazia no `config.json` (campo `apikey`) |
 | **Sessão WhatsApp** | `dados/database/qr-code/` (no servidor) |
@@ -231,7 +231,7 @@ O `keepAliveIntervalMs: 60_000` envia pings, mas não há verificação se o Wha
 ---
 
 ## 🔜 Próximos Passos
-1. [ ] Conectar via SSH ao servidor (148.116.85.247) para verificar logs
+1. [x] Migrado para nova VPS Contabo (5.189.173.150) com sessões e grupos 100% preservados
 2. [ ] Analisar logs do PM2 para identificar padrões de desconexão
 3. [ ] Verificar uso de disco/memória no servidor
 4. [ ] Corrigir bugs de reconexão identificados

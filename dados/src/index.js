@@ -18900,7 +18900,7 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
 
           
 
-          if (!q.includes('facebook.com/')) {
+          if (!q.includes('facebook.com/') && !q.includes('fb.watch') && !q.includes('fb.com/')) {
             return reply('❌ Por favor, envie um link válido do Facebook.');
           }
 

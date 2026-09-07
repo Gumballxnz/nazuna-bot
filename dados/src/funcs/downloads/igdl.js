@@ -1,9 +1,9 @@
 /**
- * Download Instagram usando fg-senna (100% gratuito, sem API key)
- * Motor principal: fg-senna (igdl)
+ * Download Instagram usando Pool Dinâmico de Cobalt, fg-senna e APIs de alta velocidade
  */
 
 import axios from 'axios';
+import { getCobaltApis } from '../../utils/ytHelper.js';
 
 // Lazy-load fg-senna
 let _fg = null;
@@ -22,19 +22,22 @@ async function downloadBuffer(url) {
     return Buffer.from(res.data);
 }
 
-const COBALT_INSTANCES = [
-    'https://api.cobalt.tools/api/json',
-    'https://cobalt-api.kwiatusheq.xyz/api/json',
-    'https://api.cobalt.club/api/json'
-];
-
 async function igdlCobalt(url) {
     const payload = {
         url: url,
         downloadMode: 'auto'
     };
 
-    for (const api of COBALT_INSTANCES) {
+    const apis = getCobaltApis ? getCobaltApis() : [
+        'https://cobalt.api.scity.gov.mn',
+        'https://co.wuk.sh',
+        'https://nuko-c.meowing.de',
+        'https://subito-c.meowing.de',
+        'https://melon.clxxped.lol',
+        'https://api-cobalt.eversiege.network'
+    ];
+
+    for (const api of apis.slice(0, 6)) {
         try {
             const response = await axios.post(api, payload, {
                 headers: {
@@ -42,7 +45,7 @@ async function igdlCobalt(url) {
                     'Content-Type': 'application/json',
                     'User-Agent': 'Mozilla/5.0'
                 },
-                timeout: 15000
+                timeout: 10000
             });
 
             const data = response.data;
@@ -77,63 +80,86 @@ async function igdlCobalt(url) {
                 return { ok: true, data: [{ type: isVideo ? 'video' : 'image', buff }], count: 1 };
             }
         } catch (error) {
-            console.error(`[igdl-cobalt] Erro na instância ${api}:`, error.message);
+            // Próxima instância
         }
     }
     throw new Error('Todas as instâncias de Cobalt falharam.');
 }
 
+async function igdlInstaVideoSave(url) {
+    try {
+        const response = await axios.post('https://www.instavideosave.net/api/instagram', {
+            url: url
+        }, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 12000
+        });
+
+        const json = response.data;
+        const mediaUrl = json?.data?.[0]?.url || json?.data?.url || json?.url || json?.result?.[0]?.url;
+        if (mediaUrl) {
+            const buff = await downloadBuffer(mediaUrl);
+            const isVideo = mediaUrl.includes('.mp4') || mediaUrl.includes('video');
+            return { ok: true, data: [{ type: isVideo ? 'video' : 'image', buff }], count: 1 };
+        }
+    } catch (e) {}
+    throw new Error('API instavideosave falhou.');
+}
+
 // Função para baixar post do Instagram
 async function igdl(url) {
-    // Tenta primeiro o fg-senna
+    // 1. Tenta Cobalt (Mais rápido e suporta múltiplas instâncias)
+    try {
+        const resCobalt = await igdlCobalt(url);
+        if (resCobalt && resCobalt.ok) return resCobalt;
+    } catch (_) {}
+
+    // 2. Tenta fg-senna
     try {
         const fg = await getFg();
         const res = await fg.igdl(url).catch(() => null);
 
-        if (!res) throw new Error('fg-senna retornou vazio');
-
-        // Galeria (multiplos itens)
-        if (res.result && Array.isArray(res.result) && res.result.length > 0) {
-            const results = [];
-            for (const item of res.result) {
-                try {
-                    const mediaUrl = item.url || item.dl_url;
-                    if (!mediaUrl) continue;
-                    const buff = await downloadBuffer(mediaUrl);
-                    const isVideo = mediaUrl.includes('.mp4') || item.type === 'video';
-                    results.push({
-                        type: isVideo ? 'video' : 'image',
-                        buff
-                    });
-                } catch (e) {
-                    console.error('[igdl] Erro ao baixar item:', e.message);
+        if (res) {
+            // Galeria (múltiplos itens)
+            if (res.result && Array.isArray(res.result) && res.result.length > 0) {
+                const results = [];
+                for (const item of res.result) {
+                    try {
+                        const mediaUrl = item.url || item.dl_url;
+                        if (!mediaUrl) continue;
+                        const buff = await downloadBuffer(mediaUrl);
+                        const isVideo = mediaUrl.includes('.mp4') || item.type === 'video';
+                        results.push({
+                            type: isVideo ? 'video' : 'image',
+                            buff
+                        });
+                    } catch (e) {}
+                }
+                if (results.length > 0) {
+                    return { ok: true, data: results, count: results.length };
                 }
             }
-            if (results.length > 0) {
-                return { ok: true, data: results, count: results.length };
+
+            // Vídeo/imagem único
+            const dlUrl = res.dl_url || res.url;
+            if (dlUrl) {
+                const buff = await downloadBuffer(dlUrl);
+                const isVideo = dlUrl.includes('.mp4') || res.type === 'video' || !res.thumb;
+                return { ok: true, data: [{ type: isVideo ? 'video' : 'image', buff }], count: 1 };
             }
         }
+    } catch (_) {}
 
-        // Video unico
-        if (res.dl_url) {
-            const buff = await downloadBuffer(res.dl_url);
-            return { ok: true, data: [{ type: 'video', buff }], count: 1 };
-        }
+    // 3. Tenta InstaVideoSave API
+    try {
+        const resInsta = await igdlInstaVideoSave(url);
+        if (resInsta && resInsta.ok) return resInsta;
+    } catch (_) {}
 
-        throw new Error('Nenhuma mídia encontrada na resposta');
-
-    } catch (error) {
-        console.error('⚠️ igdl (fg-senna) falhou:', error.message, '. Tentando fallback Cobalt...');
-        try {
-            return await igdlCobalt(url);
-        } catch (cobaltError) {
-            console.error('❌ igdl final error:', cobaltError.message);
-            return {
-                ok: false,
-                msg: 'Erro ao baixar post do Instagram: ' + cobaltError.message
-            };
-        }
-    }
+    return {
+        ok: false,
+        msg: 'Não foi possível baixar mídia do Instagram.'
+    };
 }
 
 export {

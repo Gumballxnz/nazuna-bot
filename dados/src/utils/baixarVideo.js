@@ -19,7 +19,7 @@ import { exec } from 'child_process';
 import util from 'util';
 const execPromise = util.promisify(exec);
 import { pipeline } from 'stream/promises';
-import { downloadYT, getYTInfo, resolverUrlYT } from './ytHelper.js';
+import { downloadYT, getYTInfo, resolverUrlYT, getCobaltApis } from './ytHelper.js';
 
 // Lazy-load fg-senna (carrega puppeteer/chromium em memoria)
 let _fg = null;
@@ -30,11 +30,15 @@ async function getFg() {
 
 // Motor de download universal via Cobalt (Fase 1 global)
 async function baixarCobaltGenerico(url, formato = 'video') {
-    const cobaltApis = [
-        'https://cobaltapi.kittycat.boo/',
-        'https://api.cobalt.tools/'
+    const cobaltApis = getCobaltApis ? getCobaltApis() : [
+        'https://cobalt.api.scity.gov.mn',
+        'https://co.wuk.sh',
+        'https://nuko-c.meowing.de',
+        'https://subito-c.meowing.de',
+        'https://melon.clxxped.lol',
+        'https://api-cobalt.eversiege.network'
     ];
-    for (const api of cobaltApis) {
+    for (const api of cobaltApis.slice(0, 6)) {
         try {
             console.log(`[Cobalt Generico] Tentando download via: ${api}`);
             const cobaltRes = await axios.post(api, {
@@ -46,7 +50,7 @@ async function baixarCobaltGenerico(url, formato = 'video') {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'User-Agent': 'Mozilla/5.0'
+                    'User-Agent': UA
                 },
                 timeout: 10000
             }).then(r => r.data);
@@ -93,7 +97,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 // ==================== DETECTAR PLATAFORMA ====================
 function detectarPlataforma(url) {
     const u = url.toLowerCase();
-    if (u.includes('tiktok.com') || u.includes('vt.tiktok')) return 'TikTok';
+    if (u.includes('tiktok.com') || u.includes('vt.tiktok') || u.includes('vm.tiktok')) return 'TikTok';
     if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YouTube';
     if (u.includes('instagram.com') || u.includes('instagr.am')) return 'Instagram';
     if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com')) return 'Facebook';
@@ -234,32 +238,35 @@ async function baixarYoutube(url, formato = 'video') {
 
 // ==================== FACEBOOK ====================
 async function baixarFacebook(url) {
+    const id = Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const filePath = path.join(tmpDir, `fb_${id}.mp4`);
     try {
-        // Fase 1: yt-dlp local (Alta Qualidade)
-        try {
-            const ytRes = await ytdlpBaixar(url, 'video');
-            if (ytRes && ytRes.filePath) {
-                 return { type: 'video', url: ytRes.filePath, filePath: ytRes.filePath, isFile: true, desc: 'Facebook (YT-DLP)' };
-            }
-        } catch (e) {
-            // yt-dlp falhou, desliza para o módulo central
-        }
+        const cmd = `export PATH=/usr/bin:/usr/local/bin:$PATH && yt-dlp --no-playlist --no-warnings --no-check-certificate -f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4 -o "${filePath}" "${url}"`;
+        await new Promise((resolve, reject) => {
+            exec(cmd, { timeout: 120000 }, (error) => {
+                if (error) {
+                    try { fs.unlinkSync(filePath); } catch {}
+                    return reject(error);
+                }
+                if (fs.existsSync(filePath)) {
+                    return resolve();
+                }
+                const possible = fs.readdirSync(tmpDir).filter(f => f.startsWith(`fb_${id}`));
+                if (possible.length > 0) {
+                    return resolve();
+                }
+                reject(new Error('Arquivo não encontrado após download do Facebook'));
+            });
+        });
 
-        const facebookMod = await import('../funcs/downloads/facebook.js');
-        const dlFn = facebookMod.dl || facebookMod.default?.downloadHD || facebookMod.default?.dl;
-        if (typeof dlFn === 'function') {
-            const res = await dlFn(url);
-            if (res && res.ok && res.buffer) {
-                const id = Date.now();
-                const filePath = path.join(tmpDir, `fb_${id}.mp4`);
-                fs.writeFileSync(filePath, res.buffer);
-                return { type: 'video', filePath, isFile: true, desc: `Facebook (${res.resolution || 'HD'})` };
-            }
+        const actualPath = fs.existsSync(filePath) ? filePath : path.join(tmpDir, fs.readdirSync(tmpDir).find(f => f.startsWith(`fb_${id}`)));
+        if (actualPath && fs.existsSync(actualPath)) {
+            return { type: 'video', filePath: actualPath, isFile: true, desc: 'Facebook' };
         }
     } catch (e) {
-        console.error('[Facebook Central Dl error]', e.message);
+        console.error('[Facebook yt-dlp error]', e.message);
     }
-    throw new Error('Facebook: Todos os motores de download falharam.');
+    throw new Error('Facebook: Falha ao baixar vídeo via yt-dlp.');
 }
 
 // ==================== TWITTER/X ====================
@@ -431,17 +438,16 @@ async function verificarEConverterCodec(filePath) {
         console.log(`[Codec Sniffer] Ficheiro detectado com codec: ${codec}`);
 
         if (codec === 'h264' || codec === 'h264(high)') {
-            // Se já for H264, usamos turbo copy apenas para afinar o faststart
+            // Se já for H264, usamos faststart copy
             const finalPath = filePath.replace('.mp4', '_ready.mp4');
             await execPromise(`ffmpeg -y -i "${filePath}" -c copy -movflags +faststart "${finalPath}"`);
             try { fs.unlinkSync(filePath); } catch {}
             return finalPath;
         } else if (codec && codec !== '') {
-            // Se for VP9, AV1, HEVC, etc, o WhatsApp recusa! Tritramos pixels com libx264
-            console.log(`[Codec Sniffer] Codec Incompatível (${codec}). Triturando formato para H.264...`);
+            // Se for VP9, AV1, HEVC, etc, converte para H.264 + AAC + yuv420p (100% compatível com Android, iOS e Status do WhatsApp)
+            console.log(`[Codec Sniffer] Codec Incompatível (${codec}). Convertendo para H.264 (yuv420p)...`);
             const finalPath = filePath.replace('.mp4', '_ready.mp4');
-            // ultrafast preset e crf 30 para conversão ultra leve no VPS de 1GB
-            await execPromise(`ffmpeg -y -i "${filePath}" -c:v libx264 -preset ultrafast -crf 30 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:a aac -movflags +faststart "${finalPath}"`);
+            await execPromise(`ffmpeg -y -i "${filePath}" -c:v libx264 -preset ultrafast -crf 26 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:a aac -b:a 128k -movflags +faststart "${finalPath}"`);
             try { fs.unlinkSync(filePath); } catch {}
             return finalPath;
         }
@@ -501,37 +507,32 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
             });
             finalFilePath = tmpFp;
         } else {
-            // Stream seguro de URL externas da cascata APIs (Siputzx, Ryzendesu)
+            // Stream seguro de URL externas
             finalFilePath = await baixarStreamLocal(resultado.url, 'mp4');
         }
 
-        // --- A MÁGICA FINAL: Fase 3 ---
-        // Se o video não for compativel com WhatsApp, nós ressucitamos!
         if (finalFilePath) {
+            // Converte e ajusta o codec (H.264 + AAC + yuv420p + faststart)
+            finalFilePath = await verificarEConverterCodec(finalFilePath);
+
             let stats = null;
             try { stats = fs.statSync(finalFilePath); } catch {}
-            const limit = 15 * 1024 * 1024; // 15MB
-            const isBig = stats && stats.size >= limit;
+            const limit = 60 * 1024 * 1024; // 60MB (Limite do player nativo do WhatsApp)
+            const isBig = stats && stats.size > limit;
+
+            const captionMsg = `✅ ${plataforma}`;
 
             if (isBig) {
-                // Vídeo grande (>= 15MB) -> Envio instantâneo como Documento MP4 limpo! (Pula re-encoding pesado para economizar CPU)
-                console.log(`[enviarMidia] Vídeo grande (${stats ? (stats.size / 1024 / 1024).toFixed(2) : '?'}MB >= 15MB). Modo Ultra Velocidade (Documento) ativo.`);
+                // Vídeo muito grande (> 60MB) -> Envio como Documento
+                console.log(`[enviarMidia] Vídeo muito grande (${stats ? (stats.size / 1024 / 1024).toFixed(2) : '?'}MB > 60MB). Enviando como Documento.`);
                 await nazu.sendMessage(from, {
                     document: { url: finalFilePath },
                     mimetype: 'video/mp4',
                     fileName: resultado.filename || path.basename(finalFilePath) || 'video.mp4'
                 });
             } else {
-                // Vídeo pequeno (< 15MB) -> SEMPRE como Player de Vídeo Nativo no Chat!
-                console.log(`[enviarMidia] Vídeo pequeno (${stats ? (stats.size / 1024 / 1024).toFixed(2) : '?'}MB < 15MB). Garantindo player nativo no chat.`);
-                
-                // Converte o codec se for incompatível para que o player nativo do WhatsApp funcione perfeitamente
-                finalFilePath = await verificarEConverterCodec(finalFilePath);
-
-                // Legenda limpa: apenas o selo de confirmação e a plataforma
-                const captionMsg = `✅ ${plataforma}`;
-
-                // Envia como player nativo sem citação (quoted: m) e sem extraAttrs (zero links que barram a entrega)
+                // Vídeo normal (<= 60MB) -> SEMPRE Player de Vídeo Nativo no Chat!
+                console.log(`[enviarMidia] Enviando como player de vídeo nativo (${stats ? (stats.size / 1024 / 1024).toFixed(2) : '?'}MB <= 60MB).`);
                 await nazu.sendMessage(from, {
                     video: { url: finalFilePath },
                     mimetype: 'video/mp4',
@@ -666,28 +667,16 @@ export default async function baixarVideoLocal(nazu, from, m, q, reply) {
 
         let resultado;
         try {
-            // Tenta Cobalt em primeiro lugar para todas as plataformas exceto Mediafire e Spotify
-            if (plataforma !== 'Mediafire' && plataforma !== 'Spotify') {
-                try {
-                    console.log(`[downloader] Tentando Cobalt em primeiro lugar para ${plataforma}...`);
-                    resultado = await baixarCobaltGenerico(url, 'video');
-                } catch (cobaltErr) {
-                    console.warn(`[downloader] Cobalt falhou, usando fallback: ${cobaltErr.message}`);
-                }
-            }
-
-            if (!resultado) {
-                switch (plataforma) {
-                    case 'TikTok':      resultado = await baixarTiktok(url); break;
-                    case 'YouTube':     resultado = await baixarYoutube(url, 'video'); break;
-                    case 'Instagram':   resultado = await baixarInstagram(url); break;
-                    case 'Facebook':    resultado = await baixarFacebook(url); break;
-                    case 'Twitter/X':   resultado = await baixarTwitter(url); break;
-                    case 'Pinterest':   resultado = await baixarPinterest(url); break;
-                    case 'Reddit':      resultado = await baixarReddit(url); break;
-                    case 'Mediafire':   resultado = await baixarMediafire(url); break;
-                    default:            resultado = await baixarGenerico(url, plataforma); break;
-                }
+            switch (plataforma) {
+                case 'TikTok':      resultado = await baixarTiktok(url); break;
+                case 'YouTube':     resultado = await baixarYoutube(url, 'video'); break;
+                case 'Instagram':   resultado = await baixarInstagram(url); break;
+                case 'Facebook':    resultado = await baixarFacebook(url); break;
+                case 'Twitter/X':   resultado = await baixarTwitter(url); break;
+                case 'Pinterest':   resultado = await baixarPinterest(url); break;
+                case 'Reddit':      resultado = await baixarReddit(url); break;
+                case 'Mediafire':   resultado = await baixarMediafire(url); break;
+                default:            resultado = await baixarGenerico(url, plataforma); break;
             }
         } catch (err) {
             console.error(`[Download ${plataforma}] Erro:`, err.message);
@@ -853,14 +842,15 @@ export async function handlePlayConfirmation(nazu, from, m, text, senderJid) {
                 }, { quoted: m });
                 try { fs.unlinkSync(finalPath); } catch {}
             } else {
-                // Vídeo usa a lógica híbrida inteligente de ultra velocidade!
-                const resultado = await baixarYoutube(pending.url, 'video');
-                if (resultado) {
-                    // Garantir que a legenda correta do play seja exibida
-                    resultado.desc = pending.title;
-                    await enviarMidia(nazu, from, m, resultado, 'YouTube');
-                } else {
-                    throw new Error('Falha ao obter vídeo no play.');
+                let finalPath = dl.filePath;
+                finalPath = await verificarEConverterCodec(finalPath);
+                await nazu.sendMessage(from, {
+                    video: { url: finalPath },
+                    mimetype: 'video/mp4',
+                    caption: `🎬 ${pending.title || 'YouTube'}`
+                }, { quoted: m });
+                if (finalPath !== dl.filePath) {
+                    try { fs.unlinkSync(finalPath); } catch {}
                 }
             }
             try { if (fs.existsSync(dl.filePath)) fs.unlinkSync(dl.filePath); } catch {}
