@@ -603,21 +603,25 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
             try { fs.unlinkSync(filePath); } catch {}
         }
     } else if (resultado.type === 'image') {
-        const filePath = await baixarStreamLocal(resultado.url, 'jpg');
-        await nazu.sendMessage(from, {
-            image: { url: filePath },
-            caption: `✅ ${plataforma}`
-        }, { quoted: m });
-         try { fs.unlinkSync(filePath); } catch {}
+        const filePath = resultado.filePath || (resultado.url ? await baixarStreamLocal(resultado.url, 'jpg') : null);
+        if (filePath) {
+            await nazu.sendMessage(from, {
+                image: { url: filePath },
+                caption: `✅ ${plataforma}`
+            }, { quoted: m });
+            try { fs.unlinkSync(filePath); } catch {}
+        }
     } else if (resultado.type === 'images') {
-        for (const imgUrl of resultado.urls.slice(0, 10)) {
+        for (const item of (resultado.urls || resultado.files || []).slice(0, 10)) {
             try {
-                const filePath = await baixarStreamLocal(imgUrl, 'jpg');
-                await nazu.sendMessage(from, {
-                    image: { url: filePath },
-                    caption: `✅ ${plataforma}`
-                }, { quoted: m });
-                try { fs.unlinkSync(filePath); } catch {}
+                const filePath = typeof item === 'string' ? await baixarStreamLocal(item, 'jpg') : (item.filePath || await baixarStreamLocal(item.url, 'jpg'));
+                if (filePath) {
+                    await nazu.sendMessage(from, {
+                        image: { url: filePath },
+                        caption: `✅ ${plataforma}`
+                    }, { quoted: m });
+                    try { fs.unlinkSync(filePath); } catch {}
+                }
             } catch {}
         }
     } else if (resultado.type === 'gallery') {
