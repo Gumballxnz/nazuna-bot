@@ -1359,14 +1359,22 @@ async function createBotSocket(authDir) {
 
                 if (global.nazuWatchdog) clearInterval(global.nazuWatchdog);
                 global.nazuWatchdog = setInterval(async () => {
-                    if (!NazunaSock) return;
+                    if (!NazunaSock || !NazunaSock.user?.id) return;
                     try {
                         // Faz um ping inofensivo para garantir que o socket responde
-                        await NazunaSock.presenceSubscribe(NazunaSock.user?.id).catch(() => {});
+                        await NazunaSock.presenceSubscribe(NazunaSock.user.id).catch(() => {});
                     } catch (e) {
-                        if (String(e).includes('Connection Closed') || String(e).includes('closed')) {
-                            console.error('🚨 Watchdog: Connection Closed detectado ativamente! Forçando restart...');
-                            process.exit(1);
+                        const errStr = String(e);
+                        if (errStr.includes('Connection Closed') || errStr.includes('closed') || errStr.includes('not opened')) {
+                            console.warn('⚠️ Watchdog: Socket fechado ou inativo. Disparando reconexão interna...');
+                            if (global.nazuWatchdog) {
+                                clearInterval(global.nazuWatchdog);
+                                global.nazuWatchdog = null;
+                            }
+                            if (reconnectTimer) clearTimeout(reconnectTimer);
+                            reconnectTimer = setTimeout(() => {
+                                startNazu();
+                            }, 3000);
                         }
                     }
                 }, 45000); // Checa a cada 45 segundos
@@ -1431,18 +1439,30 @@ async function createBotSocket(authDir) {
             if (connection === 'close') {
                 const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
                 const reasonMessage = {
-                    [DisconnectReason.loggedOut]: 'Deslogado do WhatsApp',
-                    401: 'Sessão expirada',
-                    403: 'Acesso proibido (Forbidden)',
-                    [DisconnectReason.connectionClosed]: 'Conexão fechada',
-                    [DisconnectReason.connectionLost]: 'Conexão perdida',
-                    [DisconnectReason.connectionReplaced]: 'Conexão substituída',
-                    [DisconnectReason.timedOut]: 'Tempo de conexão esgotado',
-                    [DisconnectReason.badSession]: 'Sessão inválida',
-                    [DisconnectReason.restartRequired]: 'Reinício necessário',
-                }[reason] || 'Motivo desconhecido';
+                    [DisconnectReason.loggedOut]: 'Deslogado do WhatsApp (401)',
+                    401: 'Sessão expirada (401)',
+                    403: 'Acesso proibido / ban (403)',
+                    [DisconnectReason.connectionClosed]: 'Conexão fechada (428)',
+                    [DisconnectReason.connectionLost]: 'Conexão perdida (408)',
+                    [DisconnectReason.connectionReplaced]: 'Conexão substituída (440)',
+                    [DisconnectReason.timedOut]: 'Tempo de conexão esgotado (408)',
+                    [DisconnectReason.badSession]: 'Sessão reportada como inválida (500)',
+                    [DisconnectReason.restartRequired]: 'Reinício de socket necessário (515)',
+                    500: 'Erro interno WhatsApp (500)',
+                    502: 'Bad Gateway WhatsApp (502)',
+                    503: 'Servidor WhatsApp temporariamente indisponível (503)',
+                    504: 'Gateway Timeout WhatsApp (504)',
+                }[reason] || `Código ${reason || 'desconhecido'}`;
 
                 console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage} | Tentativa: ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+
+                // Limpeza de ouvintes e conexão antiga para prevenir vazamento de memória e sockets zumbis
+                try {
+                    NazunaSock.ev.removeAllListeners();
+                } catch {}
+                try {
+                    NazunaSock.ws?.close();
+                } catch {}
 
                 // Cancela o watchdog ao fechar a conexão para evitar falsos restarts no watchdog
                 if (global.nazuWatchdog) {
@@ -1451,7 +1471,6 @@ async function createBotSocket(authDir) {
                 }
 
                 // Limpa recursos antes de reconectar
-                // Watchdog removido
                 if (cacheCleanupInterval) {
                     clearInterval(cacheCleanupInterval);
                     cacheCleanupInterval = null;
@@ -1535,7 +1554,7 @@ async function createBotSocket(authDir) {
                     console.log('🔄 Sessão foi deslogada pelo WhatsApp. Nova autenticação necessária.');
                     process.exit(1);
                 } else if (reason === DisconnectReason.badSession) {
-                    console.log('⚠️ Sessão reportada como inválida. Reiniciando sem apagar credenciais...');
+                    console.log('⚠️ Sessão reportada como inválida. Tentando reconectar internamente...');
                 } else if (reason === 401) {
                     if (codeMode) {
                         console.log('❌ Sessão inválida em modo de pareamento (401). Limpando sessão...');
@@ -1543,7 +1562,7 @@ async function createBotSocket(authDir) {
                         console.log('🗑️ Sessão apagada. Reinicie o bot e tente parear novamente.');
                         process.exit(0);
                     } else {
-                        console.log('⚠️ Sessão expirada (401). Reiniciando sem apagar credenciais...');
+                        console.log('⚠️ Sessão com código 401 temporário. Tentando reconectar internamente...');
                     }
                 }
 
@@ -1552,58 +1571,49 @@ async function createBotSocket(authDir) {
                     process.exit(0);
                 }
 
-                if (reason === DisconnectReason.restartRequired) {
-                    console.log('🔄 Reinício necessário (515) — reiniciando imediatamente...');
-                    process.exit(1);
+                if (reason === DisconnectReason.restartRequired || reason === 515) {
+                    console.log('🔄 Reinício de socket necessário (515 Baileys) — reconectando internamente em 1.5s...');
+                    if (reconnectTimer) clearTimeout(reconnectTimer);
+                    reconnectTimer = setTimeout(() => {
+                        startNazu();
+                    }, 1500);
+                    return;
                 }
 
                 reconnectAttempts++;
 
                 if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                    console.error(`❌ Máximo de tentativas de reconexão (${MAX_RECONNECT_ATTEMPTS}) atingido. Parando...`);
+                    console.error(`❌ Máximo de tentativas consecutivas de reconexão (${MAX_RECONNECT_ATTEMPTS}) atingido. Reiniciando processo via PM2...`);
                     process.exit(1);
                 }
 
-                // Erros de rede comuns que podem ser reconectados internamente
-                const transientErrors = [
-                    DisconnectReason.connectionLost,   // 503
-                    DisconnectReason.connectionClosed, // 1006
-                    DisconnectReason.timedOut,         // 408
-                    DisconnectReason.restartRequired   // 515
-                ];
-
-                if (transientErrors.includes(reason)) {
-                    const delayTime = Math.min(RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttempts - 1), MAX_RECONNECT_DELAY);
-                    console.log(`🔄 Erro temporário de rede detectado (${reasonMessage}). Tentando reconectar internamente em ${delayTime / 1000}s (Sem reiniciar processo)...`);
-                    if (reconnectTimer) clearTimeout(reconnectTimer);
-                    reconnectTimer = setTimeout(() => {
-                        startNazu();
-                    }, delayTime);
-                } else {
-                    // Para garantir que o PM2 reinicie de forma totalmente limpa e evite sockets zumbis/memory leak:
-                    console.log(`🔄 Reiniciando processo via PM2 para limpeza de memória...`);
-                    
-                    // Se for rate limit (428), esperamos antes de encerrar para não causar loop no PM2
-                    if (reason === 428) {
-                        const delay428 = Math.min(10000 * Math.pow(2, consecutive428Count - 1), MAX_RECONNECT_DELAY);
-                        console.log(`⏳ Aguardando ${Math.round(delay428 / 1000)}s antes de reiniciar (anti-loop 428)...`);
-                        setTimeout(() => process.exit(1), delay428);
-                    } else {
-                        // Outros erros menores
-                        setTimeout(() => process.exit(1), 3000);
-                    }
-                }
+                // Todos os erros temporários de rede (503, 408, 500, 502, 504, 1006, etc.) reconectam internamente
+                const delayTime = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.4, Math.max(0, reconnectAttempts - 1)), MAX_RECONNECT_DELAY);
+                console.log(`🔄 Desconexão temporária (${reasonMessage}). Tentando reconectar internamente em ${Math.round(delayTime / 1000)}s (Tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+                if (reconnectTimer) clearTimeout(reconnectTimer);
+                reconnectTimer = setTimeout(() => {
+                    startNazu();
+                }, delayTime);
             }
         });
         return NazunaSock;
     } catch (err) {
         console.error(`❌ Erro ao criar socket do bot: ${err.message}`);
-        console.log('⏳ Aguardando 45 segundos para evitar loop de reinicialização no PM2...');
-        setTimeout(() => process.exit(1), 45000);
+        console.log('⏳ Aguardando 10 segundos para tentar reconectar internamente...');
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(() => {
+            startNazu();
+        }, 10000);
     }
 }
 
 async function startNazu() {
+    if (isReconnecting) {
+        console.log('⏳ Reconexão já em andamento, ignorando chamada redundante...');
+        return;
+    }
+    isReconnecting = true;
+
     // Verifica lock de loop 428
     try {
         const lockPath = path.join(DATABASE_DIR, '428_LOCK');
@@ -1620,7 +1630,13 @@ async function startNazu() {
         await createBotSocket(AUTH_DIR);
     } catch (err) {
         console.error(`❌ Erro ao iniciar o bot: ${err.message}`);
-        process.exit(1);
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(() => {
+            isReconnecting = false;
+            startNazu();
+        }, 10000);
+    } finally {
+        isReconnecting = false;
     }
 }
 
