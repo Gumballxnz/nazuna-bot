@@ -5,8 +5,8 @@
     "type": "module",
     "main": "dados/src/connect.js",
     "bin": {
-        "nazuna-bot": "./bin/nazuna.js",
-        "nazuna": "./bin/nazuna.js"
+        "nazuna-bot": "bin/nazuna.js",
+        "nazuna": "bin/nazuna.js"
     },
     "files": [
         "bin/",
