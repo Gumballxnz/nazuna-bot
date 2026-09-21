@@ -210,13 +210,12 @@ function startBot(codeMode = false) {
 
 let restartCount = 0;
 const MAX_RESTART_ATTEMPTS = 20;
-const RESTART_DELAY_BASE = 5000; // 5 segundos base
-const MAX_RESTART_DELAY = 120000; // Máximo 2 minutos
+const RESTART_DELAY_BASE = 5000;
+const MAX_RESTART_DELAY = 120000;
 let lastSuccessfulStart = 0;
 
 function restartBot(codeMode) {
-  // Se o bot rodou por mais de 2 minutos antes de cair, reseta o contador
-  // (significa que estava estável, o erro é pontual)
+
   if (lastSuccessfulStart > 0 && (Date.now() - lastSuccessfulStart) > 120000) {
     restartCount = 0;
   }
@@ -230,11 +229,9 @@ function restartBot(codeMode) {
     process.exit(1);
   }
 
-  // Exponential backoff: 5s, 10s, 20s, 40s, 60s, 120s
-  // Exponential backoff
   const delay = Math.min(RESTART_DELAY_BASE * Math.pow(2, restartCount - 1), MAX_RESTART_DELAY);
   aviso(`🔄 Reiniciando o bot em ${Math.round(delay / 1000)}s... (tentativa ${restartCount}/${MAX_RESTART_ATTEMPTS})`);
-  
+
   setTimeout(() => {
     if (botProcess) botProcess.removeAllListeners();
     lastSuccessfulStart = Date.now();
@@ -287,7 +284,6 @@ async function promptConnectionMethod() {
   }
 }
 
-// Limpeza radical do tmp na inicialização para evitar lixo residual
 function cleanTmpDir() {
   const tmpPath = path.join(process.cwd(), 'dados', 'src', 'tmp');
   try {

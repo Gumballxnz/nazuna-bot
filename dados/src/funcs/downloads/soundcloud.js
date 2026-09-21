@@ -1,20 +1,10 @@
-/**
- * Download SoundCloud - 100% Gratuito 
- * Motor: Siputzx + Ryzendesu
- */
-
 import axios from 'axios';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-/**
- * Faz download direto de uma música do SoundCloud via URL
- * @param {string} url - URL do track do SoundCloud
- * @returns {Promise<Object>} Dados do download
- */
 async function download(url) {
   try {
-    // Motor 1: Siputzx
+
     try {
       const res = await axios.get(`https://api.siputzx.my.id/api/d/soundcloud?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
@@ -37,7 +27,6 @@ async function download(url) {
       console.error('[SoundCloud] Motor 1 falhou:', e.message);
     }
 
-    // Motor 2: Ryzumi
     try {
       const res = await axios.get(`https://api.ryzumi.net/api/downloader/soundcloud?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
@@ -66,9 +55,6 @@ async function download(url) {
   }
 }
 
-/**
- * Busca e download - placeholder
- */
 async function searchDownload(query) {
   return { ok: false, msg: 'Use o comando !play para buscar músicas ou envie um link do SoundCloud.' };
 }

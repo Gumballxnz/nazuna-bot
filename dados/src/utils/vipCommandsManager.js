@@ -5,19 +5,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Caminho do arquivo de comandos VIP
 const VIP_COMMANDS_FILE = path.join(__dirname, '../../database/dono/vipCommands.json');
 
-/**
- * Garante que o arquivo de comandos VIP existe
- */
 function ensureVipCommandsFile() {
   const dir = path.dirname(VIP_COMMANDS_FILE);
-  
+
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  
+
   if (!fs.existsSync(VIP_COMMANDS_FILE)) {
     const defaultData = {
       commands: [],
@@ -35,9 +31,6 @@ function ensureVipCommandsFile() {
   }
 }
 
-/**
- * Carrega os comandos VIP do arquivo
- */
 function loadVipCommands() {
   ensureVipCommandsFile();
   try {
@@ -49,9 +42,6 @@ function loadVipCommands() {
   }
 }
 
-/**
- * Salva os comandos VIP no arquivo
- */
 function saveVipCommands(data) {
   ensureVipCommandsFile();
   try {
@@ -63,35 +53,24 @@ function saveVipCommands(data) {
   }
 }
 
-/**
- * Adiciona um novo comando VIP
- * @param {string} command - Nome do comando (sem prefixo)
- * @param {string} description - Descrição do comando
- * @param {string} category - Categoria do comando
- * @param {string} usage - Exemplo de uso (opcional)
- */
 function addVipCommand(command, description, category = 'outros', usage = '') {
   const data = loadVipCommands();
-  
-  // Normaliza o comando
+
   const normalizedCommand = command.toLowerCase().trim();
-  
-  // Verifica se o comando já existe
+
   const existingIndex = data.commands.findIndex(cmd => cmd.command === normalizedCommand);
-  
+
   if (existingIndex !== -1) {
     return {
       success: false,
       message: `❌ O comando "${normalizedCommand}" já existe na lista VIP!`
     };
   }
-  
-  // Valida categoria
+
   if (!data.categories[category]) {
     category = 'outros';
   }
-  
-  // Adiciona o novo comando
+
   const newCommand = {
     command: normalizedCommand,
     description: description.trim(),
@@ -100,9 +79,9 @@ function addVipCommand(command, description, category = 'outros', usage = '') {
     addedAt: new Date().toISOString(),
     enabled: true
   };
-  
+
   data.commands.push(newCommand);
-  
+
   if (saveVipCommands(data)) {
     return {
       success: true,
@@ -117,26 +96,22 @@ function addVipCommand(command, description, category = 'outros', usage = '') {
   }
 }
 
-/**
- * Remove um comando VIP
- * @param {string} command - Nome do comando a ser removido
- */
 function removeVipCommand(command) {
   const data = loadVipCommands();
   const normalizedCommand = command.toLowerCase().trim();
-  
+
   const index = data.commands.findIndex(cmd => cmd.command === normalizedCommand);
-  
+
   if (index === -1) {
     return {
       success: false,
       message: `❌ O comando "${normalizedCommand}" não foi encontrado na lista VIP.`
     };
   }
-  
+
   const removedCommand = data.commands[index];
   data.commands.splice(index, 1);
-  
+
   if (saveVipCommands(data)) {
     return {
       success: true,
@@ -151,95 +126,69 @@ function removeVipCommand(command) {
   }
 }
 
-/**
- * Verifica se um comando é VIP-only
- * @param {string} command - Nome do comando
- * @returns {boolean}
- */
 function isVipCommand(command) {
   const data = loadVipCommands();
   const normalizedCommand = command.toLowerCase().trim();
   return data.commands.some(cmd => cmd.command === normalizedCommand && cmd.enabled);
 }
 
-/**
- * Lista todos os comandos VIP
- * @param {string} category - Categoria específica (opcional)
- * @returns {Array}
- */
 function listVipCommands(category = null) {
   const data = loadVipCommands();
-  
+
   if (category) {
     return data.commands.filter(cmd => cmd.category === category && cmd.enabled);
   }
-  
+
   return data.commands.filter(cmd => cmd.enabled);
 }
 
-/**
- * Obtém informações de um comando VIP específico
- * @param {string} command - Nome do comando
- */
 function getVipCommand(command) {
   const data = loadVipCommands();
   const normalizedCommand = command.toLowerCase().trim();
   return data.commands.find(cmd => cmd.command === normalizedCommand);
 }
 
-/**
- * Agrupa comandos VIP por categoria
- * @returns {Object} Comandos agrupados por categoria
- */
 function groupVipCommandsByCategory() {
   const data = loadVipCommands();
   const grouped = {};
-  
-  // Inicializa categorias
+
   for (const [key, label] of Object.entries(data.categories)) {
     grouped[key] = {
       label: label,
       commands: []
     };
   }
-  
-  // Agrupa comandos ativos
+
   data.commands.forEach(cmd => {
     if (cmd.enabled && grouped[cmd.category]) {
       grouped[cmd.category].commands.push(cmd);
     }
   });
-  
-  // Remove categorias vazias
+
   Object.keys(grouped).forEach(key => {
     if (grouped[key].commands.length === 0) {
       delete grouped[key];
     }
   });
-  
+
   return grouped;
 }
 
-/**
- * Ativa ou desativa um comando VIP
- * @param {string} command - Nome do comando
- * @param {boolean} enabled - true para ativar, false para desativar
- */
 function toggleVipCommand(command, enabled) {
   const data = loadVipCommands();
   const normalizedCommand = command.toLowerCase().trim();
-  
+
   const cmdIndex = data.commands.findIndex(cmd => cmd.command === normalizedCommand);
-  
+
   if (cmdIndex === -1) {
     return {
       success: false,
       message: `❌ Comando "${normalizedCommand}" não encontrado.`
     };
   }
-  
+
   data.commands[cmdIndex].enabled = enabled;
-  
+
   if (saveVipCommands(data)) {
     const status = enabled ? 'ativado' : 'desativado';
     return {
@@ -254,29 +203,23 @@ function toggleVipCommand(command, enabled) {
   }
 }
 
-/**
- * Obtém todas as categorias disponíveis
- */
 function getCategories() {
   const data = loadVipCommands();
   return data.categories;
 }
 
-/**
- * Adiciona uma nova categoria
- */
 function addCategory(key, label) {
   const data = loadVipCommands();
-  
+
   if (data.categories[key]) {
     return {
       success: false,
       message: `❌ A categoria "${key}" já existe.`
     };
   }
-  
+
   data.categories[key] = label;
-  
+
   if (saveVipCommands(data)) {
     return {
       success: true,
@@ -290,13 +233,10 @@ function addCategory(key, label) {
   }
 }
 
-/**
- * Exporta estatísticas dos comandos VIP
- */
 function getVipStats() {
   const data = loadVipCommands();
   const grouped = groupVipCommandsByCategory();
-  
+
   return {
     total: data.commands.length,
     active: data.commands.filter(cmd => cmd.enabled).length,

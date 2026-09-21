@@ -1,8 +1,3 @@
-/**
- * Download Facebook - 100% Gratuito 
- * Motor: yt-dlp nativo
- */
-
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
@@ -11,11 +6,6 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 const tmpDir = path.join(process.cwd(), 'tmp');
 
-/**
- * Faz download de vídeo do Facebook em HD
- * @param {string} url - URL do vídeo do Facebook
- * @returns {Promise<Object>} Dados do download
- */
 async function downloadHD(url) {
   const id = Date.now() + '_' + Math.random().toString(36).substring(2, 6);
   const filePath = path.join(tmpDir, `fb_cmd_${id}.mp4`);

@@ -37,7 +37,7 @@ const TYPE_CONFIG = {
 class RelationshipManager {
   constructor() {
     this.pendingRequests = new Map();
-    this.pendingBetrayals = new Map(); // Nova estrutura para pedidos de traição
+    this.pendingBetrayals = new Map();
     const timer = setInterval(() => this._cleanup(), 60 * 1000);
     if (typeof timer.unref === 'function') {
       timer.unref();
@@ -127,7 +127,6 @@ class RelationshipManager {
       };
     }
 
-    // ===== CORREÇÃO: Verifica se o solicitante já está em outro relacionamento =====
     const requesterActivePair = this.getActivePairForUser(requesterId);
     if (requesterActivePair && this._normalizeId(requesterActivePair.partnerId) !== target) {
       const partnerName = getUserName(requesterActivePair.partnerId);
@@ -139,7 +138,6 @@ class RelationshipManager {
       };
     }
 
-    // ===== CORREÇÃO: Verifica se o alvo já está em outro relacionamento =====
     const targetActivePair = this.getActivePairForUser(targetId);
     if (targetActivePair && this._normalizeId(targetActivePair.partnerId) !== requester) {
       const partnerName = getUserName(targetActivePair.partnerId);
@@ -240,7 +238,7 @@ class RelationshipManager {
           message: 'Vocês já são casados!'
         };
       }
-      // Permite evoluir de brincadeira para namoro
+
       return { allowed: true };
     }
 
@@ -404,10 +402,9 @@ class RelationshipManager {
       acceptedAt: stageEntry.acceptedAt
     });
 
-    // Lógica de atualização de status
     if (request.type === 'brincadeira') {
       pair.status = 'brincadeira';
-      // Só cria brincadeira se não existir
+
       if (!pair.stages.brincadeira) {
         pair.stages.brincadeira = stageEntry;
       }
@@ -416,17 +413,17 @@ class RelationshipManager {
       }
     } else if (request.type === 'namoro') {
       pair.status = 'namoro';
-      // Sempre atualiza o namoro com a nova data
+
       pair.stages.namoro = stageEntry;
-      // Preserva brincadeira anterior se existir, senão cria
+
       if (!pair.stages.brincadeira) {
         pair.stages.brincadeira = { ...stageEntry };
       }
     } else if (request.type === 'casamento') {
       pair.status = 'casamento';
-      // Sempre atualiza o casamento com a nova data
+
       pair.stages.casamento = stageEntry;
-      // Preserva namoro e brincadeira anteriores
+
       if (!pair.stages.namoro) {
         pair.stages.namoro = { ...stageEntry };
       }
@@ -469,7 +466,6 @@ class RelationshipManager {
       lines.push(`🗓️ Início: ${sinceText}`);
     }
 
-    // Para casamento, mostra quanto tempo namoraram
     if (request.type === 'casamento' && pair.stages?.namoro?.since) {
       const namoroSince = Date.parse(pair.stages.namoro.since);
       const casamentoSince = Date.parse(stageInfo.since);
@@ -479,7 +475,6 @@ class RelationshipManager {
       }
     }
 
-    // Para namoro, mostra quanto tempo de brincadeira (se houver)
     if (request.type === 'namoro' && pair.stages?.brincadeira?.since) {
       const brincadeiraSince = Date.parse(pair.stages.brincadeira.since);
       const namoroSince = Date.parse(stageInfo.since);
@@ -533,7 +528,6 @@ class RelationshipManager {
       lines.push('⚠️ Status atual: sem registro válido.');
     }
 
-    // Mostra histórico de estágios
     const historicalStages = ['brincadeira', 'namoro', 'casamento']
       .filter(stage => pair.stages?.[stage]?.since)
       .map(stage => {
@@ -549,7 +543,6 @@ class RelationshipManager {
       lines.push('', '📚 Histórico de Estágios:', ...historicalStages);
     }
 
-    // Se está namorando mas não casado, mostra tempo restante para casar
     if (pair.status === 'namoro' && pair.stages?.namoro?.since) {
       const namoroSince = Date.parse(pair.stages.namoro.since);
       if (!Number.isNaN(namoroSince)) {
@@ -678,7 +671,7 @@ class RelationshipManager {
         this.pendingRequests.delete(groupId);
       }
     }
-    // Limpa pedidos de traição expirados
+
     for (const [key, betrayal] of this.pendingBetrayals.entries()) {
       if (betrayal.expiresAt && betrayal.expiresAt <= now) {
         this.pendingBetrayals.delete(key);
@@ -686,7 +679,6 @@ class RelationshipManager {
     }
   }
 
-  // Verifica se há pedido de traição pendente
   hasPendingBetrayal(groupId) {
     for (const [key, betrayal] of this.pendingBetrayals.entries()) {
       if (betrayal.groupId === groupId) {
@@ -696,12 +688,10 @@ class RelationshipManager {
     return false;
   }
 
-  // Processa resposta de traição
   processBetrayalResponse(groupId, responderId, rawResponse, prefix = '/') {
     let betrayalToProcess = null;
     let betrayalKey = null;
 
-    // Encontra o pedido de traição para este grupo e respondente
     for (const [key, betrayal] of this.pendingBetrayals.entries()) {
       if (betrayal.groupId === groupId && this._normalizeId(betrayal.targetId) === this._normalizeId(responderId)) {
         betrayalToProcess = betrayal;
@@ -735,11 +725,9 @@ class RelationshipManager {
       };
     }
 
-    // Aceita a traição - executa o processo completo
     return this._executeBetrayalAccepted(betrayalToProcess, prefix);
   }
 
-  // Cria pedido de traição
   createBetrayalRequest(userId, targetId, groupId, prefix = '/') {
     const userActivePair = this.getActivePairForUser(userId);
 
@@ -753,7 +741,6 @@ class RelationshipManager {
 
     const partnerId = userActivePair.partnerId;
 
-    // Verifica se está tentando trair com o próprio parceiro
     if (this._normalizeId(targetId) === this._normalizeId(partnerId)) {
       return {
         success: false,
@@ -762,7 +749,6 @@ class RelationshipManager {
       };
     }
 
-    // Verifica se está tentando trair consigo mesmo
     if (this._normalizeId(targetId) === this._normalizeId(userId)) {
       return {
         success: false,
@@ -771,7 +757,6 @@ class RelationshipManager {
       };
     }
 
-    // Verifica se já existe pedido de traição pendente neste grupo
     for (const betrayal of this.pendingBetrayals.values()) {
       if (betrayal.groupId === groupId) {
         return {
@@ -808,7 +793,6 @@ class RelationshipManager {
     };
   }
 
-  // Executa traição após aceitação
   _executeBetrayalAccepted(betrayalRequest, prefix = '/') {
     const { userId, targetId, partnerId, groupId, userKey } = betrayalRequest;
 
@@ -823,7 +807,6 @@ class RelationshipManager {
       };
     }
 
-    // Verifica se o alvo também está em um relacionamento
     const targetActivePair = this.getActivePairForUser(targetId);
 
     let targetInRelationship = false;
@@ -837,7 +820,6 @@ class RelationshipManager {
     const now = new Date().toISOString();
     const config = TYPE_CONFIG[currentPair.status];
 
-    // Registra a traição no histórico
     if (!Array.isArray(currentPair.history)) {
       currentPair.history = [];
     }
@@ -852,13 +834,11 @@ class RelationshipManager {
       previousStatus: currentPair.status
     });
 
-    // Incrementa contador de traições
     if (!currentPair.betrayals) {
       currentPair.betrayals = { [userId]: 0, [partnerId]: 0 };
     }
     currentPair.betrayals[userId] = (currentPair.betrayals[userId] || 0) + 1;
 
-    // Marca como relacionamento traído
     currentPair.lastBetrayal = {
       date: now,
       traitor: userId,

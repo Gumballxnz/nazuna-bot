@@ -12,7 +12,7 @@ class RentalExpirationManager {
     this.ownerNumber = config.ownerNumber || null;
     this.ownerName = config.ownerName || 'Dono do Bot';
     this.config = {
-      checkInterval: config.checkInterval || '0 */6 * * *', // Every 6 hours
+      checkInterval: config.checkInterval || '0 */6 * * *',
       warningDays: config.warningDays || 3,
       finalWarningDays: config.finalWarningDays || 1,
       cleanupDelayHours: config.cleanupDelayHours || 24,
@@ -39,14 +39,12 @@ class RentalExpirationManager {
       return true;
     }
     try {
-      // Ensure logs directory exists
+
       const logDir = path.dirname(this.config.logFile);
       await fs.mkdir(logDir, { recursive: true });
 
-      // Start the scheduler
       this.startScheduler();
 
-      // Log initialization
       await this.log('RentalExpirationManager initialized successfully');
 
       return true;
@@ -90,21 +88,19 @@ class RentalExpirationManager {
 
   async checkExpiredRentals() {
     try {
-      // Guard: não executa se o socket ainda não foi atribuído
+
       if (!this.nazu) {
         await this.log('Skipping rental check: socket not connected yet');
         return;
       }
       const startTime = Date.now();
       await this.log('Starting rental expiration check...');
-      
-      // Verifica códigos de ativação expirados (24h)
+
       await this.checkExpiredActivationCodes();
 
       this.stats.totalChecks++;
       this.lastCheckTime = new Date();
 
-      // Load rental data
       const rentalData = await this.loadRentalData();
       if (!rentalData || !rentalData.groups) {
         await this.log('No rental data found or groups not initialized');
@@ -119,27 +115,26 @@ class RentalExpirationManager {
 
       for (const [groupId, groupInfo] of Object.entries(rentalData.groups)) {
         try {
-          // Skip permanent rentals
+
           if (groupInfo.permanent) continue;
 
           const expiresAt = new Date(groupInfo.expiresAt);
           const timeUntilExpiry = expiresAt - now;
           const daysUntilExpiry = Math.ceil(timeUntilExpiry / (1000 * 60 * 60 * 24));
 
-          // Process different notification levels
           if (daysUntilExpiry <= 0) {
-            // Rental has expired
+
             await this.processExpiredRental(groupId, groupInfo, rentalData);
             expiredCount++;
           } else if (daysUntilExpiry <= this.config.finalWarningDays) {
-            // Final warning
+
             if (groupInfo.lastNotified !== 'final') {
               await this.sendExpirationNotification(groupId, 'final', daysUntilExpiry);
               groupInfo.lastNotified = 'final';
               finalWarningCount++;
             }
           } else if (daysUntilExpiry <= this.config.warningDays) {
-            // Initial warning
+
             if (groupInfo.lastNotified !== 'warning') {
               await this.sendExpirationNotification(groupId, 'warning', daysUntilExpiry);
               groupInfo.lastNotified = 'warning';
@@ -155,10 +150,8 @@ class RentalExpirationManager {
         }
       }
 
-      // Save updated rental data
       await this.saveRentalData(rentalData);
 
-      // Update stats
       this.stats.warningsSent += warningCount;
       this.stats.finalWarningsSent += finalWarningCount;
       this.stats.expiredProcessed += expiredCount;
@@ -184,12 +177,10 @@ class RentalExpirationManager {
         return;
       }
 
-      // Send expiration notification to group
       if (this.config.enableNotifications) {
         await this.sendExpirationNotification(groupId, 'expired', 0);
       }
 
-      // Auto-cleanup after delay
       if (this.config.enableAutoCleanup) {
         setTimeout(async () => {
           await this.performAutoCleanup(groupId, groupMetadata);
@@ -212,14 +203,12 @@ class RentalExpirationManager {
       const ownerInfo = await this.getOwnerInfo();
       const message = this.buildExpirationMessage(type, daysUntilExpiry, groupMetadata, ownerInfo);
 
-      // Send to group
       await this.nazu.sendMessage(groupId, {
         text: message
       }).catch(error => {
         console.error(`❌ Failed to send message to group ${groupId}:`, error);
       });
 
-      // Also send to group admins
       const participants = groupMetadata.participants || [];
       const admins = participants.filter(p => p.admin === true);
 
@@ -295,7 +284,7 @@ ${footer}
   async performAutoCleanup(groupId, groupMetadata) {
     try {
       if (!this.nazu) return;
-      // Send final goodbye message
+
       const goodbyeMessage = `
 👋 **ATÉ LOGO, ${groupMetadata.subject.toUpperCase()}!**
 
@@ -318,10 +307,8 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
         text: goodbyeMessage
       });
 
-      // Leave the group
       await this.nazu.groupLeave(groupId);
 
-      // Remove from rental data
       const rentalData = await this.loadRentalData();
       if (rentalData.groups && rentalData.groups[groupId]) {
         delete rentalData.groups[groupId];
@@ -337,12 +324,11 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
 
   async getOwnerInfo() {
     try {
-      // Use owner number from config or fallback to environment variable
+
       const name = this.ownerName || process.env.OWNER_NAME || 'Dono do Bot';
       const number = this.ownerNumber || process.env.OWNER_NUMBER || '5511999999999';
       let contact = `${number}@s.whatsapp.net`;
 
-      // If nazu and helpers available, try to normalize contact to LID
       if (this.nazu && typeof this.nazu.onWhatsApp === 'function') {
         try {
           const cleanNumber = number.toString().replace(/\D/g, '');
@@ -390,11 +376,10 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
       const DONO_DIR = path.join(__dirname, '../../database/dono');
       const ALUGUEIS_FILE = path.join(DONO_DIR, 'alugueis.json');
 
-      // Check if file exists
       try {
         await fs.access(ALUGUEIS_FILE);
       } catch {
-        // Create default structure if file doesn't exist
+
         const defaultData = {
           globalMode: false,
           groups: {}
@@ -486,13 +471,13 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
           if (diffInHours > 24) {
             const durationTxt = info.duration === 'permanent' ? 'Permanente ✨' : `${info.duration} dias ⏳`;
             const msg = `⚠️ *CÓDIGO EXPIRADO (24H)*\n\nO código *${code}* não foi usado em 24h e agora está inválido.\n\n📅 *Gerado em:* ${createdAt.toLocaleString('pt-BR')}\n⏳ *Duração:* ${durationTxt}`;
-            
+
             if (this.nazu) {
               await this.nazu.sendMessage(ownerJid, { text: msg }).catch(err => {
                  console.error("Erro ao enviar notificação de código expirado ao dono:", err.message);
               });
             }
-            
+
             info.expiredNotified = true;
             hasChanges = true;
           }

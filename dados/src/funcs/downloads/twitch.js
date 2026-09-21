@@ -1,15 +1,10 @@
-/**
- * Download Twitch - 100% Gratuito 
- * Motor: Siputzx + Ryzendesu
- */
-
 import axios from 'axios';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
 async function download(url) {
   try {
-    // Motor 1: Siputzx
+
     try {
       const res = await axios.get(`https://api.siputzx.my.id/api/d/twitch?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },

@@ -16,10 +16,6 @@ const SUBBOTS_FILE = path.join(__dirname, '../../database/subbots.json');
 const SUBBOTS_DIR = path.join(__dirname, '../../database/subbots');
 const BASE_DATABASE_DIR = path.join(__dirname, '../../database');
 
-/**
- * Busca a versão do Baileys diretamente do JSON do GitHub
- * @returns {Promise<{version: number[]}>}
- */
 async function fetchBaileysVersionFromGitHub() {
     try {
         const response = await axios.get('https://raw.githubusercontent.com/WhiskeySockets/Baileys/refs/heads/master/src/Defaults/baileys-version.json', {
@@ -30,23 +26,17 @@ async function fetchBaileysVersionFromGitHub() {
         };
     } catch (error) {
         console.error('❌ Erro ao buscar versão do Baileys do GitHub, usando função fetchLatestBaileysVersion como fallback:', error.message);
-        // Fallback para função original caso falhe
+
         return await fetchLatestBaileysVersion();
     }
 }
 
-// Instâncias ativas de sub-bots
 const activeSubBots = new Map();
 
-// Controle de geração de código em progresso
 const generatingCode = new Set();
 
-// Logger silencioso
 const logger = pino({ level: 'silent' });
 
-/**
- * Carrega lista de sub-bots do arquivo
- */
 function loadSubBots() {
     try {
         if (!fs.existsSync(SUBBOTS_FILE)) {
@@ -61,9 +51,6 @@ function loadSubBots() {
     }
 }
 
-/**
- * Salva lista de sub-bots no arquivo
- */
 function saveSubBots(subbots) {
     try {
         const data = { subbots };
@@ -75,9 +62,6 @@ function saveSubBots(subbots) {
     }
 }
 
-/**
- * Cria diretórios necessários para um sub-bot
- */
 function createSubBotDirectories(botId) {
     const botDir = path.join(SUBBOTS_DIR, botId);
     const authDir = path.join(botDir, 'auth');
@@ -104,13 +88,9 @@ function createSubBotDirectories(botId) {
     };
 }
 
-/**
- * Cria configuração inicial para sub-bot
- */
 function createSubBotConfig(botId, phoneNumber, ownerNumber) {
     const dirs = createSubBotDirectories(botId);
 
-    // Config baseado no principal
     const mainConfigPath = path.join(__dirname, '../config.json');
     let mainConfig = {};
 
@@ -127,7 +107,7 @@ function createSubBotConfig(botId, phoneNumber, ownerNumber) {
         prefixo: mainConfig.prefixo || '!',
         apikey: mainConfig.apikey || '',
         debug: false,
-        // Se ownerNumber já for um LID, persiste aqui; index.js deve passar LID para manter DB consistente
+
         lidowner: ownerNumber && ownerNumber.includes('@lid') ? ownerNumber : '',
         botNumber: phoneNumber
     };
@@ -138,11 +118,6 @@ function createSubBotConfig(botId, phoneNumber, ownerNumber) {
     return { config, dirs };
 }
 
-/**
- * Inicializa uma instância de sub-bot
- * @param {boolean} generatePairingCode - Se deve gerar código de pareamento
- * @returns {Promise<{sock: Object, pairingCode: string|null}>}
- */
 async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairingCode = false) {
     try {
         console.log(`🤖 Inicializando sub-bot ${botId}...`);
@@ -174,22 +149,19 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
 
         let pairingCode = null;
 
-        // Aguarda a conexão abrir antes de solicitar pairing code
         if (generatePairingCode && !sock.authState.creds.registered) {
             const cleanPhone = phoneNumber;
 
             console.log(`⏳ Aguardando socket inicializar...`);
 
-            // Aguarda um pouco para o socket estar pronto
             await new Promise(resolve => setTimeout(resolve, 3000));
 
             try {
-                // Agora solicita o código
+
                 pairingCode = await sock.requestPairingCode(cleanPhone);
 
                 console.log(`🔑 Código de pareamento gerado para ${phoneNumber}: ${pairingCode}`);
 
-                // Salva informações do sub-bot
                 const subbots = loadSubBots();
                 if (subbots[botId]) {
                     subbots[botId].pairingCode = pairingCode;
@@ -215,7 +187,7 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
                 if (subbots[botId]) {
                     subbots[botId].status = 'conectado';
                     subbots[botId].lastConnection = new Date().toISOString();
-                    // Armazena o número do sub-bot em LID para consistência da DB
+
                     let botNum = sock.user?.id?.split(':')[0] || phoneNumber;
                     try {
                         botNum = await getLidFromJidCached(sock, botNum);
@@ -243,19 +215,18 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
                     saveSubBots(subbots);
                 }
 
-                // Se foi logout, remove completamente
                 if (reason === DisconnectReason.loggedOut) {
                     console.log(`🗑️ Sub-bot ${botId} foi deslogado, removendo dados...`);
                     await removeSubBot(botId);
                 } else if (reason === 428) {
-                    // Erro 428 = aguardando pareamento, não reconectar automaticamente
+
                     console.log(`⏸️ Sub-bot ${botId} aguardando pareamento. Use o código enviado para conectar.`);
                     if (subbots[botId]) {
                         subbots[botId].status = 'aguardando_pareamento';
                         saveSubBots(subbots);
                     }
                 } else if (sock.authState.creds.registered) {
-                    // Só reconecta automaticamente se já estiver registrado
+
                     console.log(`🔄 Tentando reconectar sub-bot ${botId} em 10 segundos...`);
                     setTimeout(() => {
                         initializeSubBot(botId, phoneNumber, ownerNumber);
@@ -266,7 +237,6 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
             }
         });
 
-        // Handler de mensagens - processa comandos
         sock.ev.on('messages.upsert', async (m) => {
             if (!m.messages || m.type !== 'notify') return;
 
@@ -274,12 +244,10 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
                 for (const info of m.messages) {
                     if (!info || !info.message || !info.key?.remoteJid) continue;
 
-                    // Ignora mensagens próprias do bot
                     if (info.key.fromMe) continue;
 
                     console.log(`📨 Sub-bot ${botId} processando mensagem de ${info.key.remoteJid}`);
 
-                    // Define o caminho do config do sub-bot temporariamente
                     const originalConfigPath = process.env.CONFIG_PATH;
                     const originalDatabasePath = process.env.DATABASE_PATH;
                     const originalIsSubbot = process.env.IS_SUBBOT;
@@ -287,18 +255,15 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
 
                     const subBotConfigPath = path.join(dirs.databaseDir, 'config.json');
 
-                    // IMPORTANTE: Define as variáveis ANTES de importar qualquer módulo
                     process.env.CONFIG_PATH = subBotConfigPath;
                     process.env.DATABASE_PATH = dirs.databaseDir;
                     process.env.IS_SUBBOT = 'true';
                     process.env.SUBBOT_ID = botId;
 
                     try {
-                        // Carrega o módulo de processamento (import dinâmico)
-                        // As variáveis de ambiente devem estar definidas antes deste import
+
                         const indexModule = await import('../index.js');
 
-                        // Obtém a função default exportada
                         const NazuninhaBotExec = indexModule.default || indexModule;
 
                         if (typeof NazuninhaBotExec !== 'function') {
@@ -307,22 +272,19 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
                             continue;
                         }
 
-                        // Cria um cache simples para este sub-bot usando Map (compatível com bot principal)
                         const messagesCache = new Map();
 
-                        // Chave composta: remoteJid_messageId para permitir filtrar por grupo
                         if (info.key?.id && info.key?.remoteJid) {
                             const cacheKey = `${info.key.remoteJid}_${info.key.id}`;
                             messagesCache.set(cacheKey, info);
                         }
 
-                        // Processa a mensagem usando a mesma lógica do bot principal
                         await NazuninhaBotExec(sock, info, null, messagesCache, null);
                     } catch (importError) {
                         console.error(`❌ Erro ao importar/executar processamento no sub-bot ${botId}:`, importError.message);
                         console.error(`Stack trace:`, importError.stack);
                     } finally {
-                        // Restaura o config original
+
                         if (originalConfigPath !== undefined) {
                             process.env.CONFIG_PATH = originalConfigPath;
                         } else {
@@ -358,12 +320,9 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
     }
 }
 
-/**
- * Adiciona um novo sub-bot
- */
 async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
     try {
-        // Valida número
+
         const cleanPhone = phoneNumber.replace(/\D/g, '');
         if (!/^\d{10,15}$/.test(cleanPhone)) {
             return {
@@ -372,7 +331,6 @@ async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
             };
         }
 
-        // Valida LID do sub-bot
         if (!subBotLid || !subBotLid.includes('@lid')) {
             return {
                 success: false,
@@ -380,10 +338,8 @@ async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
             };
         }
 
-        // Gera ID único
         const botId = `subbot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Verifica se já existe
         const subbots = loadSubBots();
         const existing = Object.values(subbots).find(b => b.phoneNumber === phoneNumber);
         if (existing) {
@@ -393,7 +349,6 @@ async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
             };
         }
 
-        // Verifica se o LID já está cadastrado
         const existingLid = Object.values(subbots).find(b => b.subBotLid === subBotLid);
         if (existingLid) {
             return {
@@ -402,13 +357,10 @@ async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
             };
         }
 
-        // Cria diretórios
         if (!fs.existsSync(SUBBOTS_DIR)) {
             fs.mkdirSync(SUBBOTS_DIR, { recursive: true });
         }
 
-        // Salva as informações do sub-bot SEM inicializar ainda
-        // ownerNumber here should already be normalized to LID (index.js will pass LID).
         subbots[botId] = {
             id: botId,
             phoneNumber,
@@ -421,11 +373,9 @@ async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
         };
         saveSubBots(subbots);
 
-        // Cria diretórios mas não inicializa
         createSubBotDirectories(botId);
         createSubBotConfig(botId, phoneNumber, ownerNumber);
 
-        // Monta mensagem de resposta
         let message = `✅ *SUB-BOT REGISTRADO COM SUCESSO!*\n\n`;
         message += `📱 *Número:* ${phoneNumber}\n`;
         message += `🆔 *ID:* \`${botId}\`\n`;
@@ -453,9 +403,6 @@ async function addSubBot(phoneNumber, ownerNumber, subBotLid) {
     }
 }
 
-/**
- * Remove um sub-bot
- */
 async function removeSubBot(botId) {
     try {
         const subbots = loadSubBots();
@@ -467,7 +414,6 @@ async function removeSubBot(botId) {
             };
         }
 
-        // Desconecta se estiver ativo
         const activeSock = activeSubBots.get(botId);
         if (activeSock) {
             try {
@@ -478,13 +424,11 @@ async function removeSubBot(botId) {
             activeSubBots.delete(botId);
         }
 
-        // Remove diretório
         const botDir = path.join(SUBBOTS_DIR, botId);
         if (fs.existsSync(botDir)) {
             fs.rmSync(botDir, { recursive: true, force: true });
         }
 
-        // Remove do registro
         delete subbots[botId];
         saveSubBots(subbots);
 
@@ -501,9 +445,6 @@ async function removeSubBot(botId) {
     }
 }
 
-/**
- * Lista todos os sub-bots
- */
 function listSubBots() {
     try {
         const subbots = loadSubBots();
@@ -539,9 +480,6 @@ function listSubBots() {
     }
 }
 
-/**
- * Inicializa todos os sub-bots salvos
- */
 async function initializeAllSubBots() {
     try {
         const subbots = loadSubBots();
@@ -558,18 +496,16 @@ async function initializeAllSubBots() {
         for (const botId of keys) {
             const bot = subbots[botId];
 
-            // Só inicializa se não estiver ativo e se tiver credenciais salvas (já foi pareado)
             if (!activeSubBots.has(botId)) {
                 const authDir = path.join(SUBBOTS_DIR, botId, 'auth');
                 const credsFile = path.join(authDir, 'creds.json');
 
-                // Verifica se já foi pareado (tem creds.json)
                 if (fs.existsSync(credsFile)) {
                     try {
                         console.log(`🔄 Inicializando sub-bot ${botId}...`);
                         await initializeSubBot(botId, bot.phoneNumber, bot.ownerNumber, false);
                         initialized++;
-                        // Pequeno delay entre inicializações
+
                         await new Promise(resolve => setTimeout(resolve, 2000));
                     } catch (error) {
                         console.error(`❌ Erro ao inicializar sub-bot ${botId}:`, error.message);
@@ -586,9 +522,6 @@ async function initializeAllSubBots() {
     }
 }
 
-/**
- * Desconecta todos os sub-bots
- */
 async function disconnectAllSubBots() {
     try {
         console.log('🛑 Desconectando todos os sub-bots...');
@@ -609,9 +542,6 @@ async function disconnectAllSubBots() {
     }
 }
 
-/**
- * Obtém informações de um sub-bot específico
- */
 function getSubBotInfo(botId) {
     const subbots = loadSubBots();
     const bot = subbots[botId];
@@ -629,9 +559,6 @@ function getSubBotInfo(botId) {
     };
 }
 
-/**
- * Reconecta um sub-bot específico após pareamento
- */
 async function reconnectSubBot(botId) {
     try {
         const subbots = loadSubBots();
@@ -667,15 +594,10 @@ async function reconnectSubBot(botId) {
     }
 }
 
-/**
- * Gera código de pareamento para um sub-bot específico
- * Reseta as credenciais e gera novo código
- */
 async function generatePairingCodeForSubBot(userLid) {
     try {
         const subbots = loadSubBots();
 
-        // Encontra o sub-bot pelo LID
         const botEntry = Object.entries(subbots).find(([_, bot]) => bot.subBotLid === userLid);
 
         if (!botEntry) {
@@ -687,7 +609,6 @@ async function generatePairingCodeForSubBot(userLid) {
 
         const [botId, bot] = botEntry;
 
-        // Verifica se já está gerando código
         if (generatingCode.has(botId)) {
             return {
                 success: false,
@@ -695,11 +616,10 @@ async function generatePairingCodeForSubBot(userLid) {
             };
         }
 
-        // Marca como gerando
         generatingCode.add(botId);
 
         try {
-            // Desconecta se estiver ativo
+
             const activeSock = activeSubBots.get(botId);
             if (activeSock) {
                 try {
@@ -710,7 +630,6 @@ async function generatePairingCodeForSubBot(userLid) {
                 }
             }
 
-            // Remove credenciais antigas
             const authDir = path.join(SUBBOTS_DIR, botId, 'auth');
             if (fs.existsSync(authDir)) {
                 fs.rmSync(authDir, { recursive: true, force: true });
@@ -719,7 +638,6 @@ async function generatePairingCodeForSubBot(userLid) {
 
             console.log(`🔑 Gerando novo código de pareamento para sub-bot ${botId}...`);
 
-            // Inicializa com geração de código
             const result = await initializeSubBot(botId, bot.phoneNumber, bot.ownerNumber, true);
 
             if (!result.pairingCode) {
@@ -729,7 +647,6 @@ async function generatePairingCodeForSubBot(userLid) {
                 };
             }
 
-            // Monta mensagem com o código
             let message = `🔑 *CÓDIGO DE PAREAMENTO GERADO!*\n\n`;
             message += `📱 *Seu número:* ${bot.phoneNumber}\n`;
             message += `🆔 *ID:* \`${botId}\`\n\n`;
@@ -751,14 +668,14 @@ async function generatePairingCodeForSubBot(userLid) {
                 botId
             };
         } finally {
-            // Remove da lista de gerando após 10 segundos
+
             setTimeout(() => {
                 generatingCode.delete(botId);
             }, 10000);
         }
     } catch (error) {
         console.error('Erro ao gerar código de pareamento:', error);
-        // Remove do controle em caso de erro
+
         generatingCode.delete(botId);
         return {
             success: false,

@@ -1,9 +1,3 @@
-/**
- * Sistema de Estilização de Texto Otimizado
- * Versão: 3.1.0 - 100% Local
- */
-
-// Mapeamento completo de estilos de texto usando objetos
 const FONT_STYLES = {
   normal: {
     a: 'a', b: 'b', c: 'c', d: 'd', e: 'e', f: 'f', g: 'g', h: 'h', i: 'i', j: 'j',
@@ -629,7 +623,6 @@ const FONT_STYLES = {
   }
 };
 
-// Gerador de Estilos Local
 class StyleGenerator {
   static normalizeText(text) {
     return text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
@@ -640,8 +633,8 @@ class StyleGenerator {
     let styled = '';
 
     for (const char of normalized) {
-      // Usa o caractere diretamente como chave no styleMap
-      styled += styleMap[char] || char; // Mantém o caractere original se não houver mapeamento
+
+      styled += styleMap[char] || char;
     }
 
     return styled;
@@ -654,34 +647,26 @@ class StyleGenerator {
 
     const styles = [];
 
-    // Gera todos os estilos disponíveis
     for (const [styleName, styleMap] of Object.entries(FONT_STYLES)) {
       if (styleName !== 'normal') {
         styles.push(this.applyStyle(text, styleMap));
       }
     }
 
-    // Adiciona alguns estilos compostos
-    styles.push(text.split('').join('᠆')); // Texto separado
-    styles.push(text.split('').join(' ')); // Espaçado
-    styles.push(text.toUpperCase()); // Maiúsculas
-    styles.push(text.toLowerCase()); // Minúsculas
+    styles.push(text.split('').join('᠆'));
+    styles.push(text.split('').join(' '));
+    styles.push(text.toUpperCase());
+    styles.push(text.toLowerCase());
 
-    // Remove estilos vazios ou duplicados
     return styles
       .filter(style => style && style.trim())
       .filter((style, index, self) => self.indexOf(style) === index);
   }
 }
 
-/**
- * Gera estilos de texto diferentes (100% local)
- * @param {string} text - Texto para estilizar
- * @returns {Array<string>} Array de estilos
- */
 function styleText(text) {
   try {
-    // Validações
+
     if (!text || typeof text !== 'string') {
       throw new Error('Texto inválido');
     }
@@ -690,13 +675,12 @@ function styleText(text) {
       throw new Error('Texto muito longo (máximo 100 caracteres)');
     }
 
-    // Gera estilos locais
     const styles = StyleGenerator.generateStyles(text);
 
     return styles;
   } catch (error) {
     console.error('Erro ao gerar estilos:', error);
-    // Retorna array vazio em caso de erro
+
     return [];
   }
 }

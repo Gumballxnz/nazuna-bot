@@ -1,4 +1,3 @@
-// --- SISTEMA DE CONQUISTAS ---
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,9 +7,8 @@ const __dirname = path.dirname(__filename);
 
 const ACHIEVEMENTS_FILE = path.join(__dirname, '../../../database/achievements.json');
 
-// Definição de todas as conquistas disponíveis
 const ACHIEVEMENTS = {
-    // Conquistas de Mensagens
+
     first_message: {
         id: 'first_message',
         name: '🎉 Primeiro Passo',
@@ -44,7 +42,6 @@ const ACHIEVEMENTS = {
         goldReward: 5000
     },
 
-    // Conquistas de Comandos
     first_command: {
         id: 'first_command',
         name: '⌨️ Iniciante',
@@ -78,7 +75,6 @@ const ACHIEVEMENTS = {
         goldReward: 3000
     },
 
-    // Conquistas de Jogos
     first_game_win: {
         id: 'first_game_win',
         name: '🥇 Primeira Vitória',
@@ -136,7 +132,6 @@ const ACHIEVEMENTS = {
         goldReward: 1000
     },
 
-    // Conquistas Sociais
     first_gift: {
         id: 'first_gift',
         name: '🎁 Generoso',
@@ -170,7 +165,6 @@ const ACHIEVEMENTS = {
         goldReward: 1500
     },
 
-    // Conquistas de Economia/RPG
     first_gold: {
         id: 'first_gold',
         name: '💰 Primeiro Ouro',
@@ -204,7 +198,6 @@ const ACHIEVEMENTS = {
         goldReward: 0
     },
 
-    // Conquistas de Nível
     level_10: {
         id: 'level_10',
         name: '📈 Em Ascensão',
@@ -238,7 +231,6 @@ const ACHIEVEMENTS = {
         goldReward: 10000
     },
 
-    // Conquistas Especiais
     daily_streak_7: {
         id: 'daily_streak_7',
         name: '📅 Dedicado',
@@ -289,7 +281,6 @@ const ACHIEVEMENTS = {
     }
 };
 
-// Carregar dados de conquistas
 const loadAchievements = () => {
     try {
         if (fs.existsSync(ACHIEVEMENTS_FILE)) {
@@ -301,7 +292,6 @@ const loadAchievements = () => {
     return { users: {}, stats: {} };
 };
 
-// Salvar dados de conquistas
 const saveAchievements = (data) => {
     try {
         const dir = path.dirname(ACHIEVEMENTS_FILE);
@@ -314,7 +304,6 @@ const saveAchievements = (data) => {
     }
 };
 
-// Obter dados do usuário
 const getUserData = (data, userId) => {
     if (!data.users[userId]) {
         data.users[userId] = {
@@ -339,7 +328,6 @@ const getUserData = (data, userId) => {
     return data.users[userId];
 };
 
-// Verificar e desbloquear conquista
 const checkAndUnlock = (userId, achievementId, customCheck = null) => {
     const data = loadAchievements();
     const user = getUserData(data, userId);
@@ -348,10 +336,8 @@ const checkAndUnlock = (userId, achievementId, customCheck = null) => {
     if (!achievement) return null;
     if (user.unlockedAchievements.includes(achievementId)) return null;
 
-    // Se há uma verificação customizada, usar ela
     if (customCheck && !customCheck(user.stats)) return null;
 
-    // Desbloquear conquista
     user.unlockedAchievements.push(achievementId);
     saveAchievements(data);
 
@@ -367,17 +353,15 @@ const checkAndUnlock = (userId, achievementId, customCheck = null) => {
     };
 };
 
-// Incrementar estatística e verificar conquistas relacionadas
 const incrementStat = (userId, stat, amount = 1) => {
     const data = loadAchievements();
     const user = getUserData(data, userId);
-    
+
     user.stats[stat] = (user.stats[stat] || 0) + amount;
     saveAchievements(data);
 
     const unlockedAchievements = [];
 
-    // Verificar conquistas baseadas na estatística
     switch (stat) {
         case 'messages':
             if (user.stats.messages >= 1) {
@@ -415,7 +399,7 @@ const incrementStat = (userId, stat, amount = 1) => {
                 const result = checkAndUnlock(userId, 'commands_5000');
                 if (result) unlockedAchievements.push(result);
             }
-            // Verificar horário
+
             const hour = new Date().getHours();
             if (hour >= 0 && hour < 5) {
                 const result = checkAndUnlock(userId, 'night_owl');
@@ -483,7 +467,6 @@ const incrementStat = (userId, stat, amount = 1) => {
             break;
     }
 
-    // Verificar conquista de colecionador
     if (user.unlockedAchievements.length >= 20) {
         const result = checkAndUnlock(userId, 'collector');
         if (result) unlockedAchievements.push(result);
@@ -496,7 +479,6 @@ const incrementStat = (userId, stat, amount = 1) => {
     return unlockedAchievements;
 };
 
-// Verificar conquista de memória (baseado em score)
 const checkMemoryAchievement = (userId, attempts) => {
     const data = loadAchievements();
     const user = getUserData(data, userId);
@@ -512,7 +494,6 @@ const checkMemoryAchievement = (userId, attempts) => {
     return null;
 };
 
-// Verificar conquista de nível
 const checkLevelAchievement = (userId, level) => {
     const unlockedAchievements = [];
 
@@ -536,7 +517,6 @@ const checkLevelAchievement = (userId, level) => {
     return unlockedAchievements;
 };
 
-// Verificar conquista de ouro
 const checkGoldAchievement = (userId, gold) => {
     const unlockedAchievements = [];
 
@@ -560,7 +540,6 @@ const checkGoldAchievement = (userId, gold) => {
     return unlockedAchievements;
 };
 
-// Verificar conquista de daily streak
 const checkDailyStreak = (userId) => {
     const data = loadAchievements();
     const user = getUserData(data, userId);
@@ -592,7 +571,6 @@ const checkDailyStreak = (userId) => {
     return unlockedAchievements;
 };
 
-// Obter todas as conquistas do usuário
 const getUserAchievements = (userId) => {
     const data = loadAchievements();
     const user = getUserData(data, userId);
@@ -611,7 +589,6 @@ const getUserAchievements = (userId) => {
     };
 };
 
-// Obter lista de conquistas formatada
 const formatAchievementsList = (userId) => {
     const { unlocked, locked, total, unlockedCount, stats } = getUserAchievements(userId);
 
@@ -644,7 +621,6 @@ const formatAchievementsList = (userId) => {
     return message;
 };
 
-// Obter todas as conquistas disponíveis
 const getAllAchievements = () => ACHIEVEMENTS;
 
 export {

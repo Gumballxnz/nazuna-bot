@@ -3,16 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
 
-// Lazy-load fg-senna (carrega puppeteer/chromium em memoria)
 let _fg = null;
 async function getFg() {
     if (!_fg) _fg = (await import('fg-senna')).default;
     return _fg;
 }
 
-/**
- * Download de Twitter via VxTwitter API
- */
 export async function downloadTwitter(url) {
     const tweetId = url.match(/\/status\/(\d+)/)?.[1];
     if (!tweetId) throw new Error('Link do Twitter inválido');
@@ -21,7 +17,7 @@ export async function downloadTwitter(url) {
     if (!res || (!res.media_extended && !res.media_urls)) throw new Error('Mídia não encontrada');
 
     const mediaList = res.media_extended || res.media_urls.map(u => ({ url: u, type: u.includes('.mp4') ? 'video' : 'image' }));
-    
+
     return {
         author: res.user_name,
         text: res.text,
@@ -29,21 +25,17 @@ export async function downloadTwitter(url) {
     };
 }
 
-/**
- * Download de APK via APKPure (Motor Senna Bot)
- */
 export async function downloadAPK(query) {
     const fg = await getFg();
-    // Fase 1: Pesquisa no APKPure (Motor de Confiança do Senna)
+
     const searchRes = await fg.apks(query).catch(() => null);
     if (!searchRes || searchRes.length === 0) throw new Error('App não encontrado no Google Play/APKPure.');
 
     const app = searchRes[0];
-    
-    // Fase 2: Extrair link de download real
+
     const appDl = await fg.apkdl(app.pkg).catch(() => null);
     if (!appDl || !appDl.download) {
-        // Fallback Aptoide se APKPure falhar
+
         const resAptoide = await axios.get(`https://ws75.aptoide.com/api/7/apps/search?query=${encodeURIComponent(query)}&limit=1`).then(v => v.data).catch(() => null);
         if (resAptoide && resAptoide.datalist?.list?.length > 0) {
             const apt = resAptoide.datalist.list[0];
@@ -75,31 +67,22 @@ export async function downloadAPK(query) {
     };
 }
 
-/**
- * Download de GDrive via fg-senna
- */
 export async function downloadGDrive(url) {
     const fg = await getFg();
     const res = await fg.gdrive(url).catch(() => null);
     if (!res || !res.downloadUrl) throw new Error('Falha ao obter link do GDrive');
-    return res; 
-    // retorna { fileName, mimetype, size, downloadUrl }
+    return res;
+
 }
 
-/**
- * Download de MediaFire via fg-senna
- */
 export async function downloadMediafire(url) {
     const fg = await getFg();
     const res = await fg.mediafire(url).catch(() => null);
     if (!res || !res.url) throw new Error('Falha ao extrair do Mediafire');
     return res;
-    // retorna { url, type, filename, ext, aploud, size }
+
 }
 
-/**
- * Download de Spotify via Siputzx (Motor Secundário Senna)
- */
 export async function downloadSpotify(url) {
     const res = await axios.get(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(url)}`, { timeout: 20000 }).then(v => v.data).catch(() => null);
     if (!res || !res.data || !res.data.download) {

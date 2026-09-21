@@ -1,8 +1,5 @@
 import { groupVipCommandsByCategory, getVipStats } from '../utils/vipCommandsManager.js';
 
-/**
- * Gera o menu VIP dinamicamente baseado nos comandos cadastrados
- */
 async function menuVIP(prefix, botName = "MeuBot", userName = "Usuário", {
   header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
   menuTopBorder = "╭┈",
@@ -15,7 +12,7 @@ async function menuVIP(prefix, botName = "MeuBot", userName = "Usuário", {
     const grouped = groupVipCommandsByCategory();
     const stats = getVipStats();
     const formattedHeader = header.replace(/#user#/g, userName);
-    
+
     let menu = `${formattedHeader}
 
 `;
@@ -65,7 +62,7 @@ async function menuVIPInfo(prefix, botName = "MeuBot", userName = "Usuário", {
 } = {}) {
   const stats = getVipStats();
   const formattedHeader = header.replace(/#user#/g, userName);
-  
+
   let info = `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *📊 ESTATÍSTICAS*
@@ -106,7 +103,7 @@ async function listVIPCommands(prefix, botName = "MeuBot", userName = "Usuário"
   const grouped = groupVipCommandsByCategory();
   const stats = getVipStats();
   const formattedHeader = header.replace(/#user#/g, userName);
-  
+
   if (stats.active === 0) {
     return `📭 Nenhum comando VIP cadastrado.
 
@@ -114,7 +111,7 @@ ${prefix}addcmdvip <cmd> | <desc> | <cat>
 
 Categorias: download, diversao, utilidade, ia, editor, info, outros`;
   }
-  
+
   let list = `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *👑 COMANDOS VIP*

@@ -1,18 +1,12 @@
-/**
- * Download Instagram usando Pool Dinâmico de Cobalt, fg-senna e APIs de alta velocidade
- */
-
 import axios from 'axios';
 import { getCobaltApis } from '../../utils/ytHelper.js';
 
-// Lazy-load fg-senna
 let _fg = null;
 async function getFg() {
     if (!_fg) _fg = (await import('fg-senna')).default;
     return _fg;
 }
 
-// Baixar buffer de uma URL
 async function downloadBuffer(url) {
     const res = await axios.get(url, {
         responseType: 'arraybuffer',
@@ -51,7 +45,6 @@ async function igdlCobalt(url) {
             const data = response.data;
             if (!data) continue;
 
-            // Galeria picker
             if (data.status === 'picker' && Array.isArray(data.picker)) {
                 const results = [];
                 for (const item of data.picker) {
@@ -73,14 +66,13 @@ async function igdlCobalt(url) {
                 }
             }
 
-            // Item único
             if (data.url) {
                 const buff = await downloadBuffer(data.url);
                 const isVideo = data.url.includes('.mp4') || data.url.includes('video') || data.filename?.includes('.mp4') || data.status === 'stream';
                 return { ok: true, data: [{ type: isVideo ? 'video' : 'image', buff }], count: 1 };
             }
         } catch (error) {
-            // Próxima instância
+
         }
     }
     throw new Error('Todas as instâncias de Cobalt falharam.');
@@ -106,21 +98,19 @@ async function igdlInstaVideoSave(url) {
     throw new Error('API instavideosave falhou.');
 }
 
-// Função para baixar post do Instagram
 async function igdl(url) {
-    // 1. Tenta Cobalt (Mais rápido e suporta múltiplas instâncias)
+
     try {
         const resCobalt = await igdlCobalt(url);
         if (resCobalt && resCobalt.ok) return resCobalt;
     } catch (_) {}
 
-    // 2. Tenta fg-senna
     try {
         const fg = await getFg();
         const res = await fg.igdl(url).catch(() => null);
 
         if (res) {
-            // Galeria (múltiplos itens)
+
             if (res.result && Array.isArray(res.result) && res.result.length > 0) {
                 const results = [];
                 for (const item of res.result) {
@@ -140,7 +130,6 @@ async function igdl(url) {
                 }
             }
 
-            // Vídeo/imagem único
             const dlUrl = res.dl_url || res.url;
             if (dlUrl) {
                 const buff = await downloadBuffer(dlUrl);
@@ -150,7 +139,6 @@ async function igdl(url) {
         }
     } catch (_) {}
 
-    // 3. Tenta InstaVideoSave API
     try {
         const resInsta = await igdlInstaVideoSave(url);
         if (resInsta && resInsta.ok) return resInsta;

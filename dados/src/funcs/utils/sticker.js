@@ -9,7 +9,6 @@ import ffmpeg from 'fluent-ffmpeg';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Diretório temporário
 function ensureTmpDir() {
   const tmpDir = path.join(path.dirname(__filename), "../../../database/tmp");
   if (!fsSync.existsSync(tmpDir)) {
@@ -22,14 +21,12 @@ function generateTempFileName(ext) {
   return path.join(dir, `${Date.now()}_${Math.floor(Math.random() * 1e6)}.${ext}`);
 }
 
-// Download para buffer
 async function getBuffer(url) {
   const { data } = await axios.get(url, { responseType: "arraybuffer" });
   if (!data || data.length === 0) throw new Error("Download vazio");
   return Buffer.from(data);
 }
 
-// Detecção mínima só para imagens
 function detectImageExtension(buf) {
   if (buf.length >= 12) {
     if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return "png";
@@ -39,16 +36,14 @@ function detectImageExtension(buf) {
   return "jpg";
 }
 
-// Converter para WebP (sempre .mp4 para vídeo)
 async function convertToWebp(mediaBuffer, isVideo = false, forceSquare = false) {
-  // Se já for webp estático e não for vídeo, retorna direto
+
   if (!isVideo &&
       mediaBuffer.slice(0, 4).toString() === "RIFF" &&
       mediaBuffer.slice(8, 12).toString() === "WEBP") {
     return mediaBuffer;
   }
 
-  // Arquivo de entrada temporário
   const inExt = isVideo ? "mp4" : detectImageExtension(mediaBuffer);
   const tmpIn = generateTempFileName(isVideo ? "mp4" : inExt);
 
@@ -62,8 +57,7 @@ async function convertToWebp(mediaBuffer, isVideo = false, forceSquare = false) 
 
   const filters = isVideo ? `${vfBase},fps=15` : vfBase;
 
-  // Limites de tamanho e qualidade
-  const MAX_SIZE = 990000; // Menos de 1MB com margem de segurança (~966KB)
+  const MAX_SIZE = 990000;
   const MIN_QUALITY = isVideo ? 15 : 25;
   let quality = isVideo ? 45 : 75;
   let outBuffer = null;
@@ -103,17 +97,14 @@ async function convertToWebp(mediaBuffer, isVideo = false, forceSquare = false) 
     outBuffer = await fs.readFile(tmpOut);
     await fs.unlink(tmpOut).catch(()=>{});
 
-    // Verifica se está dentro do limite
     if (outBuffer.length <= MAX_SIZE) {
       break;
     }
 
-    // Se ainda está grande, reduz qualidade
     if (quality <= MIN_QUALITY) {
       break;
     }
 
-    // Reduz qualidade progressivamente
     const reductionFactor = outBuffer.length / MAX_SIZE;
     if (reductionFactor > 1.5) {
       quality = Math.max(MIN_QUALITY, Math.floor(quality * 0.6));
@@ -124,13 +115,11 @@ async function convertToWebp(mediaBuffer, isVideo = false, forceSquare = false) 
     }
   }
 
-  // Limpeza
   await fs.unlink(tmpIn).catch(()=>{});
 
   return outBuffer;
 }
 
-// Escrever EXIF
 async function writeExif(webpBuffer, metadata) {
   try {
     const img = new webp.Image();
@@ -159,7 +148,6 @@ async function writeExif(webpBuffer, metadata) {
   }
 }
 
-// Resolver input
 async function resolveInputToBuffer(input) {
   if (Buffer.isBuffer(input)) return input;
   if (typeof input === "string") {
@@ -177,9 +165,6 @@ async function resolveInputToBuffer(input) {
   throw new Error("Entrada de sticker inválida");
 }
 
-/**
- * Envia sticker
- */
 const sendSticker = async (nazu, jid, {
   sticker: input,
   type = "image",

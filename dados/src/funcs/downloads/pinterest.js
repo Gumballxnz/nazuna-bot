@@ -1,11 +1,3 @@
-/**
- * Pinterest Download e Pesquisa - 100% Gratuito 
- * Motor: Scraper nativo com resolvedores CORS (AllOrigins, Codetabs) e fallbacks resilientes
- * 
- * @author Hiudy & Antigravity (adaptado)
- * @version 5.0.0
- */
-
 import axios from 'axios';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -43,23 +35,15 @@ async function tryCobaltDL(url) {
   return null;
 }
 
-/**
- * Busca via curl nativo (bypassa TLS fingerprint do Node.js)
- * Curl usa libcurl que tem fingerprint diferente do axios/node-fetch
- * @param {string} curlUrl - URL a buscar via curl
- * @param {string} userAgent - User-Agent a usar
- * @returns {Promise<string>} HTML/texto da resposta
- */
 async function fetchViaCurl(curlUrl, userAgent = '') {
   const uaFlag = userAgent ? `-A '${userAgent}'` : '';
   const { stdout } = await execAsync(
     `curl -sL --max-time 15 ${uaFlag} '${curlUrl.replace(/'/g, "\'")}' 2>/dev/null`,
-    { maxBuffer: 50 * 1024 * 1024 } // 50MB buffer
+    { maxBuffer: 50 * 1024 * 1024 }
   );
   return stdout;
 }
 
-// Cache LRU simples para evitar requisições repetidas
 class SimpleCache {
   constructor(maxEntries = 500, ttl = 30 * 60 * 1000) {
     this.map = new Map();
@@ -88,15 +72,9 @@ class SimpleCache {
 
 const cache = new SimpleCache(500, 30 * 60 * 1000);
 
-// User-Agents testados: Googlebot funciona em data center, Chrome para uso local
 const UA_GOOGLEBOT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 const UA_CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-/**
- * Pesquisa imagens no Pinterest usando API nativa do Pinterest via proxy CORS
- * @param {string} query - Termo de pesquisa
- * @returns {Promise<Object>} - { ok: true, urls: [...], type, count, query }
- */
 async function pinterestSearch(query) {
   try {
     if (!query || typeof query !== 'string') {
@@ -121,7 +99,6 @@ async function pinterestSearch(query) {
 
     let jsonResponse = null;
 
-    // Tentativa 1: AllOrigins
     try {
       const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`, {
         headers: { 'User-Agent': UA_CHROME },
@@ -134,7 +111,6 @@ async function pinterestSearch(query) {
       console.error('[Pinterest Search] AllOrigins falhou:', e.message);
     }
 
-    // Tentativa 2: Codetabs
     if (!jsonResponse) {
       try {
         const res = await axios.get(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(searchUrl)}`, {
@@ -151,7 +127,6 @@ async function pinterestSearch(query) {
       }
     }
 
-    // Tentativa 3: Direto via curl (contorna TLS fingerprint)
     if (!jsonResponse) {
       try {
         const rawRes = await fetchViaCurl(searchUrl, UA_CHROME);
@@ -163,7 +138,6 @@ async function pinterestSearch(query) {
       }
     }
 
-    // Tentativa 4: Direto via axios (legado)
     if (!jsonResponse) {
       try {
         const res = await axios.get(searchUrl, {
@@ -198,7 +172,6 @@ async function pinterestSearch(query) {
       }
     }
 
-    // Fallback rápido usando um scraper alternativo de imagem se necessário
     return { ok: false, msg: 'Nenhuma imagem encontrada. Tente outro termo.' };
   } catch (error) {
     console.error('Erro na pesquisa Pinterest:', error);
@@ -206,11 +179,6 @@ async function pinterestSearch(query) {
   }
 }
 
-/**
- * Download de conteúdo do Pinterest via URL
- * @param {string} url - URL do pin
- * @returns {Promise<Object>} - { ok: true, urls: [...], type, title }
- */
 async function pinterestDL(url) {
   try {
     if (!url || typeof url !== 'string') {
@@ -222,13 +190,9 @@ async function pinterestDL(url) {
 
     let html = null;
 
-    // === FASE 1: Resolver URL (converter links curtos pin.it em URL longa) ===
     let resolvedUrl = url;
-    let oembedData = null; // guardamos o oEmbed para usar como fallback de imagem na FASE 3
+    let oembedData = null;
 
-    // Se for link curto (pin.it) ou qualquer URL do Pinterest, usa a API oEmbed oficial
-    // oEmbed é uma API pública do Pinterest, funciona de qualquer IP sem bloqueio
-    // Retorna: { html: '<a href="pinterest.com/pin/ID/">...', thumbnail_url, title, ... }
     try {
       const oembedRes = await axios.get(`https://www.pinterest.com/oembed/?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA_CHROME },
@@ -236,7 +200,7 @@ async function pinterestDL(url) {
       });
       if (oembedRes.data) {
         oembedData = oembedRes.data;
-        // Extrai pin ID do campo html do oEmbed
+
         const pinMatch = (oembedRes.data.html || '').match(/pinterest\.com\/pin\/([0-9]+)/);
         if (pinMatch) {
           resolvedUrl = `https://www.pinterest.com/pin/${pinMatch[1]}/`;
@@ -245,7 +209,7 @@ async function pinterestDL(url) {
       }
     } catch (e) {
       console.error('[Pinterest DL] oEmbed falhou:', e.message);
-      // Fallback: tentar via curl se axios falhar
+
       try {
         const oembedRaw = await fetchViaCurl(`https://www.pinterest.com/oembed/?url=${encodeURIComponent(url)}`);
         const data = JSON.parse(oembedRaw);
@@ -262,11 +226,6 @@ async function pinterestDL(url) {
       }
     }
 
-
-    // === FASE 2: Buscar HTML do pin com URL resolvida ===
-
-    // Motor 1 (curl + Googlebot): comprovado 100% funcional na VPS via curl nativo
-    // Googlebot UA faz o Pinterest servir HTML completo com __PWS_DATA__
     try {
       const htmlViaGooglebot = await fetchViaCurl(resolvedUrl, UA_GOOGLEBOT);
       if (htmlViaGooglebot && htmlViaGooglebot.includes('__PWS_DATA__')) {
@@ -276,7 +235,6 @@ async function pinterestDL(url) {
       console.error('[Pinterest DL] curl Googlebot falhou:', e.message);
     }
 
-    // Motor 2 (axios Googlebot): fallback para quando curl não está disponível
     if (!html) {
       try {
         const res = await axios.get(resolvedUrl, {
@@ -296,7 +254,6 @@ async function pinterestDL(url) {
       }
     }
 
-    // Motor 3 (AllOrigins via curl): proxy que funciona localmente
     if (!html) {
       try {
         const rawJson = await fetchViaCurl(`https://api.allorigins.win/get?url=${encodeURIComponent(resolvedUrl)}`);
@@ -309,7 +266,6 @@ async function pinterestDL(url) {
       }
     }
 
-    // Motor 4 (axios AllOrigins): último recurso
     if (!html) {
       try {
         const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(resolvedUrl)}`, {
@@ -328,8 +284,6 @@ async function pinterestDL(url) {
       return { ok: false, msg: 'Não foi possível carregar a página do Pinterest.' };
     }
 
-
-    // 2. Tenta parsear dados do __PWS_DATA__
     const pwsMatch = html.match(/<script id="__PWS_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
     if (pwsMatch) {
       try {
@@ -341,7 +295,6 @@ async function pinterestDL(url) {
             const pinData = pins[pinIds[0]];
             const title = pinData.title || pinData.grid_title || '';
 
-            // Caso A: É um vídeo
             if (pinData.videos && pinData.videos.video_list) {
               const videoList = pinData.videos.video_list;
               const bestVideo = videoList.V_720P || videoList.V_HLSV4 || Object.values(videoList)[0];
@@ -358,7 +311,6 @@ async function pinterestDL(url) {
               }
             }
 
-            // Caso B: Story Pin Data (carrosséis / coleções)
             if (pinData.story_pin_data?.pages) {
               const pages = pinData.story_pin_data.pages;
               const urls = [];
@@ -376,7 +328,7 @@ async function pinterestDL(url) {
                       continue;
                     }
                   }
-                  
+
                   const imgBlock = page.blocks.find(b => b.type === 'IMAGE');
                   if (imgBlock && imgBlock.image_spec) {
                     const bestImg = imgBlock.image_spec.orig?.url || imgBlock.image_spec['736x']?.url || imgBlock.image_spec['564x']?.url;
@@ -400,7 +352,6 @@ async function pinterestDL(url) {
               }
             }
 
-            // Caso C: É uma imagem normal
             if (pinData.images) {
               const images = pinData.images;
               const orig = images.orig || images['736x'] || images['564x'];
@@ -423,7 +374,6 @@ async function pinterestDL(url) {
       }
     }
 
-    // 3. Fallback de Metatags OG se __PWS_DATA__ não for encontrado ou falhar
     const ogVideo = html.match(/<meta\s+property=["']og:video["']\s+content=["']([^"']+)["']/i) ||
                     html.match(/<meta\s+name=["']twitter:player["']\s+content=["']([^"']+)["']/i);
     const ogImage = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
@@ -459,7 +409,6 @@ async function pinterestDL(url) {
       return result;
     }
 
-    // Fallback final: thumbnail do oEmbed (sempre retorna pelo menos uma imagem)
     if (oembedData && oembedData.thumbnail_url) {
       const result = {
         ok: true,
@@ -472,7 +421,6 @@ async function pinterestDL(url) {
       return result;
     }
 
-    // Fallback absoluto via Cobalt API (excelente para vídeos e imagens que falharam no scraper local)
     try {
       console.log('[Pinterest DL] Tentando fallback absoluto via Cobalt...');
       const cobaltUrl = await tryCobaltDL(url);

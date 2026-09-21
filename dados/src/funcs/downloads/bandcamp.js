@@ -1,20 +1,10 @@
-/**
- * Download Bandcamp - 100% Gratuito 
- * Motor: Siputzx + Ryzendesu
- */
-
 import axios from 'axios';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-/**
- * Baixa música/álbum do Bandcamp
- * @param {string} url - URL da track ou álbum do Bandcamp
- * @returns {Promise<Object>} Objeto com sucesso, buffer e informações da música
- */
 export async function download(url) {
   try {
-    // Motor 1: Siputzx
+
     try {
       const res = await axios.get(`https://api.siputzx.my.id/api/d/bandcamp?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
@@ -41,7 +31,6 @@ export async function download(url) {
       console.error('[Bandcamp] Motor 1 falhou:', e.message);
     }
 
-    // Motor 2: Ryzumi
     try {
       const res = await axios.get(`https://api.ryzumi.net/api/downloader/bandcamp?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },

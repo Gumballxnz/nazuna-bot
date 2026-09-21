@@ -8,7 +8,6 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-// Lazy-load fg-senna (carrega sob demanda para economizar RAM)
 let _fg = null;
 async function getFg() {
     if (!_fg) _fg = (await import('fg-senna')).default;
@@ -18,7 +17,6 @@ async function getFg() {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Pasta temporária da Nazuna
 const TEMP_DIR = path.join(__dirname, '..', 'tmp');
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
@@ -86,7 +84,6 @@ function cleanMediaUrl(rawUrl) {
     }
 }
 
-// Circuit breaker simples
 const motorFailures = new Map();
 const CIRCUIT_COOLDOWN = 2 * 60 * 1000;
 
@@ -104,15 +101,11 @@ function marcarSucesso(nome) {
     motorFailures.delete(nome);
 }
 
-/**
- * Resolve a URL direta do YouTube e metadados usando fg-senna e Cobalt API.
- */
 export async function resolverUrlYT(url, type = 'audio') {
     const targetUrl = cleanMediaUrl(url);
     let dl_url = null;
     let title = 'YouTube';
 
-    // Fase 1: fg-senna (Scraper de alta velocidade)
     if (motorDisponivel('fg-senna')) {
         try {
             console.log(`[YouTube Resolver] Fase 1: fg-senna (${type})...`);
@@ -139,7 +132,6 @@ export async function resolverUrlYT(url, type = 'audio') {
         }
     }
 
-    // Fase 2: Cobalt API (Pool dinâmico de instâncias ativas)
     if (motorDisponivel('cobalt')) {
         try {
             console.log(`[YouTube Resolver] Fase 2: Cobalt API...`);
@@ -190,9 +182,6 @@ export async function resolverUrlYT(url, type = 'audio') {
     throw new Error('Não foi possível resolver link direto do YouTube.');
 }
 
-/**
- * Downloads a YouTube video or audio with streaming to local disk.
- */
 export async function downloadYT(url, type = 'audio') {
     const filename = `yt_${Date.now()}`;
     const ext = type === 'audio' ? 'mp3' : 'mp4';
@@ -202,7 +191,6 @@ export async function downloadYT(url, type = 'audio') {
     let dl_url = null;
     let title = 'YouTube';
 
-    // 1. Tenta resolver via APIs de streaming (fg-senna / Cobalt)
     try {
         const resolved = await resolverUrlYT(targetUrl, type);
         dl_url = resolved.dl_url;
@@ -211,7 +199,6 @@ export async function downloadYT(url, type = 'audio') {
         console.log(`[YouTube Downloader] Streaming direto falhou: ${resolveErr.message}. Tentando yt-dlp local...`);
     }
 
-    // Se resolveu a URL externa com sucesso, baixa o arquivo para a VPS
     if (dl_url) {
         try {
             console.log(`[YouTube Downloader] Baixando stream da URL resolvida para o disco...`);
@@ -244,7 +231,6 @@ export async function downloadYT(url, type = 'audio') {
         }
     }
 
-    // 2. Se falhou na resolução de stream, executa yt-dlp local na VPS
     try {
         console.log(`[YouTube Downloader] Executando yt-dlp local na VPS...`);
         const dlpRes = await ytdlpLocal(targetUrl, type, filePath);
@@ -265,21 +251,16 @@ export async function downloadYT(url, type = 'audio') {
     throw new Error('Todas as fases de download falharam no servidor.');
 }
 
-/**
- * yt-dlp wrapper local com suporte a cookies
- */
 function ytdlpLocal(url, type, targetPath) {
     return new Promise((resolve) => {
         const id = Date.now();
         const ext = type === 'audio' ? 'mp3' : 'mp4';
         const filePath = targetPath || path.join(TEMP_DIR, `yt_dlp_${id}.${ext}`);
-        
-        // Formato otimizado
+
         const formatArg = type === 'audio'
             ? '-f "ba[ext=m4a]/ba/b" --extract-audio --audio-format mp3 --audio-quality 128k'
             : '-f "bv*[height<=720][ext=mp4]+ba[ext=m4a]/bv*[height<=720]+ba/b[height<=720]/b" --merge-output-format mp4';
 
-        // Localizar cookies
         const possibleCookiePaths = [
             path.join(__dirname, '..', '..', '..', 'cookies.txt'),
             path.join(__dirname, '..', '..', 'cookies.txt'),
@@ -314,9 +295,6 @@ function ytdlpLocal(url, type, targetPath) {
     });
 }
 
-/**
- * Get video info
- */
 export async function getYTInfo(url) {
     try {
         const fg = await getFg();

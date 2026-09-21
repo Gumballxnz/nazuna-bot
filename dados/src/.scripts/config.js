@@ -131,7 +131,7 @@ async function installSystemDependencies() {
             print.warning('⚠️ Falha ao atualizar pacotes do Termux. Continue com cuidado.');
         }
     }
-    
+
     for (const dep of DEPENDENCIES_CONFIG) {
         let status = `${colors.green}✅ Já instalado${colors.reset}`;
         try {
@@ -140,7 +140,7 @@ async function installSystemDependencies() {
             status = `${colors.yellow}⚠️ Não encontrado${colors.reset}`;
             const osKey = SystemInfo.isTermux ? 'termux' : (SystemInfo.os === 'darwin' ? 'mac' : SystemInfo.os);
             let installCommand = dep[osKey];
-            
+
             if (installCommand) {
                 try {
                     if (SystemInfo.isTermux && (dep.name === 'Git' || dep.name === 'FFmpeg')) {
@@ -159,7 +159,7 @@ async function installSystemDependencies() {
         }
         report.push({ name: dep.name, status });
     }
-    
+
     try {
         const optimizationDirs = ['temp', 'logs', 'cache', 'dados/backup'];
         for (const dir of optimizationDirs) {
@@ -171,22 +171,22 @@ async function installSystemDependencies() {
         print.warning('⚠️ Erro ao criar diretórios de otimização');
         report.push({ name: 'Diretórios de Otimização', status: `${colors.red}❌ Falha${colors.reset}` });
     }
-    
+
     return report;
 }
 
 async function installNodeDependencies() {
     print.separator();
     print.message('📦 Instalando dependências do projeto (Node.js)...');
-    
+
     try {
         const cleanupPaths = [
             './temp',
-            './logs/*.log', 
+            './logs/*.log',
             '/tmp/nazuna-*',
             '/tmp/baileys_media_cache'
         ];
-        
+
         for (const cleanupPath of cleanupPaths) {
             try {
                 if (cleanupPath.includes('*')) {
@@ -208,7 +208,7 @@ async function installNodeDependencies() {
     } catch (error) {
         print.warning('⚠️ Erro na limpeza automática (continuando...)');
     }
-    
+
     try {
         await runCommandWithSpinner('npm install --no-optional --force --no-bin-links', 'Executando npm install...');
         print.message('✅ Dependências instaladas com sucesso via NPM.');
@@ -243,7 +243,7 @@ async function main() {
     }
 
     print.header();
-    
+
     let config = { nomedono: '', numerodono: '', nomebot: '', prefixo: '!' };
     try {
         const existingConfig = JSON.parse(await fs.readFile(CONFIG_FILE, 'utf8'));
@@ -252,7 +252,7 @@ async function main() {
     } catch {  }
 
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    
+
     print.info(`${colors.bold}${colors.underline}🔧 Configurações Básicas${colors.reset}`);
     config.nomedono = await promptInput(rl, '👤 Nome do dono do bot', config.nomedono);
     config.numerodono = await promptInput(rl, '📱 Número do dono (apenas dígitos)', config.numerodono, (v) => /^\d{10,15}$/.test(v));
@@ -264,7 +264,7 @@ async function main() {
 
     print.separator();
     print.message('✅ Configuração salva com sucesso!');
-    
+
     if (await confirm(rl, '⚙️ Deseja verificar e instalar todas as dependências agora?', 's')) {
         rl.close();
         const nodeReport = await installNodeDependencies();

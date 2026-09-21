@@ -1,0 +1,36 @@
+# Dados e Sessões sensíveis
+database/
+dados/database/
+sessions/
+qr-code/
+*.key
+*.pem
+*.log
+.env
+.env.*
+
+# Chaves e certificados
+ssh*
+vps*
+
+# Arquivos de desenvolvimento e logs
+.git/
+.github/
+.vscode/
+.idea/
+scratch/
+test*.js
+test*.mjs
+auto-deploy.log
+conexao.log
+out.log
+run.log
+deploy.sh
+ecosystem.config.cjs
+memoria_projeto*.md
+
+# Dependências locais
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

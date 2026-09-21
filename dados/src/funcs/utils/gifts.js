@@ -1,4 +1,3 @@
-// --- SISTEMA DE PRESENTES ---
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,13 +7,12 @@ const __dirname = path.dirname(__filename);
 
 const GIFTS_FILE = path.join(__dirname, '../../../database/gifts.json');
 
-// Caixas de presente disponíveis
 const GIFT_BOXES = {
     comum: {
         id: 'comum',
         name: '📦 Caixa Comum',
         cost: 0,
-        cooldown: 24 * 60 * 60 * 1000, // 24 horas
+        cooldown: 24 * 60 * 60 * 1000,
         rewards: [
             { type: 'gold', min: 10, max: 50, chance: 40 },
             { type: 'xp', min: 5, max: 25, chance: 40 },
@@ -48,7 +46,6 @@ const GIFT_BOXES = {
     }
 };
 
-// Presentes que podem ser enviados
 const SENDABLE_GIFTS = {
     rosa: { id: 'rosa', emoji: '🌹', name: 'Rosa', cost: 50, message: 'uma linda rosa' },
     coracao: { id: 'coracao', emoji: '❤️', name: 'Coração', cost: 100, message: 'um coração cheio de amor' },
@@ -62,7 +59,6 @@ const SENDABLE_GIFTS = {
     anel: { id: 'anel', emoji: '💍', name: 'Anel', cost: 2000, message: 'um anel deslumbrante' }
 };
 
-// Carregar dados
 const loadGifts = () => {
     try {
         if (fs.existsSync(GIFTS_FILE)) {
@@ -74,7 +70,6 @@ const loadGifts = () => {
     return { users: {}, history: [] };
 };
 
-// Salvar dados
 const saveGifts = (data) => {
     try {
         const dir = path.dirname(GIFTS_FILE);
@@ -87,7 +82,6 @@ const saveGifts = (data) => {
     }
 };
 
-// Obter dados do usuário
 const getUserData = (data, userId) => {
     if (!data.users[userId]) {
         data.users[userId] = {
@@ -102,17 +96,15 @@ const getUserData = (data, userId) => {
     return data.users[userId];
 };
 
-// Helper para nome de usuário
 const getUserName = (userId) => {
     if (!userId || typeof userId !== 'string') return 'unknown';
     return userId.split('@')[0] || userId;
 };
 
-// Rolar recompensa de caixa
 const rollReward = (box) => {
     const roll = Math.random() * 100;
     let cumulative = 0;
-    
+
     for (const reward of box.rewards) {
         cumulative += reward.chance;
         if (roll <= cumulative) {
@@ -133,17 +125,15 @@ const rollReward = (box) => {
             }
         }
     }
-    
+
     return { type: 'nothing', message: '💨 A caixa estava vazia!' };
 };
 
-// Abrir caixa diária
 const openDailyBox = (userId) => {
     const data = loadGifts();
     const user = getUserData(data, userId);
     const now = Date.now();
-    
-    // Verificar cooldown
+
     if (user.lastDailyBox) {
         const timePassed = now - user.lastDailyBox;
         if (timePassed < GIFT_BOXES.comum.cooldown) {
@@ -156,17 +146,16 @@ const openDailyBox = (userId) => {
             };
         }
     }
-    
+
     user.lastDailyBox = now;
     const reward = rollReward(GIFT_BOXES.comum);
-    
-    // Adicionar item ao inventário se for item
+
     if (reward.type === 'item') {
         user.inventory[reward.item] = (user.inventory[reward.item] || 0) + 1;
     }
-    
+
     saveGifts(data);
-    
+
     return {
         success: true,
         reward,
@@ -174,27 +163,26 @@ const openDailyBox = (userId) => {
     };
 };
 
-// Abrir caixa comprada
 const openBox = (userId, boxType, userGold) => {
     const box = GIFT_BOXES[boxType];
     if (!box) {
         return { success: false, message: '❌ Tipo de caixa inválido!' };
     }
-    
+
     if (box.cost > 0 && userGold < box.cost) {
         return { success: false, message: `❌ Você precisa de ${box.cost} gold para abrir esta caixa!` };
     }
-    
+
     const data = loadGifts();
     const user = getUserData(data, userId);
     const reward = rollReward(box);
-    
+
     if (reward.type === 'item') {
         user.inventory[reward.item] = (user.inventory[reward.item] || 0) + 1;
     }
-    
+
     saveGifts(data);
-    
+
     return {
         success: true,
         reward,
@@ -203,57 +191,52 @@ const openBox = (userId, boxType, userGold) => {
     };
 };
 
-// Enviar presente
 const sendGift = (fromId, toId, giftType) => {
     if (fromId === toId) {
         return { success: false, message: '❌ Você não pode enviar presente para si mesmo!' };
     }
-    
+
     const gift = SENDABLE_GIFTS[giftType.toLowerCase()];
     if (!gift) {
         const available = Object.values(SENDABLE_GIFTS).map(g => `${g.emoji} ${g.name} (${g.cost}g)`).join('\n');
-        return { 
-            success: false, 
+        return {
+            success: false,
             message: `❌ Presente inválido!\n\n🎁 *Presentes disponíveis:*\n${available}`
         };
     }
-    
+
     const data = loadGifts();
     const sender = getUserData(data, fromId);
     const receiver = getUserData(data, toId);
     const today = new Date().toDateString();
-    
-    // Reset contador diário se for um novo dia
+
     if (sender.lastGiftDate !== today) {
         sender.giftsToday = 0;
         sender.lastGiftDate = today;
     }
-    
-    // Limite de presentes por dia
+
     if (sender.giftsToday >= 5) {
         return { success: false, message: '❌ Você já enviou 5 presentes hoje! Tente novamente amanhã.' };
     }
-    
+
     sender.giftsSent++;
     sender.giftsToday++;
     receiver.giftsReceived++;
     receiver.inventory[gift.emoji] = (receiver.inventory[gift.emoji] || 0) + 1;
-    
-    // Registrar no histórico
+
     data.history.push({
         from: fromId,
         to: toId,
         gift: gift.id,
         date: new Date().toISOString()
     });
-    
-    // Manter apenas últimos 1000 registros
+
     if (data.history.length > 1000) {
         data.history = data.history.slice(-1000);
     }
-    
+
     saveGifts(data);
-    
+
     return {
         success: true,
         gift,
@@ -265,58 +248,55 @@ const sendGift = (fromId, toId, giftType) => {
     };
 };
 
-// Ver inventário de presentes
 const getInventory = (userId) => {
     const data = loadGifts();
     const user = getUserData(data, userId);
-    
+
     const items = Object.entries(user.inventory).filter(([_, count]) => count > 0);
-    
+
     if (items.length === 0) {
         return {
             success: true,
             message: `🎒 *SEU INVENTÁRIO*\n\n📭 Vazio!\n\nAbra caixas ou receba presentes para preencher.`
         };
     }
-    
+
     let message = `🎒 *SEU INVENTÁRIO*\n\n`;
     items.forEach(([item, count]) => {
         message += `${item} x${count}\n`;
     });
-    
+
     message += `\n📊 *Estatísticas:*\n`;
     message += `🎁 Enviados: ${user.giftsSent}\n`;
     message += `📥 Recebidos: ${user.giftsReceived}`;
-    
+
     return { success: true, message };
 };
 
-// Listar presentes disponíveis
 const listGifts = (prefix = '/') => {
     let message = `🎁 *PRESENTES DISPONÍVEIS*\n\n`;
-    
+
     Object.values(SENDABLE_GIFTS).forEach(gift => {
         message += `${gift.emoji} *${gift.name}* - ${gift.cost} gold\n`;
     });
-    
+
     message += `\n💡 Use: ${prefix}presente @user <nome>\n`;
     message += `📌 Exemplo: ${prefix}presente @user rosa`;
-    
+
     return { success: true, message };
 };
 
-// Listar caixas disponíveis
 const listBoxes = (prefix = '/') => {
     let message = `📦 *CAIXAS DISPONÍVEIS*\n\n`;
-    
+
     Object.values(GIFT_BOXES).forEach(box => {
         const cost = box.cost === 0 ? 'Grátis (1x/dia)' : `${box.cost} gold`;
         message += `${box.name}\n   💰 ${cost}\n\n`;
     });
-    
+
     message += `💡 Use: ${prefix}caixa <tipo>\n`;
     message += `📌 Exemplo: ${prefix}caixa rara`;
-    
+
     return { success: true, message };
 };
 

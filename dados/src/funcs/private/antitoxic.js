@@ -1,4 +1,3 @@
-// --- SISTEMA ANTITOXIC ---
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,32 +8,28 @@ const __dirname = path.dirname(__filename);
 const ANTITOXIC_FILE = path.join(__dirname, '../../../database/antitoxic.json');
 
 const CONFIG = {
-    COOLDOWN_MS: 30 * 1000, // Cooldown entre avisos para o mesmo usuário
-    THRESHOLD: 70, // Score mínimo para considerar tóxico (0-100)
-    MAX_WARNINGS: 3, // Avisos antes de ação automática
-    WARNING_RESET_MS: 24 * 60 * 60 * 1000, // Reset de avisos após 24h
+    COOLDOWN_MS: 30 * 1000,
+    THRESHOLD: 70,
+    MAX_WARNINGS: 3,
+    WARNING_RESET_MS: 24 * 60 * 60 * 1000,
     ACTIONS: ['avisar', 'apagar', 'mute'],
     DEFAULT_ACTION: 'avisar'
 };
 
-// Palavras-chave para detecção rápida (fallback se IA falhar)
 const TOXIC_KEYWORDS = [
-    // Ofensas gerais
+
     'idiota', 'burro', 'imbecil', 'retardado', 'otário', 'babaca',
     'estúpido', 'cretino', 'mongol', 'débil', 'lixo', 'merda',
-    // Termos mais graves (censurados parcialmente)
+
     'f*der', 'p*ta', 'v*ado', 'c*ralho', 'arr*mbado',
-    // Ameaças
+
     'vou te matar', 'vou te pegar', 'vai morrer'
 ];
 
-// Helper para nome de usuário
 const getUserName = (userId) => {
     if (!userId || typeof userId !== 'string') return 'unknown';
     return userId.split('@')[0] || userId;
 };
-
-// --- PERSISTÊNCIA ---
 
 const loadAntitoxic = () => {
     try {
@@ -59,13 +54,11 @@ const saveAntitoxic = (data) => {
     }
 };
 
-// --- CONFIGURAÇÃO DO GRUPO ---
-
 const enableAntitoxic = (groupId, action = CONFIG.DEFAULT_ACTION) => {
     if (!CONFIG.ACTIONS.includes(action)) {
         action = CONFIG.DEFAULT_ACTION;
     }
-    
+
     const data = loadAntitoxic();
     data.groups[groupId] = {
         enabled: true,
@@ -75,7 +68,7 @@ const enableAntitoxic = (groupId, action = CONFIG.DEFAULT_ACTION) => {
         stats: { detected: 0, warned: 0, deleted: 0, muted: 0 }
     };
     saveAntitoxic(data);
-    
+
     return {
         success: true,
         message: `🛡️ *ANTITOXIC ATIVADO*\n\n` +
@@ -95,7 +88,7 @@ const disableAntitoxic = (groupId) => {
         data.groups[groupId].enabled = false;
     }
     saveAntitoxic(data);
-    
+
     return {
         success: true,
         message: `🛡️ *ANTITOXIC DESATIVADO*\n\n` +
@@ -110,15 +103,15 @@ const setAntitoxicAction = (groupId, action) => {
             message: `❌ Ação inválida!\n\nAções disponíveis: ${CONFIG.ACTIONS.join(', ')}`
         };
     }
-    
+
     const data = loadAntitoxic();
     if (!data.groups[groupId] || !data.groups[groupId].enabled) {
         return { success: false, message: '❌ O antitoxic não está ativado neste grupo!' };
     }
-    
+
     data.groups[groupId].action = action;
     saveAntitoxic(data);
-    
+
     return {
         success: true,
         message: `🛡️ *ANTITOXIC*\n\nAção alterada para: *${action}*`
@@ -130,15 +123,15 @@ const setAntitoxicThreshold = (groupId, threshold) => {
     if (isNaN(value) || value < 1 || value > 100) {
         return { success: false, message: '❌ Sensibilidade deve ser entre 1 e 100!' };
     }
-    
+
     const data = loadAntitoxic();
     if (!data.groups[groupId] || !data.groups[groupId].enabled) {
         return { success: false, message: '❌ O antitoxic não está ativado neste grupo!' };
     }
-    
+
     data.groups[groupId].threshold = value;
     saveAntitoxic(data);
-    
+
     return {
         success: true,
         message: `🛡️ *ANTITOXIC*\n\nSensibilidade alterada para: *${value}%*\n\n` +
@@ -149,7 +142,7 @@ const setAntitoxicThreshold = (groupId, threshold) => {
 const getAntitoxicStatus = (groupId) => {
     const data = loadAntitoxic();
     const group = data.groups[groupId];
-    
+
     if (!group || !group.enabled) {
         return {
             success: true,
@@ -157,7 +150,7 @@ const getAntitoxicStatus = (groupId) => {
             message: `🛡️ *ANTITOXIC*\n\n❌ Desativado neste grupo.\n\n💡 Use /antitoxic on para ativar.`
         };
     }
-    
+
     return {
         success: true,
         enabled: true,
@@ -173,9 +166,6 @@ const getAntitoxicStatus = (groupId) => {
     };
 };
 
-// --- DETECÇÃO ---
-
-// Detecção rápida por palavras-chave (fallback)
 const quickCheck = (message) => {
     const lower = message.toLowerCase();
     for (const keyword of TOXIC_KEYWORDS) {
@@ -186,13 +176,12 @@ const quickCheck = (message) => {
     return { isToxic: false, score: 0 };
 };
 
-// Analisar mensagem (para ser chamada com IA)
 const analyzeMessage = async (message, aiFunction = null) => {
-    // Se não tiver função de IA, usar detecção por palavras-chave
+
     if (!aiFunction) {
         return quickCheck(message);
     }
-    
+
     try {
         const prompt = `Analise a seguinte mensagem e determine se ela é tóxica, ofensiva ou contém discurso de ódio.
 Responda APENAS com um JSON no formato: {"score": <0-100>, "reason": "<motivo curto>"}
@@ -208,8 +197,7 @@ Mensagem para analisar: "${message.slice(0, 500)}"
 Responda apenas o JSON, sem explicações adicionais.`;
 
         const response = await aiFunction(prompt);
-        
-        // Tentar extrair JSON da resposta
+
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             const result = JSON.parse(jsonMatch[0]);
@@ -223,22 +211,18 @@ Responda apenas o JSON, sem explicações adicionais.`;
     } catch (err) {
         console.error('[ANTITOXIC] Erro na IA:', err.message);
     }
-    
-    // Fallback para detecção por palavras-chave
+
     return quickCheck(message);
 };
 
-// Processar mensagem (retorna ação a ser tomada)
 const processMessage = async (groupId, userId, message, aiFunction = null) => {
     const data = loadAntitoxic();
     const group = data.groups[groupId];
-    
-    // Verificar se está ativado
+
     if (!group || !group.enabled) {
         return { action: 'none' };
     }
-    
-    // Verificar cooldown
+
     const userKey = `${groupId}:${userId}`;
     if (data.userWarnings[userKey]) {
         const lastWarning = data.userWarnings[userKey].lastWarning;
@@ -246,45 +230,39 @@ const processMessage = async (groupId, userId, message, aiFunction = null) => {
             return { action: 'none', reason: 'cooldown' };
         }
     }
-    
-    // Analisar mensagem
+
     const analysis = await analyzeMessage(message, aiFunction);
-    
+
     if (!analysis.isToxic) {
         return { action: 'none' };
     }
-    
-    // Atualizar estatísticas
+
     group.stats.detected++;
-    
-    // Atualizar avisos do usuário
+
     if (!data.userWarnings[userKey]) {
         data.userWarnings[userKey] = { count: 0, lastWarning: 0 };
     }
-    
+
     const userWarning = data.userWarnings[userKey];
-    
-    // Reset se passou muito tempo
+
     if (Date.now() - userWarning.lastWarning > CONFIG.WARNING_RESET_MS) {
         userWarning.count = 0;
     }
-    
+
     userWarning.count++;
     userWarning.lastWarning = Date.now();
-    
-    // Determinar ação
+
     let action = group.action;
     if (userWarning.count >= CONFIG.MAX_WARNINGS && action === 'avisar') {
-        action = 'apagar'; // Escala ação após múltiplos avisos
+        action = 'apagar';
     }
-    
-    // Atualizar stats
+
     if (action === 'avisar') group.stats.warned++;
     else if (action === 'apagar') group.stats.deleted++;
     else if (action === 'mute') group.stats.muted++;
-    
+
     saveAntitoxic(data);
-    
+
     return {
         action,
         score: analysis.score,
@@ -295,12 +273,11 @@ const processMessage = async (groupId, userId, message, aiFunction = null) => {
     };
 };
 
-// Gerar mensagem de aviso
 const generateWarningMessage = (userId, result) => {
-    const aiDisclaimer = result.byAI 
+    const aiDisclaimer = result.byAI
         ? '\n\n_⚠️ Esta análise foi feita por IA e pode conter erros._'
         : '';
-    
+
     if (result.action === 'avisar') {
         return {
             message: `🛡️ *ANTITOXIC*\n\n` +
@@ -312,7 +289,7 @@ const generateWarningMessage = (userId, result) => {
             mentions: [userId]
         };
     }
-    
+
     if (result.action === 'apagar') {
         return {
             message: `🛡️ *ANTITOXIC*\n\n` +
@@ -322,7 +299,7 @@ const generateWarningMessage = (userId, result) => {
             mentions: [userId]
         };
     }
-    
+
     if (result.action === 'mute') {
         return {
             message: `🛡️ *ANTITOXIC*\n\n` +
@@ -332,11 +309,10 @@ const generateWarningMessage = (userId, result) => {
             mentions: [userId]
         };
     }
-    
+
     return null;
 };
 
-// Verificar se grupo tem antitoxic ativado
 const isEnabled = (groupId) => {
     const data = loadAntitoxic();
     return data.groups[groupId]?.enabled || false;

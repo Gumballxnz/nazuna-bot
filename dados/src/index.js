@@ -12,7 +12,6 @@ import makeWASocket, {
 import { exec, execSync, spawn } from 'child_process';
 import { promisify } from 'util';
 
-// Helper para substituir getContentType removido
 const getContentType = (content) => {
   if (content) {
     const keys = Object.keys(content);
@@ -24,7 +23,6 @@ const getContentType = (content) => {
 const execAsync = promisify(exec);
 import axios from 'axios';
 
-// Lazy-load linkedom (pesado, usado raramente)
 let _parseHTML = null;
 async function getParseHTML() {
     if (!_parseHTML) _parseHTML = (await import('linkedom')).parseHTML;
@@ -38,7 +36,6 @@ import { fileURLToPath } from 'url';
 
 import { PerformanceOptimizer, getPerformanceOptimizer } from './utils/performanceOptimizer.js';
 
-// Monkey-patch fs.writeFileSync para invalidar automaticamente o cache de grupos quando gravado no disco
 const optimizer = getPerformanceOptimizer();
 const originalWriteFileSync = fs.writeFileSync;
 fs.writeFileSync = (filePath, data, options) => {
@@ -57,7 +54,7 @@ fs.writeFileSync = (filePath, data, options) => {
 
 import * as ia from './funcs/private/ia.js';
 import * as vipCommandsManager from './utils/vipCommandsManager.js';
-// apiKeyNotifier removido - sistema agora é 100% gratuito
+
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './utils/captchaIndex.js';
 import baixarVideoLocal, { playAudio, playVideo, handlePlayConfirmation, baixarDireto } from './utils/baixarVideo.js';
 import { downloadTwitter, downloadAPK, downloadSpotify, downloadGDrive, downloadMediafire } from './utils/extraDl.js';
@@ -189,7 +186,7 @@ import {
   checkCommandLimit,
   formatTimeLeft,
   runDatabaseSelfTest,
-  // Funções de segurança
+
   loadJsonFileSafe,
   saveJsonFileSafe,
   loadLevelingSafe,
@@ -197,13 +194,13 @@ import {
   getLevelingUser,
   validateLevelingUser,
   validateEconomyUser,
-  // Funções de normalização de parâmetros
+
   normalizeParam,
   compareParams,
   findKeyIgnoringAccents,
   matchParam,
   resolveParamAlias,
-  // Sistema de Personalização de Grupo
+
   loadGroupCustomization,
   isGroupCustomizationEnabled,
   setGroupCustomizationEnabled,
@@ -212,13 +209,13 @@ import {
   setGroupCustomPhoto,
   removeGroupCustomName,
   removeGroupCustomPhoto,
-  // Sistema de Áudio do Menu
+
   loadMenuAudio,
   isMenuAudioEnabled,
   getMenuAudioPath,
   setMenuAudio,
   removeMenuAudio,
-  // Sistema de Ler Mais do Menu
+
   isMenuLerMaisEnabled,
   setMenuLerMais,
   getMenuLerMaisText
@@ -263,32 +260,30 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathz.dirname(__filename);
-// API_KEY_REQUIRED_MESSAGE removido
+
 const OWNER_ONLY_MESSAGE = '🚫 Este comando é apenas para o dono do bot!';
 
-// Função para formatar respostas de IA para WhatsApp (converte ** para *)
 const formatAIResponse = (text) => {
   if (!text || typeof text !== 'string') return text;
   return text
-    .replace(/\*\*\*([^*]+)\*\*\*/g, '*$1*')  // ***text*** -> *text*
-    .replace(/\*\*([^*]+)\*\*/g, '*$1*')      // **text** -> *text*
-    .replace(/_{2,}([^_]+)_{2,}/g, '_$1_')    // __text__ -> _text_
-    .replace(/```[\s\S]*?```/g, '')           // Remove blocos de código
-    .replace(/`([^`]+)`/g, '$1')              // Remove inline code
-    .replace(/^#{1,6}\s+/gm, '')              // Remove headers markdown
-    .replace(/\n{3,}/g, '\n\n')               // Limita quebras de linha
+    .replace(/\*\*\*([^*]+)\*\*\*/g, '*$1*')
+    .replace(/\*\*([^*]+)\*\*/g, '*$1*')
+    .replace(/_{2,}([^_]+)_{2,}/g, '_$1_')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 };
 
 const writeJsonFile = (filePath, data) => {
   try {
-    // Validação de entrada
+
     if (data === undefined || data === null) {
       console.error(`❌ writeJsonFile: Tentativa de salvar dados nulos em ${filePath}`);
       return false;
     }
 
-    // Testa se dados são serializáveis
     let jsonString;
     try {
       jsonString = JSON.stringify(data, null, 2);
@@ -297,7 +292,6 @@ const writeJsonFile = (filePath, data) => {
       return false;
     }
 
-    // Valida JSON gerado
     try {
       JSON.parse(jsonString);
     } catch (validateError) {
@@ -307,11 +301,9 @@ const writeJsonFile = (filePath, data) => {
 
     ensureDirectoryExists(pathz.dirname(filePath));
 
-    // Escreve em arquivo temporário primeiro (operação atômica)
     const tempPath = filePath + '.tmp';
     fs.writeFileSync(tempPath, jsonString, 'utf-8');
 
-    // Verifica integridade do arquivo temporário
     try {
       const writtenContent = fs.readFileSync(tempPath, 'utf-8');
       JSON.parse(writtenContent);
@@ -321,12 +313,11 @@ const writeJsonFile = (filePath, data) => {
       return false;
     }
 
-    // Move arquivo temporário para destino (atômico)
     fs.renameSync(tempPath, filePath);
     return true;
   } catch (error) {
     console.error(`❌ Erro ao escrever JSON em ${filePath}:`, error.message);
-    // Tenta limpar arquivo temporário
+
     try {
       const tempPath = filePath + '.tmp';
       if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
@@ -335,12 +326,6 @@ const writeJsonFile = (filePath, data) => {
   }
 };
 
-/**
- * Versão assíncrona do writeJsonFile - não bloqueia o event loop
- * @param {string} filePath - Caminho do arquivo
- * @param {object} data - Dados a serem salvos
- * @returns {Promise<boolean>}
- */
 const writeJsonFileAsync = async (filePath, data) => {
   try {
     if (data === undefined || data === null) {
@@ -356,7 +341,6 @@ const writeJsonFileAsync = async (filePath, data) => {
       return false;
     }
 
-    // Valida JSON gerado
     try {
       JSON.parse(jsonString);
     } catch (validateError) {
@@ -366,11 +350,9 @@ const writeJsonFileAsync = async (filePath, data) => {
 
     await fsPromises.mkdir(pathz.dirname(filePath), { recursive: true });
 
-    // Escreve em arquivo temporário primeiro (operação atômica)
     const tempPath = filePath + '.tmp';
     await fsPromises.writeFile(tempPath, jsonString, 'utf-8');
 
-    // Verifica integridade
     try {
       const writtenContent = await fsPromises.readFile(tempPath, 'utf-8');
       JSON.parse(writtenContent);
@@ -380,7 +362,6 @@ const writeJsonFileAsync = async (filePath, data) => {
       return false;
     }
 
-    // Move arquivo temporário para destino (atômico)
     await fsPromises.rename(tempPath, filePath);
     return true;
   } catch (error) {
@@ -393,12 +374,6 @@ const writeJsonFileAsync = async (filePath, data) => {
   }
 };
 
-/**
- * Leitura assíncrona de arquivo JSON
- * @param {string} filePath - Caminho do arquivo
- * @param {object} defaultValue - Valor padrão se arquivo não existir
- * @returns {Promise<object>}
- */
 const readJsonFileAsync = async (filePath, defaultValue = {}) => {
   try {
     const content = await fsPromises.readFile(filePath, 'utf-8');
@@ -411,11 +386,6 @@ const readJsonFileAsync = async (filePath, defaultValue = {}) => {
   }
 };
 
-/**
- * Verifica se arquivo existe (assíncrono)
- * @param {string} filePath - Caminho do arquivo
- * @returns {Promise<boolean>}
- */
 const fileExistsAsync = async (filePath) => {
   try {
     await fsPromises.access(filePath);
@@ -425,13 +395,10 @@ const fileExistsAsync = async (filePath) => {
   }
 };
 
-// ==================== PROTEÇÃO ANTI-BAN: Rate Limit para Menções em Massa ====================
-// Sistema controlado pelo dono: pode ativar/desativar proteção por grupo
-const MASS_MENTION_THRESHOLD = 150; // Membros mínimos para aplicar proteção (quando ativa)
-const MASS_MENTION_MAX_USES = 2;    // Máximo de usos permitidos
-const MASS_MENTION_COOLDOWN = 5 * 60 * 60 * 1000; // 5 horas em milissegundos
+const MASS_MENTION_THRESHOLD = 150;
+const MASS_MENTION_MAX_USES = 2;
+const MASS_MENTION_COOLDOWN = 5 * 60 * 60 * 1000;
 
-// Cache em memória para rate limit (persistido em arquivo)
 let massMentionLimitCache = null;
 let massMentionConfigCache = null;
 
@@ -441,7 +408,7 @@ const loadMassMentionConfig = () => {
     if (fs.existsSync(MASS_MENTION_CONFIG_FILE)) {
       massMentionConfigCache = JSON.parse(fs.readFileSync(MASS_MENTION_CONFIG_FILE, 'utf-8'));
     } else {
-      massMentionConfigCache = {}; // Vazio = desativado por padrão
+      massMentionConfigCache = {};
     }
   } catch (e) {
     console.error('Erro ao carregar massMentionConfig:', e.message);
@@ -485,20 +452,13 @@ const saveMassMentionLimit = (data) => {
   }
 };
 
-/**
- * Verifica se o grupo pode usar comandos de menção em massa
- * @param {string} groupId - ID do grupo
- * @param {number} memberCount - Número de membros do grupo
- * @returns {{ allowed: boolean, remainingUses: number, resetTime: number|null, message: string|null }}
- */
 const checkMassMentionLimit = (groupId, memberCount) => {
-  // Verifica se a proteção está ativada para este grupo
+
   const config = loadMassMentionConfig();
   if (!config[groupId] || !config[groupId].enabled) {
     return { allowed: true, remainingUses: -1, resetTime: null, message: null };
   }
 
-  // Se grupo tem menos de 150 membros, não aplica limite mesmo se ativo
   if (memberCount < MASS_MENTION_THRESHOLD) {
     return { allowed: true, remainingUses: -1, resetTime: null, message: null };
   }
@@ -506,17 +466,14 @@ const checkMassMentionLimit = (groupId, memberCount) => {
   const data = loadMassMentionLimit();
   const now = Date.now();
 
-  // Inicializa dados do grupo se não existir
   if (!data[groupId]) {
     data[groupId] = { uses: [], lastReset: now };
   }
 
   const groupData = data[groupId];
 
-  // Remove usos antigos (mais de 5 horas)
   groupData.uses = groupData.uses.filter(timestamp => (now - timestamp) < MASS_MENTION_COOLDOWN);
 
-  // Verifica se atingiu o limite
   if (groupData.uses.length >= MASS_MENTION_MAX_USES) {
     const oldestUse = Math.min(...groupData.uses);
     const resetTime = oldestUse + MASS_MENTION_COOLDOWN;
@@ -545,10 +502,6 @@ const checkMassMentionLimit = (groupId, memberCount) => {
   };
 };
 
-/**
- * Registra um uso de menção em massa
- * @param {string} groupId - ID do grupo
- */
 const registerMassMentionUse = (groupId) => {
   const data = loadMassMentionLimit();
   const now = Date.now();
@@ -557,14 +510,11 @@ const registerMassMentionUse = (groupId) => {
     data[groupId] = { uses: [], lastReset: now };
   }
 
-  // Remove usos antigos antes de adicionar novo
   data[groupId].uses = data[groupId].uses.filter(timestamp => (now - timestamp) < MASS_MENTION_COOLDOWN);
   data[groupId].uses.push(now);
 
   saveMassMentionLimit(data);
 };
-
-// ==================== FIM: Proteção Anti-Ban ====================
 
 let performanceOptimizerInstance = null;
 let performanceOptimizerInitPromise = null;
@@ -624,7 +574,6 @@ ensureDatabaseIntegrity();
 
 const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`);
 
-
 let packageJson = {};
 try {
   packageJson = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8'));
@@ -633,23 +582,20 @@ try {
 }
 const botVersion = packageJson.version;
 
-// Inicializa o cache JID→LID (auto-save ja esta em helpers.js)
 initJidLidCache(JID_LID_CACHE_FILE);
 
 async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirationManager = null) {
-  // Log de início de processamento para debug paralelo
+
   const msgId = info?.key?.id?.slice(-6) || 'unknown';
   const from = info?.key?.remoteJid || 'unknown';
 
   let config = loadJsonFile(CONFIG_FILE, {}, true);
   ensureDatabaseIntegrity({ log: Boolean(config?.debug) });
 
-  // Verificação e correção do prefixo reservado $ ao inicializar
   if (config.prefixo === '$') {
     config.prefixo = '/';
     writeJsonFile(CONFIG_FILE, config);
 
-    // Notifica o dono sobre a mudança automática
     const ownerJid = `${config.numerodono}@s.whatsapp.net`;
     try {
       await nazu.sendMessage(ownerJid, {
@@ -660,7 +606,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     }
   }
 
-  // Log de debug aprimorado para rastreamento de IDs
   const debugLog = (msg, data = null) => {
     if (config?.debug) {
       console.log(`[DEBUG] ${msg}`, data || '');
@@ -693,23 +638,20 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   const prefixo = config.prefixo;
   const debug = config.debug;
   const lidowner = config.lidowner;
-  // KeyCog removido - sistema 100% gratuito
+
   const KeyCog = null;
 
-
-
-  // Sistema de degradação automática de pets
   function applyPetDegradation(pets) {
     if (!Array.isArray(pets) || pets.length === 0) return { changed: false };
 
     const now = Date.now();
-    const oneHour = 3600000; // 1 hora em ms
-    const oneDayInHours = 24; // Degradação total em 24 horas se não cuidar
+    const oneHour = 3600000;
+    const oneDayInHours = 24;
 
     let changed = false;
 
     pets.forEach(pet => {
-      // Inicializa lastUpdate se não existir
+
       if (!pet.lastUpdate) {
         pet.lastUpdate = now;
         changed = true;
@@ -719,31 +661,26 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       const timePassed = now - pet.lastUpdate;
       const hoursPassed = timePassed / oneHour;
 
-      // Só degrada se passou mais de 1 hora
       if (hoursPassed >= 1) {
-        // Calcula degradação proporcional ao tempo
-        const hungerDegrade = Math.floor(hoursPassed * (100 / oneDayInHours)); // ~4.17 por hora
-        const moodDegrade = Math.floor(hoursPassed * (100 / (oneDayInHours * 2))); // ~2.08 por hora (degrada mais devagar)
 
-        // Aplica degradação
+        const hungerDegrade = Math.floor(hoursPassed * (100 / oneDayInHours));
+        const moodDegrade = Math.floor(hoursPassed * (100 / (oneDayInHours * 2)));
+
         const oldHunger = pet.hunger || 100;
         const oldMood = pet.mood || 100;
 
         pet.hunger = Math.max(0, oldHunger - hungerDegrade);
         pet.mood = Math.max(0, oldMood - moodDegrade);
 
-        // Se fome está muito baixa, humor degrada mais rápido
         if (pet.hunger < 30) {
           pet.mood = Math.max(0, pet.mood - Math.floor(hoursPassed * 5));
         }
 
-        // Se fome chegou a 0, pet perde HP gradualmente
         if (pet.hunger === 0 && hoursPassed >= 2) {
-          const hpLoss = Math.floor(hoursPassed * (pet.maxHp * 0.02)); // 2% do HP máximo por hora
-          pet.hp = Math.max(1, (pet.hp || pet.maxHp) - hpLoss); // Nunca deixa morrer (mínimo 1 HP)
+          const hpLoss = Math.floor(hoursPassed * (pet.maxHp * 0.02));
+          pet.hp = Math.max(1, (pet.hp || pet.maxHp) - hpLoss);
         }
 
-        // Atualiza timestamp
         pet.lastUpdate = now;
         changed = true;
       }
@@ -752,25 +689,18 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     return { changed };
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // FUNÇÕES AUXILIARES DO SISTEMA RPG
-  // ═══════════════════════════════════════════════════════════════════
-
-  // Multiplicadores de picareta por tier
   const PICKAXE_TIER_MULT = {
     'bronze': 1.0,
     'ferro': 1.5,
     'diamante': 2.5
   };
 
-  // Formata valores monetários
   function fmt(num) {
     if (!isFinite(num) || num == null) return '0';
     const n = Math.floor(num);
     return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 
-  // Calcula tempo restante de cooldown
   function timeLeft(timestamp) {
     const diff = Math.max(0, timestamp - Date.now());
     const mins = Math.floor(diff / 60000);
@@ -779,7 +709,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     return `${secs}s`;
   }
 
-  // Parse de quantidade (suporta "all", "max", "tudo", etc)
   function parseAmount(str, max) {
     if (!str) return 0;
     const s = str.toString().toLowerCase().trim();
@@ -790,32 +719,28 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     return isFinite(num) ? Math.max(0, Math.floor(num)) : 0;
   }
 
-  // Obtém picareta ativa do usuário
   function getActivePickaxe(user) {
     if (!user || !user.tools || !user.tools.pickaxe) return null;
     const pk = user.tools.pickaxe;
-    // Verifica se não está quebrada
+
     if (pk.dur <= 0) return null;
     return pk;
   }
 
-  // Aplica bônus de itens da loja
   function applyShopBonuses(user, econ) {
     let mineBonus = 0;
     let workBonus = 0;
-    let bankCapacity = 10000; // Capacidade padrão
+    let bankCapacity = 10000;
     let fishBonus = 0;
     let exploreBonus = 0;
     let huntBonus = 0;
     let forgeBonus = 0;
 
-    // Verifica itens no inventário
     for (const [itemKey, qty] of Object.entries(user.inventory || {})) {
       if (qty <= 0) continue;
       const item = econ.shop?.[itemKey];
       if (!item || !item.effect) continue;
 
-      // Aplica efeitos dos itens (multiplicando pela quantidade)
       if (item.effect.mineBonus) mineBonus += item.effect.mineBonus * qty;
       if (item.effect.workBonus) workBonus += item.effect.workBonus * qty;
       if (item.effect.bankCapacity) bankCapacity += item.effect.bankCapacity * qty;
@@ -825,7 +750,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       if (item.effect.forgeBonus) forgeBonus += item.effect.forgeBonus * qty;
     }
 
-    // Verifica ferramenta equipada (picareta)
     if (user.tools?.pickaxe) {
       const pk = user.tools.pickaxe;
       const pkItem = econ.shop?.[pk.key];
@@ -845,14 +769,9 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     };
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // FIM DAS FUNÇÕES AUXILIARES DO RPG
-  // ═══════════════════════════════════════════════════════════════════
-
-
   function handleAutoDownload(nazu, from, url, info) {
     const urlLower = url.toLowerCase();
-    // Todas as plataformas suportadas pelo download local
+
     const supportedSites = [
       'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
       'twitter.com', 'x.com',
@@ -865,9 +784,9 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       'vimeo.com', 'dailymotion.com', 'dai.ly',
       'streamable.com', 'twitch.tv', 'bandcamp.com'
     ];
-    
+
     if (supportedSites.some(site => urlLower.includes(site))) {
-       // Fire-and-forget: roda em background sem bloquear
+
        baixarVideoLocal(nazu, from, info, url, (msg) => {}).catch(e => {
          console.error('Erro no autodl background:', e.message);
        });
@@ -926,7 +845,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     streamable,
     bandcamp,
     alldl,
-    // Novos módulos
+
     connect4,
     uno,
     memoria,
@@ -942,33 +861,33 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     antipalavra,
     transmissao
   } = modules.default;
-  // Otimização: Cache de dados estáticos com TTL
+
   const optimizer = getPerformanceOptimizer();
 
   const antipvData = await optimizer.getCachedFile(
     DATABASE_DIR + '/antipv.json',
-    30000, // 30 segundos
-    (path) => loadJsonFile(path)
-  );
+    30000,
+    (path) => loadJsonFile(path, { mode: 'antipv', message: '🚫 Este comando só funciona em grupos!' })
+  ) || { mode: 'antipv', message: '🚫 Este comando só funciona em grupos!' };
   const premiumListaZinha = await optimizer.getCachedFile(
     DONO_DIR + '/premium.json',
-    60000, // 1 minuto
+    60000,
     (path) => loadJsonFile(path)
   );
   const banGpIds = await optimizer.getCachedFile(
     DONO_DIR + '/bangp.json',
-    30000, // 30 segundos
+    30000,
     (path) => loadJsonFile(path)
   );
   const antifloodData = await optimizer.getCachedFile(
     DATABASE_DIR + '/antiflood.json',
-    30000, // 30 segundos
+    30000,
     (path) => loadJsonFile(path)
   );
 
   const antiSpamGlobal = await optimizer.getCachedFile(
     DATABASE_DIR + '/antispam.json',
-    30000, // 30 segundos
+    30000,
     (path) => loadJsonFile(path, {
       enabled: false,
       limit: 5,
@@ -980,7 +899,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   );
   const globalBlocks = await optimizer.getCachedFile(
     DATABASE_DIR + '/globalBlocks.json',
-    30000, // 30 segundos
+    30000,
     (path) => loadJsonFile(path, {
       commands: {},
       users: {}
@@ -988,7 +907,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   );
   const botState = await optimizer.getCachedFile(
     DATABASE_DIR + '/botState.json',
-    30000, // 30 segundos
+    30000,
     (path) => loadJsonFile(path, {
       status: 'on'
     })
@@ -996,7 +915,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   const modoLiteFile = DATABASE_DIR + '/modolite.json';
   let modoLiteGlobal = await optimizer.getCachedFile(
     modoLiteFile,
-    30000, // 30 segundos
+    30000,
     (path) => loadJsonFile(path, {
       status: false
     })
@@ -1015,7 +934,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     if (!info.key.participant && !info.key.remoteJid) return;
     let sender;
     if (isGroup) {
-      // Prioriza participant, depois busca por LID, com fallback para JID
+
       sender = info.key.participant || info.message?.participant;
 
       if (!sender) {
@@ -1025,28 +944,23 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         }
       }
 
-      // Se ainda não encontrou, tenta extrair do contextInfo
       if (!sender && info.message?.extendedTextMessage?.contextInfo?.participant) {
         sender = info.message.extendedTextMessage.contextInfo.participant;
       }
 
-      // Se for JID, converte para LID usando cache
       if (sender && isValidJid(sender)) {
         sender = await getLidFromJidCached(nazu, sender);
       }
     } else {
       sender = info.key.remoteJid;
 
-      // Se for JID no PV, converte para LID usando cache
       if (sender && isValidJid(sender)) {
         sender = await getLidFromJidCached(nazu, sender);
       }
     }
 
-    // Debug: log do sender identificado
     debugLog('Sender identificado:', { sender, isGroup, from: from?.substring(0, 20) });
 
-    // Se sender ainda for undefined, ignora a mensagem (ex: mensagens de sistema, stubs, etc)
     if (!sender) {
       debugLog('Sender não identificado, ignorando mensagem');
       return;
@@ -1075,7 +989,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
     const isOwnerOrSub = isOwner || isSubOwner;
 
-    // Debug: log das verificações de permissão
     debugLog('Verificações de permissão:', {
       sender: sender?.substring(0, 30),
       senderBase,
@@ -1086,26 +999,21 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
     const type = getContentType(info.message);
 
-    // ==================== PROCESSAMENTO DE SOLICITAÇÕES DE ENTRADA NO GRUPO ====================
-    // Fallback: Solicitações também podem vir via messageStubType (backup do evento 'group.join-request')
-    if (isGroup && info.message?.messageStubType && info.message.messageStubType === 172) { // GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST_NON_ADMIN_ADD
+    if (isGroup && info.message?.messageStubType && info.message.messageStubType === 172) {
       try {
         const groupFile = buildGroupFilePath(from);
         let groupSettings = {};
 
-        // Carrega de forma assíncrona para não bloquear
         groupSettings = await readJsonFileAsync(groupFile, {});
 
-        // Extrai dados da solicitação dos parâmetros do stub
         const messageStubParameters = info.message.messageStubParameters || [];
 
         if (debug) {
           console.log('[DEBUG STUB 172] messageStubParameters:', messageStubParameters);
         }
 
-        // O primeiro parâmetro é o JID do participante
         const participantJid = messageStubParameters[0];
-        // Para novas solicitações, assumimos 'created' se não houver segundo parâmetro
+
         const action = messageStubParameters[1] || 'created';
 
         if (!participantJid) {
@@ -1125,16 +1033,14 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
         console.log(`[JOIN REQUEST] Nova solicitação detectada: ${participantJid} (ação: ${action})`);
 
-        // Processa apenas novas solicitações (action === 'created')
         if (action === 'created') {
-          // Auto-aceitar (com ou sem captcha)
+
           if (groupSettings.autoAcceptRequests) {
             if (groupSettings.captchaEnabled) {
-              // Pega o nome do grupo
+
               const groupMetadata = await nazu.groupMetadata(from).catch(() => null);
               const groupNameCaptcha = groupMetadata?.subject || 'Desconhecido';
 
-              // Gera captcha e envia para o usuário
               const num1 = Math.floor(Math.random() * 10) + 1;
               const num2 = Math.floor(Math.random() * 10) + 1;
               const correctAnswer = num1 + num2;
@@ -1145,19 +1051,16 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
                 `❓ *${num1} + ${num2} = ?*\n\n` +
                 `Responda apenas com o número da resposta.`;
 
-              // Salva captcha pendente
               groupSettings.pendingCaptchas = groupSettings.pendingCaptchas || {};
               groupSettings.pendingCaptchas[participantJid] = {
                 answer: correctAnswer,
                 groupId: from,
-                expiresAt: Date.now() + (5 * 60 * 1000) // 5 minutos
+                expiresAt: Date.now() + (5 * 60 * 1000)
               };
 
-              // Adiciona ao índice de captcha para busca rápida
               const groupFileName = `${from.replace('@g.us', '')}.json`;
               addCaptcha(participantJid, from, correctAnswer, Date.now() + (5 * 60 * 1000), groupFileName);
 
-              // Salva arquivo de forma assíncrona para não bloquear
               writeJsonFileAsync(groupFile, groupSettings).catch(err =>
                 console.error('Erro ao salvar captcha no arquivo:', err)
               );
@@ -1179,12 +1082,11 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
                 console.error(`[JOIN REQUEST] Erro ao enviar captcha para ${participantJid}:`, err);
               }
             } else {
-              // Auto-aceitar sem captcha
+
               try {
                 await nazu.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
                 console.log(`[JOIN REQUEST] ✅ Aprovado automaticamente: ${participantJid}`);
 
-                // Notificação X9
                 if (groupSettings.x9) {
                   await nazu.sendMessage(from, {
                     text: `✅ *X9 Report:* @${participantJid.split('@')[0]} foi aprovado automaticamente (auto-aceitar ativo).`,
@@ -1196,7 +1098,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
               }
             }
           } else {
-            // Auto-aceitar desativado - apenas notifica se X9 ativo
+
             if (groupSettings.x9) {
               try {
                 await nazu.sendMessage(from, {
@@ -1209,18 +1111,17 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
             }
           }
         } else if (action === 'revoked' || action === 'rejected') {
-          // Solicitação cancelada ou recusada - limpa captcha se existir
+
           if (groupSettings.pendingCaptchas && groupSettings.pendingCaptchas[participantJid]) {
             delete groupSettings.pendingCaptchas[participantJid];
-            // Remove do índice de captcha
+
             removeCaptcha(participantJid);
-            // Salva de forma assíncrona
+
             writeJsonFileAsync(groupFile, groupSettings).catch(err =>
               console.error('Erro ao salvar após remover captcha:', err)
             );
           }
 
-          // Notifica X9 se ativo
           if (groupSettings.x9) {
             const statusText = action === 'revoked' ? 'cancelou a solicitação' : 'teve a solicitação recusada';
             try {
@@ -1237,10 +1138,8 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         console.error('[JOIN REQUEST] Erro ao processar solicitação de entrada:', error);
       }
 
-      // Retorna aqui para não processar como mensagem normal
       return;
     }
-    // ==================== FIM: PROCESSAMENTO DE SOLICITAÇÕES ====================
 
     const isMedia = ["imageMessage", "videoMessage", "audioMessage"].includes(type);
     const isImage = type === 'imageMessage';
@@ -1301,7 +1200,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const menc_os2 = (menc_jid2 && menc_jid2.length > 0) ? menc_jid2[0] : menc_prt;
     const sender_ou_n = (menc_jid2 && menc_jid2.length > 0) ? menc_jid2[0] : menc_prt || sender;
     const groupFile = buildGroupFilePath(from);
-    // Otimização: Carregar groupData com cache (TTL curto de 5 segundos)
+
     let groupData = {};
     if (isGroup) {
       try {
@@ -1309,19 +1208,19 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
           from,
           async () => {
             try {
-              // Usa leitura assíncrona para não bloquear event loop
+
               return await readJsonFileAsync(groupFile, {});
             } catch (e) {
               console.error(`Erro ao ler groupFile ${groupFile}:`, e);
               return {};
             }
           },
-          5000 // 5 segundos TTL
+          5000
         );
       } catch (e) {
         console.error('Erro ao carregar groupData com cache:', e);
         try {
-          // Fallback assíncrono
+
           groupData = await readJsonFileAsync(groupFile, {});
         } catch (e2) {
           console.error('Erro ao carregar groupData sem cache:', e2);
@@ -1330,7 +1229,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       }
     }
 
-    // ==== Helpers de Rolê (definidos fora de blocos para uso global dentro da função) ====
     function ensureRoleParticipants(roleData) {
       if (!roleData.participants || typeof roleData.participants !== 'object') {
         roleData.participants = {};
@@ -1430,7 +1328,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const groupMetadata = !isGroup ? {} : await getCachedGroupMetadata(from).catch(() => ({}));
     const groupName = groupMetadata?.subject || '';
     if (isGroup) {
-      // Inicializa estrutura se os dados carregados do cache (linha 1308) estiverem vazios
+
       if (!groupData || typeof groupData !== 'object') {
         groupData = { mark: {} };
       }
@@ -1438,11 +1336,11 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         groupData.mark = groupData.mark || {};
         groupData.createdAt = new Date().toISOString();
         groupData.groupName = groupName;
-        // Salva arquivo inicial
+
         writeJsonFile(groupFile, groupData);
         optimizer.invalidateGroup(from);
       }
-      // default flags
+
       groupData.modorpg = typeof groupData.modorpg === 'boolean' ? groupData.modorpg : false;
       groupData.minMessage = groupData.minMessage || null;
       groupData.moderators = groupData.moderators || [];
@@ -1460,39 +1358,35 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
       if (groupName && groupData.groupName !== groupName) {
         groupData.groupName = groupName;
-        // Salva de forma assíncrona para não bloquear
+
         writeJsonFileAsync(groupFile, groupData).then(() => {
-          // Otimização: Invalida cache quando groupData é salvo
+
           if (isGroup) {
             optimizer.invalidateGroup(from);
           }
         }).catch(err => console.error('Erro ao salvar groupData:', err));
       };
     };
-    // Otimização: Cache de parcerias
+
     let parceriasData = {};
     if (isGroup) {
       parceriasData = await optimizer.memoize(
         `parcerias:${from}`,
         () => Promise.resolve(loadParceriasData(from)),
-        10000 // 10 segundos
+        10000
       );
     }
-    /**
-     * Persiste dados do grupo de forma assíncrona
-     * Não bloqueia o event loop durante a escrita
-     */
+
     const persistGroupData = () => {
       if (isGroup) {
-        // Usa escrita assíncrona em background
+
         writeJsonFileAsync(groupFile, groupData).then(() => {
-          // Otimização: Invalida cache quando groupData é salvo
+
           optimizer.invalidateGroup(from);
         }).catch(err => console.error('Erro ao persistir groupData:', err));
       }
     };
 
-    // Função para verificar se um usuário está na whitelist para determinado anti
     const isUserWhitelisted = (userId, antiType) => {
       if (!groupData.adminWhitelist || typeof groupData.adminWhitelist !== 'object') {
         return false;
@@ -1509,13 +1403,11 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     prefix = groupPrefix;
     var isCmd = body.trim().startsWith(groupPrefix);
 
-    // Suporte para "prefixo comando" (com espaço após o prefixo)
     const bodyWithoutPrefix = isCmd ? body.trim().slice(groupPrefix.length).trimStart() : body.trim();
 
     const aliases = loadCommandAliases();
     const matchedAlias = aliases.find(item => normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()) === item.alias);
 
-    // Se encontrou um alias, aplicar parâmetros fixos
     if (matchedAlias && matchedAlias.fixedParams) {
       const userArgs = bodyWithoutPrefix.split(/ +/).slice(1).join(' ');
       const combinedParams = matchedAlias.fixedParams + (userArgs ? ' ' + userArgs : '');
@@ -1526,7 +1418,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
     var command = isCmd ? matchedAlias ? matchedAlias.command : normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()).replace(/\s+/g, '') : null;
 
-    // Recalcular args usando bodyWithoutPrefix para suportar "! comando" (com espaço)
     if (isCmd && !matchedAlias) {
       const newArgs = bodyWithoutPrefix.split(/ +/).slice(1);
       args.length = 0;
@@ -1536,9 +1427,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
     const isPremium = premiumListaZinha[sender] || premiumListaZinha[from] || isOwner;
 
-    // Verificação de captcha para solicitações de entrada em grupos (DEVE vir ANTES de antipv)
-    // Otimizado: usa índice de captcha em vez de varrer todos os arquivos
-    if (!isGroup && !info.key.fromMe) { // Ignora mensagens do próprio bot
+    if (!isGroup && !info.key.fromMe) {
       const captchaData = getCaptcha(sender);
 
       if (captchaData) {
@@ -1565,7 +1454,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         const groupPath = pathz.join(GRUPOS_DIR, captchaData.groupFile || `${captchaData.groupId.replace('@g.us', '')}.json`);
 
         if (userAnswer === captchaData.answer) {
-          // Resposta correta - aprovar no grupo
+
           try {
             if (debug) {
               console.log('[DEBUG CAPTCHA] ✅ Resposta correta! Aprovando no grupo:', captchaData.groupId);
@@ -1573,17 +1462,14 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
             await nazu.groupRequestParticipantsUpdate(captchaData.groupId, [sender], 'approve');
             await reply('✅ *Correto!* Você foi aprovado no grupo. Bem-vindo! 🎉');
 
-            // Limpar captcha pendente do índice
             removeCaptcha(sender);
 
-            // Também limpa do arquivo do grupo (async para não bloquear)
             readJsonFileAsync(groupPath, {}).then(async groupDataCaptcha => {
               if (groupDataCaptcha.pendingCaptchas?.[sender]) {
                 delete groupDataCaptcha.pendingCaptchas[sender];
                 await writeJsonFileAsync(groupPath, groupDataCaptcha);
               }
 
-              // Notificação X9
               if (groupDataCaptcha.x9) {
                 await nazu.sendMessage(captchaData.groupId, {
                   text: `✅ *X9 Report:* @${sender.split('@')[0]} passou na verificação de captcha e foi aprovado automaticamente.`,
@@ -1597,7 +1483,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
             console.error('Erro ao aprovar após captcha:', err);
           }
         } else {
-          // Resposta incorreta - recusar
+
           try {
             if (debug) {
               console.log('[DEBUG CAPTCHA] ❌ Resposta incorreta! Recusando no grupo:', captchaData.groupId);
@@ -1605,10 +1491,8 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
             await nazu.groupRequestParticipantsUpdate(captchaData.groupId, [sender], 'reject');
             await reply('❌ *Resposta incorreta!* Sua solicitação foi recusada. Você pode tentar solicitar novamente.');
 
-            // Limpar captcha pendente do índice
             removeCaptcha(sender);
 
-            // Também limpa do arquivo do grupo (async)
             readJsonFileAsync(groupPath, {}).then(async groupDataCaptcha => {
               if (groupDataCaptcha.pendingCaptchas?.[sender]) {
                 delete groupDataCaptcha.pendingCaptchas[sender];
@@ -1626,37 +1510,40 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     }
 
     if (!isGroup) {
-      // Exceção para comandos de transmissão que devem funcionar no PV
+
       const tm2Commands = ['inscrevertm', 'inscrevertm2', 'desinscrever', 'desinscrevertm', 'cancelartm'];
       const isTm2Command = tm2Commands.some(cmd => command === cmd);
 
-      if (antipvData.mode === 'antipv' && !isOwner && !isPremium && !isTm2Command) {
-        return;
-      };
-      if (antipvData.mode === 'antipv2' && isCmd && !isOwner && !isPremium && !isTm2Command) {
-        await reply(antipvData.message || '🚫 Este comando só funciona em grupos!');
-        return;
-      };
-      if (antipvData.mode === 'antipv3' && isCmd && !isOwner && !isPremium && !isTm2Command) {
-        await nazu.updateBlockStatus(sender, 'block');
-        await reply('🚫 Você foi bloqueado por usar comandos no privado!');
-        return;
-      };
-      if (antipvData.mode === 'antipv4' && !isOwner && !isPremium && !isTm2Command) {
-        await reply(antipvData.message || '🚫 Este comando só funciona em grupos!');
-        return;
-      };
+      const effectiveMode = (antipvData && antipvData.mode) ? antipvData.mode : 'antipv';
+
+      if (effectiveMode !== 'off') {
+        if (effectiveMode === 'antipv' && !isOwner && !isPremium && !isTm2Command) {
+          return;
+        }
+        if (effectiveMode === 'antipv2' && isCmd && !isOwner && !isPremium && !isTm2Command) {
+          await reply(antipvData?.message || '🚫 Este comando só funciona em grupos!');
+          return;
+        }
+        if (effectiveMode === 'antipv3' && isCmd && !isOwner && !isPremium && !isTm2Command) {
+          await nazu.updateBlockStatus(sender, 'block');
+          await reply('🚫 Você foi bloqueado por usar comandos no privado!');
+          return;
+        }
+        if (effectiveMode === 'antipv4' && !isOwner && !isPremium && !isTm2Command) {
+          await reply(antipvData?.message || '🚫 Este comando só funciona em grupos!');
+          return;
+        }
+      }
     };
     if (isGroup && banGpIds[from] && !isOwner && !isPremium) {
       return;
     };
-    // Enhanced participant ID extraction with both LID and JID support
+
     const extractParticipantId = (participant) => {
       if (!participant) return null;
-      // Retorna LID se disponível, senão retorna o ID padrão
+
       let id = participant.lid || participant.id || null;
 
-      // Remove :XX se existir (ex: 267955023654984:13@lid -> 267955023654984@lid)
       if (id && id.includes(':')) {
         const suffix = id.includes('@lid') ? '@lid' : '@s.whatsapp.net';
         id = id.split(':')[0] + suffix;
@@ -1665,57 +1552,48 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       return id;
     };
 
-    // Helper para normalizar nomes de clã - remove acentos e caracteres não alfanuméricos
     function normalizeClanName(name) {
       if (!name) return '';
       const n = name.normalize('NFD').replace(/\p{Diacritic}/gu, '');
       return n.replace(/[^a-zA-Z0-9 ]/g, '').trim().toLowerCase();
     }
 
-    // Helper para normalizar comandos - remove acentos mas mantém espaços
     function normalizeCommand(cmd) {
       if (!cmd) return '';
       const n = cmd.normalize('NFD').replace(/\p{Diacritic}/gu, '');
       return n.replace(/[^a-zA-Z0-9\s]/g, '').trim().toLowerCase();
     }
 
-    // Extrai IDs dos membros (pode estar em JID)
     const rawMembers = !isGroup ? [] :
       groupMetadata.participants?.map(extractParticipantId).filter(Boolean) || [];
 
-    // Extrai IDs dos admins (pode estar em JID)
     const rawAdmins = !isGroup ? [] :
       groupMetadata.participants?.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(extractParticipantId).filter(Boolean) || [];
 
-    // Converte todos os membros e admins para LID (usando cache)
     const AllgroupMembers = await convertIdsToLid(nazu, rawMembers);
     const groupAdmins = await convertIdsToLid(nazu, rawAdmins);
 
-    // Debug log
     debugLog('Membros e Admins convertidos:', {
       totalMembros: AllgroupMembers.length,
       totalAdmins: groupAdmins.length,
       admins: groupAdmins.map(a => a?.substring(0, 20))
     });
 
-    // Robust bot ID extraction with multiple fallback mechanisms
     const getBotNumber = (nazu) => {
       try {
-        // Tenta pegar LID primeiro
+
         if (nazu.user?.lid) {
-          // Remove o sufixo `:XX` se existir (ex: 267955023654984:13@lid -> 267955023654984@lid)
+
           const lid = nazu.user.lid;
           const cleanLid = lid.includes(':') ? lid.split(':')[0] + '@lid' : lid;
           return cleanLid;
         }
 
-        // Fallback para ID padrão
         if (nazu.user?.id) {
           const botId = nazu.user.id.split(':')[0];
           return `${botId}@s.whatsapp.net`;
         }
 
-        // Usa helper se disponível
         if (typeof getBotId === 'function') {
           return getBotId(nazu);
         }
@@ -1730,7 +1608,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
     const botNumber = getBotNumber(nazu);
 
-    // Converte o botNumber para LID se for JID
     const botNumberLid = botNumber && isValidJid(botNumber)
       ? await getLidFromJidCached(nazu, botNumber)
       : botNumber;
@@ -1741,12 +1618,10 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     if (isGroup) {
       const isModeratorActionAllowed = groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command);
 
-      // Usa a função idsMatch para comparação robusta
       const isAdminMatch = idInArray(sender, groupAdmins);
 
       isGroupAdmin = isAdminMatch || isOwner || isModeratorActionAllowed;
 
-      // Debug: log das verificações de admin
       debugLog('Verificação de admin:', {
         sender: sender?.substring(0, 30),
         senderBase: sender?.split('@')[0],
@@ -1762,9 +1637,8 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const isModoBn = groupData.modobrincadeira;
     const isOnlyAdmin = groupData.soadm;
 
-    // Se modo soadm ativo e não é admin, ignorar aliases silenciosamente
     if (isGroup && isOnlyAdmin && !isGroupAdmin && !isOwner && matchedAlias) {
-      return; // Ignora silenciosamente o alias para não-admins
+      return;
     }
 
     const isAntiPorn = groupData.antiporn;
@@ -1806,7 +1680,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
             } else {
               await reply(`⚠️ Mídia sem legenda suficiente detectada, mas não sou admin para remover o usuário.`);
             }
-          } else { // adv
+          } else {
             await reply(`⚠️ Advertência: Envie mídias com pelo menos ${groupData.minMessage.minDigits} caracteres na legenda para evitar remoção.`);
           }
         } catch (error) {
@@ -1880,7 +1754,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
           }
         }
       }
-
 
       const participant = cachedInfo.key.participant || info.message.protocolMessage.key.participant;
       const fromGroup = cachedInfo.key.remoteJid;
@@ -1978,7 +1851,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         });
         delete groupData.afkUsers[sender];
         writeJsonFile(groupFile, groupData);
-        // Otimização: Invalida cache quando groupData é salvo
+
         if (isGroup) {
           optimizer.invalidateGroup(from);
         }
@@ -2010,7 +1883,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         }
         delete groupData.mutedUsers[sender];
         writeJsonFile(groupFile, groupData);
-        // Otimização: Invalida cache quando groupData é salvo
+
         if (isGroup) {
           optimizer.invalidateGroup(from);
         }
@@ -2060,23 +1933,23 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
           const activationResult = useActivationCode(potentialCode, from, sender);
           await reply(activationResult.message);
           if (activationResult.success) {
-            // Notifica o dono
+
             try {
-              const configPath = pathz.join(__dirname, '..', 'config.json');
+              const configPath = process.env.CONFIG_PATH || pathz.join(__dirname, 'config.json');
               const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
               const ownerNumber = config.numerodono || "5511999999999";
               const ownerJid = `${ownerNumber}@s.whatsapp.net`;
-              
+
               const groupMetadata = await getCachedGroupMetadata(from);
               const groupName = groupMetadata?.subject || 'Desconhecido';
-              
+
               const notifyMsg = `✅ *CÓDIGO DE ATIVAÇÃO USADO*\n\n` +
                                 `🎫 *Código:* ${potentialCode}\n` +
                                 `👥 *Grupo:* ${groupName}\n` +
                                 `👤 *Ativado por:* @${sender.split('@')[0]}\n` +
                                 `📅 *Data:* ${new Date().toLocaleString('pt-BR')}`;
-                                
-              await nazu.sendMessage(ownerJid, { 
+
+              await nazu.sendMessage(ownerJid, {
                 text: notifyMsg,
                 mentions: [sender]
               });
@@ -2119,7 +1992,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
           });
         }
         writeJsonFile(groupFile, groupData);
-        // Otimização: Invalida cache quando groupData é salvo
+
         if (isGroup) {
           optimizer.invalidateGroup(from);
         }
@@ -2132,7 +2005,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         const levelingData = loadLevelingSafe();
         const userData = getLevelingUser(levelingData, sender);
 
-        // Atualiza contadores
         userData.messages = (userData.messages || 0) + 1;
         if (isCmd) {
           userData.commands = (userData.commands || 0) + 1;
@@ -2142,7 +2014,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         }
         userData.lastMessage = Date.now();
 
-        // Verifica level up e salva
         checkLevelUp(sender, userData, levelingData, nazu, from);
         saveLevelingSafe(levelingData);
       } catch (levelingError) {
@@ -2229,7 +2100,6 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     };
     nazu.react = reagir;
 
-
     async function processReactionMessage() {
       try {
         if (!isGroup) {
@@ -2302,7 +2172,6 @@ Código: *${roleCode}*`,
               console.warn('Não foi possível enviar confirmação de reação:', dmError.message || dmError);
             }
 
-            // Atualiza a mensagem principal do rolê com as novas listas
             await refreshRoleAnnouncement(roleCode, roleData);
           }
           return;
@@ -2343,35 +2212,29 @@ Código: *${roleCode}*`,
     const parseTimeToMinutes = (timeStr) => {
       if (typeof timeStr !== 'string') return null;
 
-      // Validate basic format
       const m = timeStr.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
       if (!m) return null;
 
       const h = parseInt(m[1]);
       const mi = parseInt(m[2]);
 
-      // Validate hour range
       if (h < 0 || h > 23) return null;
 
-      // Validate minute range
       if (mi < 0 || mi > 59) return null;
 
       return h * 60 + mi;
     };
 
-    // Enhanced time validation function
     const validateTimeFormat = (timeStr) => {
       if (!timeStr || typeof timeStr !== 'string') {
         return { valid: false, error: 'Horário inválido. O horário não pode ser vazio.' };
       }
 
-      // Check for valid format
       const isValidFormat = /^([01]?\d|2[0-3]):([0-5]\d)$/.test(timeStr);
       if (!isValidFormat) {
         return { valid: false, error: 'Formato inválido. Use HH:MM (24 horas).' };
       }
 
-      // Parse and validate components
       const [hours, minutes] = timeStr.split(':').map(Number);
 
       if (hours < 0 || hours > 23) {
@@ -2382,7 +2245,6 @@ Código: *${roleCode}*`,
         return { valid: false, error: 'Minuto inválido. Use entre 00 e 59.' };
       }
 
-      // Check for edge cases
       if (timeStr === '24:00') {
         return { valid: false, error: 'Use 23:59 como horário máximo.' };
       }
@@ -2433,13 +2295,13 @@ Código: *${roleCode}*`,
       return '—';
     };
     const getNowMinutes = () => {
-      // Use Brazil/Sao_Paulo timezone for accurate time comparisons
+
       const now = new Date();
       const saoPauloTime = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Maputo" }));
       return saoPauloTime.getHours() * 60 + saoPauloTime.getMinutes();
     };
     const getTodayStr = () => {
-      // Use Brazil/Sao_Paulo timezone for consistent date handling
+
       const d = new Date();
       const saoPauloDate = new Date(d.toLocaleString("en-US", { timeZone: "Africa/Maputo" }));
       const y = saoPauloDate.getFullYear();
@@ -2533,11 +2395,11 @@ Código: *${roleCode}*`,
         global.remindersWorkerStarted = true;
         setInterval(async () => {
           try {
-            // Otimização: Cache de reminders
+
             const list = await optimizer.memoize(
               'reminders:all',
               () => Promise.resolve(loadReminders()),
-              5000 // 5 segundos
+              5000
             );
             if (!Array.isArray(list) || list.length === 0) return;
             const now = Date.now();
@@ -2563,9 +2425,9 @@ Código: *${roleCode}*`,
             }
             if (changed) {
               saveReminders(list);
-              // Invalida cache após salvar
+
               optimizer.clearStatic('reminders:all');
-              // Invalida cache após salvar
+
               optimizer.clearStatic('reminders:all');
             }
           } catch (err) {
@@ -2575,9 +2437,9 @@ Código: *${roleCode}*`,
       }
     };
     startRemindersWorker(nazu);
-    // GP schedule using cron jobs (daily execution)
+
     let gpScheduleWorkerStarted = global.gpScheduleWorkerStarted || false;
-    const gpCronJobs = {}; // key: `${groupId}:${type}` where type is 'open'|'close'
+    const gpCronJobs = {};
 
     const unscheduleGroupJob = (groupId, type) => {
       const key = `${groupId}:${type}`;
@@ -2595,13 +2457,13 @@ Código: *${roleCode}*`,
       const [hh, mm] = normalized.split(':');
       if (typeof hh === 'undefined' || typeof mm === 'undefined') return;
       const key = `${groupId}:${type}`;
-      // unschedule previous if exists
+
       unscheduleGroupJob(groupId, type);
 
       const cronExpr = `${parseInt(mm, 10)} ${parseInt(hh, 10)} * * *`;
       try {
         const task = cron.schedule(cronExpr, async () => {
-          // Adiciona um atraso aleatório de 0 a 15 segundos para evitar chamadas simultâneas (jitter)
+
           const jitterDelay = Math.floor(Math.random() * 15000);
           await new Promise(resolve => setTimeout(resolve, jitterDelay));
 
@@ -2613,7 +2475,6 @@ Código: *${roleCode}*`,
             data.schedule = data.schedule || {};
             const schedule = data.schedule;
 
-            // Função auxiliar para executar com retry em caso de erro 428 (Connection Closed)
             const executeWithRetry = async (action, actionLabel, maxRetries = 2) => {
               for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
@@ -2623,13 +2484,12 @@ Código: *${roleCode}*`,
                   const is428 = e?.output?.statusCode === 428 || msg.includes('Connection Closed');
                   const is403 = e?.output?.statusCode === 403 || msg.toLowerCase().includes('forbidden');
                   const isNotFound = msg.includes('item-not-found') || msg.includes('not-authorized');
-                  
-                  // Erros esperados: grupo não existe mais, bot removido, etc — silenciar
+
                   if (is403 || isNotFound) {
-                    // Log discreto, não é erro real
+
                     return null;
                   }
-                  
+
                   if (is428 && attempt < maxRetries) {
                     console.warn(`[Cron] ⚠️ Conexão fechada ao ${actionLabel} ${groupId.substring(0, 15)}... Tentativa ${attempt}/${maxRetries}. Retry em 10s...`);
                     await new Promise(r => setTimeout(r, 10000));
@@ -2645,17 +2505,15 @@ Código: *${roleCode}*`,
             try {
               groupMeta = await executeWithRetry(() => nazuInstance.groupMetadata(groupId), 'fetch_metadata', 3);
             } catch (e) {
-              return; // Erro já logado na executeWithRetry (pode ser 403 Forbidden se o bot não estiver no grupo)
+              return;
             }
 
             if (!groupMeta || !groupMeta.participants) return;
 
-            // Identificar o bot
             const botNumber = nazuInstance.user?.id?.split(':')[0];
             if (!botNumber) return;
             const botJid = `${botNumber}@s.whatsapp.net`;
 
-            // Checar se o bot é admin no grupo
             const isBotAdmin = groupMeta.participants.some(p => p.id === botJid && (p.admin === 'admin' || p.admin === 'superadmin'));
 
             if (!isBotAdmin) {
@@ -2671,7 +2529,7 @@ Código: *${roleCode}*`,
                   await executeWithRetry(() => nazuInstance.groupSettingUpdate(groupId, 'not_announcement'), 'open');
                   await nazuInstance.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' }).catch(() => {});
                   console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
-                } catch (e) {} // Erro já logado
+                } catch (e) {}
               }
             } else {
               if (groupMeta.announce === true) {
@@ -2681,11 +2539,10 @@ Código: *${roleCode}*`,
                   await executeWithRetry(() => nazuInstance.groupSettingUpdate(groupId, 'announcement'), 'close');
                   await nazuInstance.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' }).catch(() => {});
                   console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
-                } catch (e) {} // Erro já logado
+                } catch (e) {}
               }
             }
 
-            // record run and persist
             recordScheduleRun(schedule, type, getTodayStr(), normalized);
             data.schedule = schedule;
             try { writeJsonFile(filePath, data); } catch (e) { console.error('[Cron] Failed to write schedule run:', e); }
@@ -2736,7 +2593,7 @@ Código: *${roleCode}*`,
         if (gpScheduleWorkerStarted) return;
         gpScheduleWorkerStarted = true;
         global.gpScheduleWorkerStarted = true;
-        // load existing schedules and create cron jobs
+
         loadAllGroupSchedules(nazuInstance);
       } catch (e) {
         console.error('[Cron] startGpScheduleWorker error:', e);
@@ -2744,7 +2601,6 @@ Código: *${roleCode}*`,
     };
     startGpScheduleWorker(nazu);
 
-    // Sistema de Unban Automático (Antipalavra)
     let antipalavraUnbanWorkerStarted = global.antipalavraUnbanWorkerStarted || false;
     const startAntipalavraUnbanWorker = (nazuInstance) => {
       try {
@@ -2812,11 +2668,10 @@ Código: *${roleCode}*`,
           }
         };
 
-        // Calcula proximo unban e agenda com setTimeout em vez de polling
         const scheduleNextUnban = () => {
           try {
             if (!fs.existsSync(ANTIPALAVRA_UNBANS_FILE)) {
-              setTimeout(scheduleNextUnban, 5 * 60 * 1000); // Re-verifica em 5min
+              setTimeout(scheduleNextUnban, 5 * 60 * 1000);
               return;
             }
             let unbans = [];
@@ -2829,18 +2684,17 @@ Código: *${roleCode}*`,
             }
 
             if (unbans.length === 0) {
-              setTimeout(scheduleNextUnban, 5 * 60 * 1000); // Sem unbans, verifica em 5min
+              setTimeout(scheduleNextUnban, 5 * 60 * 1000);
               return;
             }
 
-            // Processa unbans pendentes
             processUnbans().then(() => {
-              // Recalcula proximo unban apos processar
+
               try {
                 const remaining = JSON.parse(fs.readFileSync(ANTIPALAVRA_UNBANS_FILE, 'utf-8')) || [];
                 if (remaining.length > 0) {
                   const nextTime = Math.min(...remaining.map(u => u.unbanAt));
-                  const delay = Math.max(nextTime - Date.now(), 10000); // Min 10s
+                  const delay = Math.max(nextTime - Date.now(), 10000);
                   setTimeout(scheduleNextUnban, delay);
                 } else {
                   setTimeout(scheduleNextUnban, 5 * 60 * 1000);
@@ -2869,7 +2723,6 @@ Código: *${roleCode}*`,
         autoHorariosWorkerStarted = true;
         global.autoHorariosWorkerStarted = true;
 
-        // Roda 1x por hora (no minuto 0) em vez de a cada 60 segundos
         cron.schedule('0 * * * *', async () => {
           try {
             const now = new Date();
@@ -2982,10 +2835,9 @@ Código: *${roleCode}*`,
     };
     startAutoHorariosWorker(nazu);
 
-    // Auto Mensagens Worker usando cron jobs (executa conforme horários programados)
     let autoMensagensWorkerStarted = global.autoMensagensWorkerStarted || false;
-    const autoMsgCronJobs = global.autoMsgCronJobs || {}; // key: `${groupId}:${msgId}`
-    global.autoMsgCronJobs = autoMsgCronJobs; // Garantir persistência global
+    const autoMsgCronJobs = global.autoMsgCronJobs || {};
+    global.autoMsgCronJobs = autoMsgCronJobs;
 
     const unscheduleAutoMessage = (groupId, msgId) => {
       const key = `${groupId}:${msgId}`;
@@ -3007,7 +2859,6 @@ Código: *${roleCode}*`,
 
       const key = `${groupId}:${msgConfig.id}`;
 
-      // Remover agendamento anterior se existir
       unscheduleAutoMessage(groupId, msgConfig.id);
 
       const cronExpr = `${parseInt(mm, 10)} ${parseInt(hh, 10)} * * *`;
@@ -3015,7 +2866,7 @@ Código: *${roleCode}*`,
       try {
         const task = cron.schedule(cronExpr, async () => {
           try {
-            // Recarregar dados do arquivo para pegar versão mais recente
+
             const filePath = pathz.join(GRUPOS_DIR, `${groupId}.json`);
             if (!fs.existsSync(filePath)) {
               console.warn(`[AutoMsg] Arquivo do grupo não encontrado: ${groupId}`);
@@ -3043,7 +2894,6 @@ Código: *${roleCode}*`,
               return;
             }
 
-            // Construir e enviar a mensagem
             const messageContent = {};
 
             if (currentMsg.type === 'text') {
@@ -3076,7 +2926,6 @@ Código: *${roleCode}*`,
           timezone: 'Africa/Maputo'
         });
 
-        // Iniciar a task imediatamente
         task.start();
         autoMsgCronJobs[key] = task;
         console.log(`[AutoMsg] 🔔 Agendamento criado para ${key} em ${cronExpr} (timezone: Africa/Maputo)`);
@@ -3124,7 +2973,6 @@ Código: *${roleCode}*`,
         autoMensagensWorkerStarted = true;
         global.autoMensagensWorkerStarted = true;
 
-        // Carregar mensagens existentes e criar cron jobs
         loadAllAutoMessages(nazuInstance);
       } catch (e) {
         console.error('[AutoMsg] startAutoMensagensWorker error:', e);
@@ -3212,10 +3060,6 @@ Código: *${roleCode}*`,
       return null;
     };
 
-    /**
-     * Processa uma imagem usando ffmpeg para formato adequado para foto de perfil
-     * Redimensiona para 640x640 (máximo) e converte para JPEG
-     */
     const processImageForProfile = async (imageBuffer) => {
       const tempDir = pathz.join(__dirname, '..', 'database', 'tmp');
       ensureDirectoryExists(tempDir);
@@ -3224,18 +3068,15 @@ Código: *${roleCode}*`,
       const outputFile = pathz.join(tempDir, `output_${Date.now()}.jpg`);
 
       try {
-        // Salva o buffer de entrada
+
         fs.writeFileSync(inputFile, imageBuffer);
 
-        // Processa com ffmpeg: redimensiona para 640x640 mantendo proporção e converte para JPEG
         const cmd = `ffmpeg -hide_banner -loglevel error -i "${inputFile}" -vf "scale=640:640:force_original_aspect_ratio=decrease,pad=640:640:(ow-iw)/2:(oh-ih)/2:color=white" -q:v 5 -y "${outputFile}"`;
 
         await execAsync(cmd, { timeout: 15000 });
 
-        // Lê o arquivo processado
         const processedBuffer = fs.readFileSync(outputFile);
 
-        // Limpa arquivos temporários
         try {
           fs.unlinkSync(inputFile);
           fs.unlinkSync(outputFile);
@@ -3245,12 +3086,12 @@ Código: *${roleCode}*`,
 
         return processedBuffer;
       } catch (error) {
-        // Limpa arquivos temporários em caso de erro
+
         try {
           if (fs.existsSync(inputFile)) fs.unlinkSync(inputFile);
           if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
         } catch (cleanupError) {
-          // Ignora erros de limpeza
+
         }
         throw new Error(`Erro ao processar imagem: ${error.message}`);
       }
@@ -3368,8 +3209,7 @@ Código: *${roleCode}*`,
       antifloodData[from].users[sender] = {
         lastCmd: now
       };
-      // Nota: Não salvamos em disco aqui para evitar race conditions.
-      // O cache será salvo periodicamente pelo optimizer.
+
     }
     if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
       if (!isUserWhitelisted(sender, 'antidoc')) {
@@ -3388,13 +3228,11 @@ Código: *${roleCode}*`,
       }
     }
 
-    // Auto-download: detecta URLs sem comando e baixa automaticamente
-    // Funciona no privado (sempre) e em grupos (se autodl estiver ativo)
     const autodlAtivo = isGroup ? groupData.autodl : true;
     if (autodlAtivo && budy2.includes('http') && !isCmd) {
       const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
       if (urlMatch && urlMatch.length > 0) {
-        // Dispara o download sem bloquear — bot continua respondendo
+
         handleAutoDownload(nazu, from, urlMatch[0], info);
       }
     }
@@ -3494,7 +3332,6 @@ Código: *${roleCode}*`,
       }
     }
 
-    // Verifica se o usuário é um parceiro registrado
     const isParceiro = parceriasData && parceriasData.partners && parceriasData.partners[sender];
 
     if (isGroup && isAntiLinkGp && !isGroupAdmin && !isParceiro) {
@@ -3617,7 +3454,7 @@ Código: *${roleCode}*`,
         }
       }
     }
-    // AntiLink Hard - Remove qualquer link compartilhado
+
     if (isGroup && groupData.antilinkhard && parceriasData.active && !isGroupAdmin && !isOwner && !isParceiro) {
       const linkRegex = /(https?:\/\/|www\.)[^\s]+|([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?/gi;
       const hasLink = linkRegex.test(budy2);
@@ -3685,11 +3522,11 @@ Código: *${roleCode}*`,
     } catch (error) {
       console.error('┃ 🚨 Erro ao gerar logs:', error, '');
     }
-    // --- SISTEMA DE CONFIRMAÇÃO PLAY (1 ou 2) ---
+
     try {
       if (body && (body === '1' || body === '2')) {
         const processed = await handlePlayConfirmation(nazu, from, info, body, sender);
-        if (processed) return; 
+        if (processed) return;
       }
     } catch (e) {
       console.error('Erro no handlePlayConfirmation:', e.message);
@@ -3702,7 +3539,7 @@ Código: *${roleCode}*`,
             if (relationshipManager.hasPendingRequest(from) && body) {
               const relResponse = relationshipManager.processResponse(from, sender, body);
               if (relResponse) {
-                // Apenas envia mensagem se for sucesso, ignora respostas inválidas
+
                 if (relResponse.success && relResponse.message) {
                   await nazu.sendMessage(from, {
                     text: relResponse.message,
@@ -3712,12 +3549,11 @@ Código: *${roleCode}*`,
               }
             }
 
-            // Processa resposta de traição
             if (relationshipManager.hasPendingBetrayal && relationshipManager.processBetrayalResponse) {
               if (relationshipManager.hasPendingBetrayal(from) && body) {
                 const betrayalResponse = relationshipManager.processBetrayalResponse(from, sender, body, groupPrefix);
                 if (betrayalResponse) {
-                  // Apenas envia mensagem se for sucesso, ignora respostas inválidas
+
                   if (betrayalResponse.success && betrayalResponse.message) {
                     await nazu.sendMessage(from, {
                       text: betrayalResponse.message,
@@ -3767,7 +3603,6 @@ Código: *${roleCode}*`,
           return;
         }
 
-        // Processamento de respostas para Connect4
         if (connect4 && connect4.hasPendingInvitation && connect4.hasPendingInvitation(from) && budy2) {
           const normalizedResponse = budy2.toLowerCase().trim();
           const result = connect4.processInvitationResponse(from, sender, normalizedResponse);
@@ -3803,9 +3638,8 @@ Código: *${roleCode}*`,
           }
         }
 
-        // Processamento do antitoxic
         if (antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body && ia ) {
-          // Função wrapper para a IA do antitoxic
+
           const aiFunction = (prompt) => {
             return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
               .then(response => response?.data?.choices?.[0]?.message?.content || '');
@@ -3827,27 +3661,25 @@ Código: *${roleCode}*`,
                   mentions: [sender]
                 });
               }
-              // Para 'mute', precisaria implementar sistema de mute
+
             }
           }).catch(toxicErr => {
             console.warn('[ANTITOXIC] Error:', toxicErr.message);
           });
         }
 
-        // Processamento do antipalavra (verifica blacklist de palavras)
         if (isGroup && antipalavra && body && !isCmd) {
           try {
-            // Verifica se o sistema está ativo no grupo
+
             if (!antipalavra.isActive(from)) {
-              // Sistema desativado, não processa
+
             } else if (!isGroupAdmin) {
-              // Apenas verifica mensagens de não-admins
+
               const detectionResult = antipalavra.checkMessage(from, body);
 
               if (detectionResult && detectionResult.detected) {
                 console.log(`[ANTIPALAVRA] Palavra detectada: "${detectionResult.palavra}" de @${sender.split('@')[0]}`);
 
-                // Verifica se o bot é admin antes de tentar remover
                 if (!isBotAdmin) {
                   await nazu.sendMessage(from, {
                     text: `⚠️ *ANTIPALAVRA - DETECÇÃO*\n\n` +
@@ -3859,14 +3691,12 @@ Código: *${roleCode}*`,
                   return;
                 }
 
-                // Deleta a mensagem
                 await nazu.sendMessage(from, { delete: info.key }).catch(err =>
                   console.error('[ANTIPALAVRA] Erro ao deletar mensagem:', err.message)
                 );
 
-                // Remove o usuário do grupo
                 await nazu.groupParticipantsUpdate(from, [sender], 'remove').then(async () => {
-                  // Agenda desbanimento para daqui a 5 horas (5 * 60 * 60 * 1000 ms)
+
                   const unbanAt = Date.now() + (5 * 60 * 60 * 1000);
                   try {
                     let unbans = [];
@@ -3886,10 +3716,8 @@ Código: *${roleCode}*`,
                   console.error('[ANTIPALAVRA] Erro ao remover usuário:', err.message)
                 );
 
-                // Registra o banimento nas estatísticas
                 antipalavra.registerBan(from, sender, detectionResult.palavra);
 
-                // Envia notificação
                 await nazu.sendMessage(from, {
                   text: `🚫 *ANTIPALAVRA - BANIMENTO TEMPORÁRIO*\n\n` +
                     `👤 Usuário: @${sender.split('@')[0]}\n` +
@@ -3900,7 +3728,6 @@ Código: *${roleCode}*`,
                   mentions: [sender]
                 }).catch(err => console.error('[ANTIPALAVRA] Erro ao enviar notificação:', err.message));
 
-                // Para o processamento da mensagem
                 return;
               }
             }
@@ -3938,18 +3765,16 @@ Código: *${roleCode}*`,
     if (budy2.match(/^(\d+)d(\d+)$/)) reply(+budy2.match(/^(\d+)d(\d+)$/)[1] > 50 || +budy2.match(/^(\d+)d(\d+)$/)[2] > 100 ? "❌ Limite: max 50 dados e 100 lados" : "🎲 Rolando " + budy2.match(/^(\d+)d(\d+)$/)[1] + "d" + budy2.match(/^(\d+)d(\d+)$/)[2] + "...\n🎯 Resultados: " + (r = [...Array(+budy2.match(/^(\d+)d(\d+)$/)[1])].map(_ => 1 + Math.floor(Math.random() * +budy2.match(/^(\d+)d(\d+)$/)[2]))).join(", ") + "\n📊 Total: " + r.reduce((a, b) => a + b, 0));
 
     const _botShort = (nazu && nazu.user && (nazu.user.id || nazu.user.lid)) ? String((nazu.user.id || nazu.user.lid).split(':')[0]) : '';
-    // Não processar pela assistente se a mensagem veio do PRO (evita loop infinito)
+
     if (!info.key.fromMe && isAssistente && !isCmd && !info._fromPro && ((_botShort && budy2.includes(_botShort)) || (menc_os2 && menc_os2 == botNumber)) ) {
       if (budy2.replaceAll('@' + _botShort, '').length > 2) {
-        // Detectar tipo de mídia da mensagem atual
+
         const tipoMidiaAtual = info.message?.imageMessage ? 'imagem' :
           info.message?.videoMessage ? 'video' :
             info.message?.audioMessage ? 'audio' :
               info.message?.stickerMessage ? 'sticker' :
                 info.message?.documentMessage ? 'documento' : null;
 
-        // Detectar tipo de mídia marcada
-        // Checar também pttMessage (mensagem de voz) que pode vir separado
         const tipoMidiaMarcada = quotedMessageContent?.imageMessage ? 'imagem' :
           quotedMessageContent?.videoMessage ? 'video' :
             quotedMessageContent?.audioMessage ? 'audio' :
@@ -3957,17 +3782,14 @@ Código: *${roleCode}*`,
                 quotedMessageContent?.stickerMessage ? 'sticker' :
                   quotedMessageContent?.documentMessage ? 'documento' : null;
 
-        // Detectar menções na mensagem
         const mencoesNaMensagem = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
 
-        // Obter todos os possíveis identificadores do bot para filtrar
         const botLid = nazu.user?.lid ? nazu.user.lid.split(':')[0] : null;
         const botJid = nazu.user?.id ? nazu.user.id.split(':')[0] : null;
         const botIdentifiers = [_botShort, botLid, botJid, botNumber].filter(Boolean);
 
-        // Filtrar menção do bot das menções (usando todos os identificadores possíveis)
         const mencoesFiltradas = mencoesNaMensagem.filter(m => {
-          const mNumber = m.split('@')[0].split(':')[0]; // Pega só o número
+          const mNumber = m.split('@')[0].split(':')[0];
           return !botIdentifiers.some(id => {
             const idNumber = id.split('@')[0].split(':')[0];
             return mNumber === idNumber;
@@ -4015,7 +3837,7 @@ Código: *${roleCode}*`,
           jSoNzIn.id_enviou_marcada = jsonO.participant;
           jSoNzIn.marcou_sua_mensagem = jsonO.participant == getBotId(nazu);
         }
-        // Se marcou mensagem com mídia mas sem texto, ainda assim é marcou_mensagem
+
         if (jsonO && jsonO.participant && tipoMidiaMarcada && !jSoNzIn.marcou_mensagem) {
           jSoNzIn.marcou_mensagem = true;
           jSoNzIn.id_enviou_marcada = jsonO.participant;
@@ -4023,14 +3845,12 @@ Código: *${roleCode}*`,
 
         console.log('🤖 Processando mensagem de assistente...');
 
-        // Add null check for ia object
         if (!ia || typeof ia.makeAssistentRequest !== 'function') {
           console.warn('[IA] makeAssistentRequest not available');
           reply('🤖 Sistema de IA temporariamente indisponível. Tente novamente em alguns minutos.');
           return;
         }
 
-        // Obter a personalidade atual do grupo
         const personality = groupData.assistentePersonality || 'nazuna';
 
         ia.makeAssistentRequest({
@@ -4043,12 +3863,9 @@ Código: *${roleCode}*`,
           console.log('✅ Assistente processado com sucesso');
           console.log(`[${personality}] Resposta recebida:`, JSON.stringify(respAssist).substring(0, 500));
 
-          // apiKeyInvalid check removido
-
-          // Tratamento especial para personalidade 'pro' (interpretador de comandos)
           if (respAssist.isPro) {
             if (respAssist.isCommand && respAssist.command) {
-              // Se falta algo para executar o comando, avisa o usuário
+
               if (respAssist.falta) {
                 reply(`⚠️ Para executar *${prefix}${respAssist.command}*, preciso que você informe: ${respAssist.falta}`);
                 return;
@@ -4056,14 +3873,11 @@ Código: *${roleCode}*`,
 
               console.log(`🤖 [PRO] Comando identificado: ${respAssist.command} ${respAssist.args || ''}`);
 
-              // Simular execução do comando reutilizando o objeto info original
               const simulatedCommand = respAssist.command.toLowerCase();
               let simulatedArgs = respAssist.args || '';
 
-              // Obter menções originais da mensagem e filtrar a menção do bot
               const originalMentions = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
 
-              // Usar os mesmos identificadores do bot para filtrar
               const botLidPro = nazu.user?.lid ? nazu.user.lid.split(':')[0] : null;
               const botJidPro = nazu.user?.id ? nazu.user.id.split(':')[0] : null;
               const botIdentifiersPro = [_botShort, botLidPro, botJidPro, botNumber].filter(Boolean);
@@ -4077,9 +3891,8 @@ Código: *${roleCode}*`,
               });
               const targetMention = mentionsWithoutBot.length > 0 ? mentionsWithoutBot[0] : null;
 
-              // Se não tem menção no texto, pode ter marcado mensagem de alguém (resposta)
               const quotedParticipant = info.message?.extendedTextMessage?.contextInfo?.participant;
-              // Verificar se o quotedParticipant não é o próprio bot
+
               const isQuotedBot = quotedParticipant ? botIdentifiersPro.some(id => {
                 const idNumber = id.split('@')[0].split(':')[0];
                 const qNumber = quotedParticipant.split('@')[0].split(':')[0];
@@ -4093,30 +3906,24 @@ Código: *${roleCode}*`,
               console.log(`🤖 [PRO] Quoted participant: ${quotedParticipant}`);
               console.log(`🤖 [PRO] Menção ou quoted final: ${mentionOrQuoted}`);
 
-              // Lista de comandos que precisam de menção (@user)
               const commandsNeedMention = ['ban', 'ban2', 'kick', 'promover', 'rebaixar', 'mute', 'desmute',
                 'mute2', 'desmute2', 'adv', 'rmadv', 'userinfo', 'perfil', 'rep', 'presente', 'denunciar',
                 'blockuser', 'unblockuser', 'addblacklist', 'delblacklist', 'addmod', 'delmod'];
 
-              // Se o comando precisa de menção e temos uma menção/quoted, adiciona ao args
               if (commandsNeedMention.includes(simulatedCommand) && mentionOrQuoted && !simulatedArgs.includes('@')) {
-                // Adicionar a menção ao início dos argumentos
+
                 const mentionNumber = mentionOrQuoted.split('@')[0];
                 simulatedArgs = `@${mentionNumber} ${simulatedArgs}`.trim();
               }
 
               const simulatedBody = `${prefix}${simulatedCommand} ${simulatedArgs}`.trim();
 
-              // Clonar o objeto info original mantendo estrutura completa
               const fakeMessage = JSON.parse(JSON.stringify(info));
 
-              // Atualizar timestamp para o momento atual
               fakeMessage.messageTimestamp = Math.floor(Date.now() / 1000);
 
-              // Marcar como mensagem processada pelo PRO para evitar loop infinito
               fakeMessage._fromPro = true;
 
-              // Determinar o tipo de mídia original para preservar
               const hasImage = !!info.message?.imageMessage;
               const hasVideo = !!info.message?.videoMessage;
               const hasAudio = !!info.message?.audioMessage;
@@ -4128,41 +3935,40 @@ Código: *${roleCode}*`,
               const hasQuotedSticker = !!quotedMessageContent?.stickerMessage;
               const hasQuotedDocument = !!quotedMessageContent?.documentMessage;
 
-              // Preservar contexto de mídia e menções
               if (fakeMessage.message) {
-                // Se tem imagem com legenda, preservar imagem e mudar legenda
+
                 if (hasImage && fakeMessage.message.imageMessage) {
                   fakeMessage.message.imageMessage.caption = simulatedBody;
-                  // Limpar outros tipos de mensagem de texto
+
                   delete fakeMessage.message.conversation;
                   delete fakeMessage.message.extendedTextMessage;
                 }
-                // Se tem vídeo com legenda, preservar vídeo e mudar legenda
+
                 else if (hasVideo && fakeMessage.message.videoMessage) {
                   fakeMessage.message.videoMessage.caption = simulatedBody;
                   delete fakeMessage.message.conversation;
                   delete fakeMessage.message.extendedTextMessage;
                 }
-                // Se tem áudio, preservar áudio e adicionar comando como extendedTextMessage
+
                 else if (hasAudio && fakeMessage.message.audioMessage) {
-                  // Áudio não tem caption, então criamos extendedTextMessage junto
+
                   fakeMessage.message.extendedTextMessage = {
                     text: simulatedBody,
                     contextInfo: info.message?.extendedTextMessage?.contextInfo || {}
                   };
                   delete fakeMessage.message.conversation;
                 }
-                // Se tem documento, preservar e mudar caption
+
                 else if (hasDocument && fakeMessage.message.documentMessage) {
                   fakeMessage.message.documentMessage.caption = simulatedBody;
                   delete fakeMessage.message.conversation;
                   delete fakeMessage.message.extendedTextMessage;
                 }
-                // Se tem sticker, preservar sticker e adicionar texto
+
                 else if (hasSticker && fakeMessage.message.stickerMessage) {
                   const stickerMentions = (info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [])
                     .filter(m => m !== botNumber && !m.includes(_botShort));
-                  // Adicionar menção do alvo se não estiver na lista
+
                   if (mentionOrQuoted && !stickerMentions.includes(mentionOrQuoted)) {
                     stickerMentions.push(mentionOrQuoted);
                   }
@@ -4175,13 +3981,13 @@ Código: *${roleCode}*`,
                   };
                   delete fakeMessage.message.conversation;
                 }
-                // Se tem mensagem marcada com mídia, preservar o contextInfo
+
                 else if (info.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
                   const originalContext = info.message.extendedTextMessage.contextInfo;
-                  // Filtrar menção do bot e adicionar menção do alvo
+
                   const quotedMentions = (originalContext.mentionedJid || [])
                     .filter(m => m !== botNumber && !m.includes(_botShort));
-                  // Se temos um alvo e ele não está na lista, adiciona
+
                   if (mentionOrQuoted && !quotedMentions.includes(mentionOrQuoted)) {
                     quotedMentions.push(mentionOrQuoted);
                   }
@@ -4189,9 +3995,9 @@ Código: *${roleCode}*`,
                     text: simulatedBody,
                     contextInfo: {
                       ...originalContext,
-                      // Preservar menções filtradas + alvo
+
                       mentionedJid: quotedMentions,
-                      // Preservar mensagem marcada
+
                       quotedMessage: originalContext.quotedMessage,
                       participant: originalContext.participant,
                       stanzaId: originalContext.stanzaId
@@ -4204,12 +4010,10 @@ Código: *${roleCode}*`,
                   delete fakeMessage.message.documentMessage;
                   delete fakeMessage.message.stickerMessage;
                 }
-                // Mensagem de texto simples
-                // Preservar menções se existirem (sem a menção do bot)
+
                 const mentionedJid = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
                 const filteredMentions = mentionedJid.filter(m => m !== botNumber && !m.includes(_botShort));
 
-                // Se temos menção de um alvo (não bot), adicionar ao mentionedJid
                 const targetMentionsForContext = mentionOrQuoted && !filteredMentions.includes(mentionOrQuoted)
                   ? [...filteredMentions, mentionOrQuoted]
                   : filteredMentions;
@@ -4236,7 +4040,6 @@ Código: *${roleCode}*`,
                 fakeMessage.message = { conversation: simulatedBody };
               }
 
-              // Feedback visual antes de executar
               const mediaInfo = hasImage ? '🖼️' : hasVideo ? '🎬' : hasAudio ? '🎵' : hasSticker ? '🎭' :
                 hasQuotedImage ? '🖼️ (marcado)' : hasQuotedVideo ? '🎬 (marcado)' :
                   hasQuotedAudio ? '🎵 (marcado)' : hasQuotedSticker ? '🎭 (marcado)' : '';
@@ -4244,14 +4047,14 @@ Código: *${roleCode}*`,
               nazu.sendMessage(from, {
                 text: `🤖 *Executando:* ${prefix}${simulatedCommand}${simulatedArgs ? ' ' + simulatedArgs : ''}${mediaInfo ? '\n📎 Mídia: ' + mediaInfo : ''}`
               }, { quoted: info }).then(() => {
-                // Emitir novamente o evento de mensagem com o objeto completo
+
                 nazu.ev.emit('messages.upsert', {
                   messages: [fakeMessage],
                   type: 'notify'
                 });
               });
             }
-            // Se não é comando, não responde nada (comportamento esperado do pro)
+
             return;
           }
 
@@ -4295,7 +4098,7 @@ Código: *${roleCode}*`,
         });
       }
     }
-    //ANTI FLOOD DE MENSAGENS
+
     if (isGroup && groupData.messageLimit?.enabled && !isGroupAdmin && !isOwnerOrSub && !info.key.fromMe) {
       try {
         groupData.messageLimit.warnings = groupData.messageLimit.warnings || {};
@@ -4336,7 +4139,7 @@ Código: *${roleCode}*`,
           }
         }
         writeJsonFile(groupFile, groupData);
-        // Otimização: Invalida cache quando groupData é salvo
+
         if (isGroup) {
           optimizer.invalidateGroup(from);
         }
@@ -4344,7 +4147,7 @@ Código: *${roleCode}*`,
         console.error("Erro no sistema de limite de mensagens:", e);
       }
     }
-    //SISTEMA DE PARCERIA
+
     if (isGroup && parceriasData.active && !isGroupAdmin && body.includes('chat.whatsapp.com') && !info.key.fromMe) {
       if (parceriasData.partners[sender]) {
         const partnerData = parceriasData.partners[sender];
@@ -4368,7 +4171,7 @@ Código: *${roleCode}*`,
         });
       }
     }
-    //ANTI FIGURINHAS
+
     if (isGroup && groupData.antifig && groupData.antifig.enabled && type === "stickerMessage" && !isGroupAdmin && !info.key.fromMe) {
       if (!isUserWhitelisted(sender, 'antifig')) {
         try {
@@ -4400,7 +4203,7 @@ Código: *${roleCode}*`,
             mentions: [sender]
           });
           writeJsonFile(groupFile, groupData);
-          // Otimização: Invalida cache quando groupData é salvo
+
           if (isGroup) {
             optimizer.invalidateGroup(from);
           }
@@ -4413,17 +4216,17 @@ Código: *${roleCode}*`,
       }
     }
     if (!isCmd) {
-      // Se modo soadm ativo e não é admin, ignorar comandos sem prefixo silenciosamente
+
       if (isGroup && isOnlyAdmin && !isGroupAdmin && !isOwner) {
-        // Não processar comandos sem prefixo para não-admins quando soadm está ativo
+
       } else {
-        // Otimização: Cache de comandos sem prefixo
+
         const noPrefixCommands = await optimizer.memoize(
           `noprefix:${from}`,
           () => Promise.resolve(loadNoPrefixCommands()),
-          10000 // 10 segundos
+          10000
         );
-        // Otimização: Usar regex pré-compilada para split
+
         const splitRegex = optimizer.getRegex('commandSplit') || /\s+/;
         const firstWord = budy2.split(splitRegex)[0]?.trim();
         const matchedCommand = noPrefixCommands.find(item => firstWord === item.trigger);
@@ -4443,22 +4246,20 @@ Código: *${roleCode}*`,
       }
     }
 
-    // Verificar comandos personalizados do dono
     if (isCmd && command) {
-      // Otimização: Normalização otimizada
+
       const normalizedTrigger = optimizer.normalizeCommand(command) || normalizar(command);
-      // Otimização: Cache de comandos personalizados
+
       const customCmd = await optimizer.memoize(
         `customcmd:${from}:${normalizedTrigger}`,
         () => Promise.resolve(findCustomCommand(normalizedTrigger)),
-        5000 // 5 segundos
+        5000
       );
       if (customCmd) {
         try {
           const responseData = customCmd.response;
           const settings = customCmd.settings || {};
 
-          // Verificações de permissão/contexto
           if (settings.ownerOnly && !isOwner) {
             return reply('🚫 Este comando só pode ser usado pelo dono do bot.');
           }
@@ -4475,11 +4276,10 @@ Código: *${roleCode}*`,
             return reply('⚠️ Este comando está restrito ao privado.');
           }
 
-          // Verificar parâmetros obrigatórios e tipos (baseado na ordem)
           const allArgsCheck = q || '';
           let argsListCheck = parseArgsFromString(allArgsCheck);
           if (Array.isArray(settings.params) && settings.params.length) {
-            // Handle rest params: if last param has rest: true, capture remainder
+
             const restIndex = settings.params.findIndex(p => p.rest);
             if (restIndex !== -1 && restIndex < settings.params.length) {
               if (argsListCheck.length > restIndex) {
@@ -4510,11 +4310,10 @@ Código: *${roleCode}*`,
             }
           }
 
-          // Substituir parâmetros (posicionais e por nome)
           let processedResponse = responseData;
           const allArgs = q || '';
           let argsList = typeof argsListCheck !== 'undefined' ? argsListCheck : parseArgsFromString(allArgs);
-          // Support named args like key=value
+
           if (Array.isArray(argsList) && argsList.some(t => t.includes('='))) {
             const namedMap = {};
             const remainingPositional = [];
@@ -4540,10 +4339,10 @@ Código: *${roleCode}*`,
                 }
               }
             } else {
-              // no param meta, just keep positional
+
               remArgs.push(...remainingPositional);
             }
-            // handle rest param capturing: if rest param found as last
+
             const restIndexLocal = (settings.params || []).findIndex(p => p.rest);
             if (restIndexLocal !== -1 && restIndexLocal < remArgs.length) {
               const restVal = remArgs.slice(restIndexLocal).join(' ');
@@ -4561,11 +4360,10 @@ Código: *${roleCode}*`,
               .replace(/{user}/gi, pushname || 'Usuário')
               .replace(/{grupo}/gi, isGroup ? groupName : 'Privado');
 
-            // Parâmetros avançados: args, posição, named params e menções
             const allArgs = q || '';
-            // re-use processed argsList from validation phase if available (argsListCheck), otherwise parse
+
             let argsList = typeof argsListCheck !== 'undefined' ? argsListCheck : parseArgsFromString(allArgs);
-            // Map named params for replacement
+
             const paramsMap = {};
             if (Array.isArray(settings.params)) {
               for (let i = 0; i < settings.params.length; i++) {
@@ -4573,14 +4371,14 @@ Código: *${roleCode}*`,
                 paramsMap[p.name] = argsList[i] || '';
               }
             }
-            // {args} | {all}
+
             processedResponse = processedResponse.replace(/\{(?:args|all)\}/gi, allArgs);
-            // {1}, {2}, ... (1-based index)
+
             processedResponse = processedResponse.replace(/\{(\d+)\}/g, (m, idx) => {
               const i = parseInt(idx, 10) - 1;
               return argsList[i] || '';
             });
-            // Named parameters replacement: {name}
+
             for (const nm in paramsMap) {
               if (!Object.prototype.hasOwnProperty.call(paramsMap, nm)) continue;
               const val = paramsMap[nm];
@@ -4592,20 +4390,20 @@ Código: *${roleCode}*`,
                 console.warn('Warn: Invalid param name during regex replace:', nm, err.message);
               }
             }
-            // mentions: {mention} -> first mentioned, {mentions} -> all mentioned
+
             const mentionedJids = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
             let mentionsToInclude = Array.isArray(mentionedJids) ? mentionedJids : [];
-            // fallback to menc_os2 (participant/quoted participant) when no explicit mentions
+
             if (!mentionsToInclude.length && typeof menc_os2 !== 'undefined' && menc_os2) {
               mentionsToInclude = [menc_os2];
             }
             const mentionText = mentionsToInclude.length > 0 ? mentionsToInclude.map(m => '@' + getUserName(m)).join(' ') : '';
             processedResponse = processedResponse.replace(/\{mention\}/gi, mentionText);
             processedResponse = processedResponse.replace(/\{mentions\}/gi, mentionText);
-            // quoted
+
             const quotedText = (quotedMessageContent && (quotedMessageContent.conversation || quotedMessageContent.extendedTextMessage?.text)) || '';
             processedResponse = processedResponse.replace(/\{quoted\}/gi, quotedText);
-            // placeholders adicionais
+
             const groupDescValue = (groupMetadata && groupMetadata.desc) ? groupMetadata.desc : '';
             const latency = info?.messageTimestamp ? ((Date.now() - info.messageTimestamp * 1000) / 1000).toFixed(3) : null;
             if (groupDescValue) {
@@ -4624,7 +4422,7 @@ Código: *${roleCode}*`,
                 .replace(/{nomebot}/gi, nomebot)
                 .replace(/{user}/gi, pushname || 'Usuário')
                 .replace(/{grupo}/gi, isGroup ? groupName : 'Privado');
-              // placeholders extras para legenda
+
               const argsListC = argsList;
               const paramsMapC = {};
               if (Array.isArray(settings.params)) {
@@ -4666,9 +4464,8 @@ Código: *${roleCode}*`,
             }
           }
 
-          // Enviar resposta
           if (typeof processedResponse === 'string') {
-            // Incluir mentions quando houver
+
             const mentionedJidsExec = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
             let mentionsToIncludeExec = Array.isArray(mentionedJidsExec) ? mentionedJidsExec : [];
             if (!mentionsToIncludeExec.length && typeof menc_os2 !== 'undefined' && menc_os2) {
@@ -4680,7 +4477,7 @@ Código: *${roleCode}*`,
               await reply(processedResponse);
             }
           } else if (processedResponse.type === 'text') {
-            // substituir placeholders em conteúdo de texto
+
             let content = processedResponse.content || 'Resposta personalizada';
             const argsListExec = argsList;
             const paramsMapExec = {};
@@ -4695,7 +4492,7 @@ Código: *${roleCode}*`,
               const i = parseInt(idx, 10) - 1;
               return argsListExec[i] || '';
             });
-            // Named parameter replacement for {name}
+
             for (const nm in paramsMapExec) {
               if (!Object.prototype.hasOwnProperty.call(paramsMapExec, nm)) continue;
               const val = paramsMapExec[nm];
@@ -4703,7 +4500,7 @@ Código: *${roleCode}*`,
               const re = new RegExp('\\{' + escapeRegExp(nm) + '\\}', 'gi');
               content = content.replace(re, val);
             }
-            // mentions
+
             const mentionedJidsExec = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
             let mentionsToIncludeExec = Array.isArray(mentionedJidsExec) ? mentionedJidsExec : [];
             if (!mentionsToIncludeExec.length && typeof menc_os2 !== 'undefined' && menc_os2) {
@@ -4770,7 +4567,7 @@ Código: *${roleCode}*`,
             }
           }
 
-          return; // Comando personalizado executado, não continuar
+          return;
         } catch (error) {
           console.error('Erro ao executar comando personalizado:', error);
           await reply('❌ Erro ao executar comando personalizado.');
@@ -4785,7 +4582,6 @@ Código: *${roleCode}*`,
       }
     }
 
-    // Verificação de comandos VIP
     if (isCmd && vipCommandsManager.isVipCommand(command)) {
       if (!isPremium) {
         await reply(`🔒 *Comando VIP Exclusivo*
@@ -4807,8 +4603,6 @@ Entre em contato com o dono do bot:
       }
     }
 
-    // --- DOWNLOAD LOCAL 100% GRATUITO (sem APIs pagas) ---
-    // Comandos que recebem URL direta → baixarVideoLocal
     const cmdDownloadURL = [
       'tiktok', 'tk', 'tt', 'ttk', 'tkk', 'tiktokvideo', 'tiktokaudio', 'tiktoks',
       'instagram', 'ig', 'igdl', 'instavideo', 'igstory',
@@ -4822,21 +4616,19 @@ Entre em contato com o dono do bot:
       'twitch',
       'alldl', 'dl', 'down', 'baixar', 'video'
     ];
-    
-    // Só intercepta se q contém URL (http). Textos de pesquisa vão pro switch original.
+
     const isUrl = q && (q.includes('http://') || q.includes('https://') || q.includes('.com/') || q.includes('.be/'));
-    
+
     if (cmdDownloadURL.includes(command) && isUrl) {
       try {
         await baixarVideoLocal(nazu, from, info, q, reply);
         return;
       } catch (e) {
         console.error('[Download local]', e.message);
-        // Se falhar, continua pro switch original
+
       }
     }
 
-    // Comandos de pesquisa + download (play = áudio, playvid = vídeo)
     if ((command === 'play' || command === 'play2') && q) {
       try {
         await playAudio(nazu, from, info, q, reply);
@@ -4853,7 +4645,6 @@ Entre em contato com o dono do bot:
         console.error('[PlayVid local]', e.message);
       }
     }
-    // --- FIM DOWNLOAD LOCAL ---
 
     switch (command) {
       case 'roles':
@@ -4963,7 +4754,6 @@ Entre em contato com o dono do bot:
                 caption: announcementText
               };
 
-              // Salva informações da mídia para uso posterior
               mediaData = {
                 type: mediaInfo.type,
                 buffer: buffer.toString('base64'),
@@ -5000,7 +4790,6 @@ Entre em contato com o dono do bot:
             roleData.announcementKey = null;
           }
 
-          // Salva a mídia no roleData
           if (mediaData) {
             roleData.media = mediaData;
           }
@@ -5219,7 +5008,7 @@ Entre em contato com o dono do bot:
           persistGroupData();
 
           await reply(`✅ Presença confirmada no rolê *${roleData.title || code}*.`);
-          // Atualiza anúncio principal
+
           await refreshRoleAnnouncement(code, roleData);
         } catch (e) {
           console.error('Erro em role.vou:', e);
@@ -5260,7 +5049,7 @@ Entre em contato com o dono do bot:
           persistGroupData();
 
           await reply(wasGoing ? `🤷 Presença removida do rolê *${roleData.title || code}*.` : `🤷 Você já estava marcado como ausente para o rolê *${roleData.title || code}*.`);
-          // Atualiza anúncio principal
+
           await refreshRoleAnnouncement(code, roleData);
         } catch (e) {
           console.error('Erro em role.nvou:', e);
@@ -5304,7 +5093,6 @@ Entre em contato com o dono do bot:
           lines.push(`🤷 Desistiram (${notGoing.length}):`);
           lines.push(notGoing.length ? notGoing.map(id => `• @${getUserName(id)}`).join('\n') : '• —');
 
-          // Envia com a mídia salva se disponível
           if (roleData.media) {
             try {
               const buffer = Buffer.from(roleData.media.buffer, 'base64');
@@ -5327,11 +5115,11 @@ Entre em contato com o dono do bot:
               await nazu.sendMessage(from, payload, { quoted: info });
             } catch (mediaError) {
               console.log('Erro ao enviar mídia do rolê:', mediaError.message);
-              // Se falhar, envia apenas texto
+
               await nazu.sendMessage(from, { text: lines.join('\n'), mentions: [...going, ...notGoing] }, { quoted: info });
             }
           } else {
-            // Se não tiver mídia, envia apenas texto
+
             await nazu.sendMessage(from, { text: lines.join('\n'), mentions: [...going, ...notGoing] }, { quoted: info });
           }
         } catch (e) {
@@ -5372,17 +5160,17 @@ Entre em contato com o dono do bot:
             message: message,
             status: 'pending'
           };
-          // Otimização: Cache de reminders
+
           const list = await optimizer.memoize(
             'reminders:all',
             () => Promise.resolve(loadReminders()),
-            5000 // 5 segundos
+            5000
           );
           list.push(newReminder);
           saveReminders(list);
-          // Invalida cache após salvar
+
           optimizer.clearStatic('reminders:all');
-          // Invalida cache após salvar
+
           optimizer.clearStatic('reminders:all');
           await reply(`✅ Lembrete agendado para ${tzFormat(at)}.\n📝 Mensagem: ${message}`);
         } catch (e) {
@@ -5394,11 +5182,11 @@ Entre em contato com o dono do bot:
       case 'meuslembretes':
       case 'listalembretes': {
         try {
-          // Otimização: Cache de reminders
+
           const allReminders = await optimizer.memoize(
             'reminders:all',
             () => Promise.resolve(loadReminders()),
-            5000 // 5 segundos
+            5000
           );
           const list = allReminders.filter(r => r.userId === sender && r.status !== 'sent');
           if (!list.length) return reply('📭 Você não tem lembretes pendentes.');
@@ -5417,18 +5205,18 @@ Entre em contato com o dono do bot:
         try {
           const idArg = (q || '').trim();
           if (!idArg) return reply(`🗑️ *Uso do comando apagalembrete:*\n\n📝 *Formato:* ${prefix}apagalembrete <id|tudo>\n\n💡 *Exemplos:*\n• ${prefix}apagalembrete 123456\n• ${prefix}apagalembrete tudo`);
-          // Otimização: Cache de reminders
+
           let list = await optimizer.memoize(
             'reminders:all',
             () => Promise.resolve(loadReminders()),
-            5000 // 5 segundos
+            5000
           );
           if (['tudo', 'todos', 'all'].includes(idArg.toLowerCase())) {
             const before = list.length;
             list = list.filter(r => !(r.userId === sender && r.status !== 'sent'));
             const removed = before - list.length;
             saveReminders(list);
-            // Invalida cache após salvar
+
             optimizer.clearStatic('reminders:all');
             return reply(`🗑️ Removidos ${removed} lembrete(s) pendente(s).`);
           }
@@ -5436,7 +5224,7 @@ Entre em contato com o dono do bot:
           if (idx === -1) return reply('❌ Lembrete não encontrado ou já enviado. Dica: use o ID mostrado em "meuslembretes".');
           const removed = list.splice(idx, 1)[0];
           saveReminders(list);
-          // Invalida cache após salvar
+
           optimizer.clearStatic('reminders:all');
           await reply(`🗑️ Lembrete removido: ${removed.message}`);
         } catch (e) {
@@ -5452,7 +5240,7 @@ Entre em contato com o dono do bot:
         if (!isGroupAdmin) return reply('Apenas administradores podem usar este comando.');
         groupData.modorpg = !groupData.modorpg;
         writeJsonFile(groupFile, groupData);
-        // Otimização: Invalida cache quando groupData é salvo
+
         if (isGroup) {
           optimizer.invalidateGroup(from);
         }
@@ -5553,9 +5341,9 @@ Entre em contato com o dono do bot:
 
           const sub = command;
           const args = q ? q.trim().toLowerCase().split(/\s+/) : [];
-          // Tratamento especial para ranklevel/ranklvl/levels etc.
+
           if (['ranklevel', 'ranklvl', 'rankinglevel', 'levels', 'toplevels'].includes(sub)) {
-            // Se estiver em grupo, usamos o ranking do grupo (RPG)
+
             if (isGroup) {
               if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
               const levelingData = loadLevelingSafe();
@@ -5583,7 +5371,6 @@ Entre em contato com o dono do bot:
               return reply(text, { mentions });
             }
 
-            // Se não for grupo, serve como ranking global
             const levelingDataRank = loadLevelingSafe();
             const sortedUsers = Object.entries(levelingDataRank.users || {}).sort((a, b) => (b[1]?.level || 1) - (a[1]?.level || 1) || (b[1]?.xp || 0) - (a[1]?.xp || 0)).slice(0, 15);
             let rankMessage = '🏆 *Ranking Global de Níveis*\n\n';
@@ -5612,7 +5399,7 @@ Entre em contato com o dono do bot:
           }
 
           if (sub === 'perfilrpg') {
-            // Perfil completo do RPG
+
             const total = (me.wallet || 0) + (me.bank || 0);
             const level = me.level || 1;
             const exp = me.exp || 0;
@@ -5620,12 +5407,10 @@ Entre em contato com o dono do bot:
             const expProgress = `${exp}/${Math.floor(nextLevelXp)}`;
             const expPercent = Math.min(100, Math.floor((exp / nextLevelXp) * 100));
 
-            // Skills
             ensureUserSkills(me);
             const topSkills = SKILL_LIST.map(sk => ({ name: sk, level: me.skills[sk]?.level || 1 }))
               .sort((a, b) => b.level - a.level).slice(0, 3);
 
-            // Estatísticas gerais
             const battlesWon = me.battlesWon || 0;
             const battlesLost = me.battlesLost || 0;
             const totalBattles = battlesWon + battlesLost;
@@ -5635,18 +5420,14 @@ Entre em contato com o dono do bot:
             const pets = (me.pets || []).length;
             const premiumItems = Object.keys(me.premiumItems || {}).length;
 
-            // Progresso de prestige
             const prestigeLevel = me.prestige?.level || 0;
             const prestigeMultiplier = me.prestige?.bonusMultiplier || 1;
 
-            // Reputação
             const reputation = me.reputation?.points || 0;
             const karma = me.reputation?.karma || 0;
 
-            // Streak diário
             const streak = me.streak?.count || 0;
 
-            // Classe
             const classes = {
               'guerreiro': { emoji: '⚔️', name: 'Guerreiro' },
               'mago': { emoji: '🧙', name: 'Mago' },
@@ -5657,14 +5438,12 @@ Entre em contato com o dono do bot:
             };
             const classeInfo = me.classe ? `${classes[me.classe]?.emoji} ${classes[me.classe]?.name}` : 'Nenhuma';
 
-            // Clã
             let clanInfo = 'Nenhum';
             if (me.clan && econ.clans[me.clan]) {
               const myClan = econ.clans[me.clan];
               clanInfo = myClan.name || 'Sem nome';
             }
 
-            // Casa
             const casas = {
               'barraca': { emoji: '⛺', name: 'Barraca' },
               'cabana': { emoji: '🏚️', name: 'Cabana' },
@@ -5674,11 +5453,9 @@ Entre em contato com o dono do bot:
             };
             const houseInfo = me.house?.type ? `${casas[me.house.type]?.emoji || ''} ${casas[me.house.type]?.name || me.house.type}` : 'Nenhuma';
 
-            // Família e Relacionamento
             if (!me.family) me.family = { spouse: null, children: [], parents: [], siblings: [] };
             const familyChildren = (me.family.children || []).length;
 
-            // Buscar relacionamento ativo do sistema de relacionamentos
             let familySpouse = 'Solteiro(a)';
             let relationshipType = '';
             let relationshipEmoji = '';
@@ -5689,7 +5466,6 @@ Entre em contato com o dono do bot:
               familySpouse = `@${activePair.partnerId.split('@')[0]}`;
               mentions.push(activePair.partnerId);
 
-              // Determinar tipo de relacionamento
               if (activePair.pair?.status === 'casamento') {
                 relationshipType = 'Casado(a)';
                 relationshipEmoji = '💍';
@@ -5805,7 +5581,7 @@ Entre em contato com o dono do bot:
             const amount = parseAmount(q.split(' ')[0], me.bank);
             if (!isFinite(amount) || amount <= 0) return reply('❌ Informe um valor válido (ou "all").');
             if (amount > me.bank) return reply('❌ Saldo insuficiente no banco.');
-            // TAXA DE SAQUE: 5%
+
             const taxa = Math.floor(amount * 0.05);
             const received = amount - taxa;
             me.bank -= amount;
@@ -5837,14 +5613,14 @@ Entre em contato com o dono do bot:
 ╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
             const amount = parseAmount(args.slice(-1)[0], me.wallet);
             if (!isFinite(amount) || amount <= 0) return reply('❌ Informe um valor válido.');
-            // TAXA DE TRANSFERÊNCIA: 15%
+
             const taxa = Math.floor(amount * 0.15);
             const totalNeeded = amount + taxa;
             if (totalNeeded > me.wallet) return reply(`❌ Você não tem saldo suficiente.\n💰 Valor: ${fmt(amount)}\n💸 Taxa (15%): ${fmt(taxa)}\n📊 Total necessário: ${fmt(totalNeeded)}\n💼 Seu saldo: ${fmt(me.wallet)}`);
             const other = getEcoUser(econ, mentioned);
             if (mentioned === sender) return reply('❌ Você não pode transferir para si mesmo.');
-            me.wallet -= totalNeeded; // Desconta valor + taxa
-            other.wallet += amount; // Destinatário recebe valor sem taxa
+            me.wallet -= totalNeeded;
+            other.wallet += amount;
             saveEconomy(econ);
             return reply(`╭━━━⊱ ✅ *TRANSFERÊNCIA* ✅ ⊱━━━╮
 │
@@ -5878,13 +5654,13 @@ Entre em contato com o dono do bot:
 │ 🛍️ Ver loja: ${prefix}loja
 │
 ╰━━━━━━━━━━━━━━━━━━━━╯`);
-            // Normaliza a busca do item ignorando acentos e underscores
+
             const key = findKeyIgnoringAccents(econ.shop || {}, rawKey) || normalizeParam(rawKey).replace(/\s+/g, '_');
             const it = (econ.shop || {})[key];
             if (!it) return reply(`❌ Item não encontrado.\n\n🛍️ Veja a loja com ${prefix}loja`);
             if (me.wallet < it.price) return reply('❌ Saldo insuficiente na carteira.');
             me.wallet -= it.price;
-            // Se for ferramenta (picareta), equipa automaticamente
+
             if (it.type === 'tool' && it.toolType === 'pickaxe') {
               me.tools = me.tools || {};
               me.tools.pickaxe = { tier: it.tier, dur: it.durability, max: it.durability, key };
@@ -5898,7 +5674,7 @@ Entre em contato com o dono do bot:
 │
 ╰━━━━━━━━━━━━━━━━━━━━╯`);
             }
-            // Caso contrário, vai para o inventário
+
             me.inventory[key] = (me.inventory[key] || 0) + 1;
             saveEconomy(econ);
             return reply(`╭━━━⊱ ✅ *COMPRA* ✅ ⊱━━━╮
@@ -5923,7 +5699,7 @@ Entre em contato com o dono do bot:
               text += '│ 📭 (vazio)\n';
             }
             text += '│\n';
-            // Ferramentas
+
             const pk = me.tools?.pickaxe;
             text += '╠━━━⊱ 🛠️ *FERRAMENTAS* 🛠️ ⊱━━━╣\n│\n';
             if (pk) {
@@ -5937,7 +5713,6 @@ Entre em contato com o dono do bot:
             return reply(text);
           }
 
-          // Materiais e preços
           if (sub === 'materiais') {
             const mats = me.materials || {};
             const keys = Object.keys(mats).filter(k => mats[k] > 0);
@@ -5951,7 +5726,7 @@ Entre em contato com o dono do bot:
             const mp = econ.materialsPrices || {};
             let text = '╭━━━⊱ 💱 *PREÇOS* 💱 ⊱━━━╮\n│\n│ 💎 *MATERIAIS (unidade)*\n│\n';
             for (const [k, v] of Object.entries(mp)) text += `│ 🔸 ${k}: ${fmt(v)}\n`;
-            // Receitas básicas
+
             const r = econ.recipes || {};
             if (Object.keys(r).length > 0) {
               text += '│\n│ 📜 *RECEITAS*\n│\n';
@@ -6067,16 +5842,16 @@ Entre em contato com o dono do bot:
             const amount = parseAmount(args[0], me.wallet);
             if (!isFinite(amount) || amount <= 0) return reply('Valor inválido.');
             if (amount > me.wallet) return reply('Saldo insuficiente.');
-            // CASSINO NERFADO: 3% de chance de ganhar (era 47%)
+
             const win = Math.random() < 0.03;
             if (win) {
-              me.wallet += Math.floor(amount * 0.8); // ganha apenas 80% do apostado
-              me.cooldowns.bet = Date.now() + 10 * 60 * 1000; // 10 minutos (era 3)
+              me.wallet += Math.floor(amount * 0.8);
+              me.cooldowns.bet = Date.now() + 10 * 60 * 1000;
               saveEconomy(econ);
               return reply(`╭───⊃⊱ 🍀 *VITÓRIA RARA!* 🍀 ⊃⊱───╮\n│\n│ 💰 Ganhou: *+${fmt(Math.floor(amount * 0.8))}*\n│ 🎰 Sorte incrível!\n│\n╰─────────────────────╯`);
             }
             me.wallet -= amount;
-            me.cooldowns.bet = Date.now() + 10 * 60 * 1000; // 10 minutos (era 3)
+            me.cooldowns.bet = Date.now() + 10 * 60 * 1000;
             saveEconomy(econ);
             return reply(`╭───⊃⊱ 💥 *PERDEU!* 💥 ⊃⊱───╮\n│\n│ 💸 Perdeu: *-${fmt(amount)}*\n│ 🎰 A casa sempre ganha...\n│\n╰─────────────────────╯`);
           }
@@ -6086,11 +5861,11 @@ Entre em contato com o dono do bot:
             const amount = parseAmount(args[0] || '100', me.wallet);
             if (!isFinite(amount) || amount <= 0) return reply('Valor inválido.');
             if (amount > me.wallet) return reply('Saldo insuficiente.');
-            // SLOTS NERFADO: símbolos com pesos para quase nunca combinar
-            const symbols = ['🍒', '🍋', '🍉', '⭐', '🔔', '🍇', '🍊', '🍓']; // mais símbolos = menos chance
-            // Cada slot é independente e viciado para não combinar
+
+            const symbols = ['🍒', '🍋', '🍉', '⭐', '🔔', '🍇', '🍊', '🍓'];
+
             const getSlot = (idx) => {
-              // Cada posição tem preferência por símbolos diferentes
+
               const weights = [30, 20, 15, 12, 10, 6, 4, 3];
               const shifted = [...weights.slice(idx * 2), ...weights.slice(0, idx * 2)];
               const total = shifted.reduce((a, b) => a + b, 0);
@@ -6103,13 +5878,13 @@ Entre em contato com o dono do bot:
             };
             const r = [getSlot(0), getSlot(1), getSlot(2)];
             let mult = 0;
-            // Jackpot quase impossível (~0.5% real)
-            if (r[0] === r[1] && r[1] === r[2]) mult = 2; // multiplicador reduzido (era 3)
-            else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) mult = 1.2; // par paga menos (era 1.5)
+
+            if (r[0] === r[1] && r[1] === r[2]) mult = 2;
+            else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) mult = 1.2;
             const delta = Math.floor(amount * (mult - 1));
-            me.wallet += delta; // delta pode ser negativo
+            me.wallet += delta;
             saveEconomy(econ);
-            me.cooldowns.slots = Date.now() + 8 * 60 * 1000; // 8 minutos (era 2)
+            me.cooldowns.slots = Date.now() + 8 * 60 * 1000;
 
             let slotText = `╭━━━⊱ 🎰 *SLOTS* 🎰 ⊱━━━╮\n`;
             slotText += `│\n`;
@@ -6136,7 +5911,7 @@ Entre em contato com o dono do bot:
 
           if (sub === 'vagas') {
             let jobs = econ.jobCatalog || {};
-            // Se não houver vagas no arquivo de economia, usar catálogo padrão embutido
+
             if (!jobs || Object.keys(jobs).length === 0) {
               jobs = {
                 "estagiario": { name: "Estagiário", min: 80, max: 140 },
@@ -6174,12 +5949,11 @@ Entre em contato com o dono do bot:
             };
 
             const jobCatalog = (econ.jobCatalog && Object.keys(econ.jobCatalog).length) ? econ.jobCatalog : defaultJobs;
-            // Normaliza a busca da vaga ignorando acentos
+
             const key = findKeyIgnoringAccents(jobCatalog, rawKey) || normalizeParam(rawKey);
             const job = jobCatalog[key];
             if (!job) return reply('❌ Vaga inexistente. Use ' + prefix + 'vagas para ver disponíveis.');
 
-            // If economy file had no jobCatalog, persist defaults so future queries find them
             if (!econ.jobCatalog || Object.keys(econ.jobCatalog).length === 0) {
               econ.jobCatalog = jobCatalog;
             }
@@ -6210,18 +5984,16 @@ Entre em contato com o dono do bot:
 
           if (sub === 'pescar' || sub === 'fish') {
             const cd = me.cooldowns?.fish || 0; if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para pescar novamente.`);
-            const base = 80 + Math.floor(Math.random() * 121); // 80-200 (BALANCEADO)
+            const base = 80 + Math.floor(Math.random() * 121);
             const skillB = getSkillBonus(me, 'fishing');
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB)); const total = base + bonus;
-            me.wallet += total; me.cooldowns.fish = Date.now() + 12 * 60 * 1000; // 12 min
+            me.wallet += total; me.cooldowns.fish = Date.now() + 12 * 60 * 1000;
             addSkillXP(me, 'fishing', 1); updateChallenge(me, 'fish', 1, true); updatePeriodChallenge(me, 'fish', 1, true);
 
-            // Adiciona peixe como ingrediente
             me.ingredients = me.ingredients || {};
-            const fishQty = 2 + Math.floor(Math.random() * 3); // 2-4 peixes
+            const fishQty = 2 + Math.floor(Math.random() * 3);
             me.ingredients.peixe = (me.ingredients.peixe || 0) + fishQty;
 
-            // Rastrear stats
             if (!me.stats) me.stats = {};
             me.stats.totalFish = (me.stats.totalFish || 0) + 1;
             me.stats.fishCount = (me.stats.fishCount || 0) + 1;
@@ -6244,26 +6016,25 @@ Entre em contato com o dono do bot:
           if (sub === 'explorar' || sub === 'explore') {
             const cd = me.cooldowns?.explore || 0;
             if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para explorar novamente.`);
-            const base = 100 + Math.floor(Math.random() * 151); // 100-250 (BALANCEADO)
+            const base = 100 + Math.floor(Math.random() * 151);
             const skillB = getSkillBonus(me, 'exploring');
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
             const total = base + bonus;
             me.wallet += total;
-            me.cooldowns.explore = Date.now() + 15 * 60 * 1000; // 15 min
+            me.cooldowns.explore = Date.now() + 15 * 60 * 1000;
             addSkillXP(me, 'exploring', 1);
             updateChallenge(me, 'explore', 1, true);
             updatePeriodChallenge(me, 'explore', 1, true);
-            // Rastrear stats
+
             if (!me.stats) me.stats = {};
             me.stats.totalExplore = (me.stats.totalExplore || 0) + 1;
             me.stats.exploreCount = (me.stats.exploreCount || 0) + 1;
 
-            // Adiciona materiais da exploração
             const matsGain = {};
-            if (Math.random() < 0.6) matsGain.madeira = 1 + Math.floor(Math.random() * 3); // 60% chance, 1-3 madeira
-            if (Math.random() < 0.3) matsGain.corda = 1; // 30% chance, 1 corda
-            if (Math.random() < 0.4) matsGain.linha = 1 + Math.floor(Math.random() * 2); // 40% chance, 1-2 linha
-            if (Math.random() < 0.2) matsGain.cristal = 1; // 20% chance, 1 cristal (raro)
+            if (Math.random() < 0.6) matsGain.madeira = 1 + Math.floor(Math.random() * 3);
+            if (Math.random() < 0.3) matsGain.corda = 1;
+            if (Math.random() < 0.4) matsGain.linha = 1 + Math.floor(Math.random() * 2);
+            if (Math.random() < 0.2) matsGain.cristal = 1;
 
             for (const [mk, mq] of Object.entries(matsGain)) giveMaterial(me, mk, mq);
 
@@ -6286,20 +6057,18 @@ Entre em contato com o dono do bot:
 
           if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
             const cd = me.cooldowns?.hunt || 0; if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para caçar novamente.`);
-            const base = 22 + Math.floor(Math.random() * 34); // 22-55 (era 45-120)
+            const base = 22 + Math.floor(Math.random() * 34);
             const skillB = getSkillBonus(me, 'hunting');
-            const bonus = Math.floor(base * ((huntBonus || 0) + skillB) * 0.4); const total = base + bonus; // bônus reduzido 60%
-            me.wallet += total; me.cooldowns.hunt = Date.now() + 22 * 60 * 1000; // 22 min (era 6 min)
+            const bonus = Math.floor(base * ((huntBonus || 0) + skillB) * 0.4); const total = base + bonus;
+            me.wallet += total; me.cooldowns.hunt = Date.now() + 22 * 60 * 1000;
             addSkillXP(me, 'hunting', 1); updateChallenge(me, 'hunt', 1, true); updatePeriodChallenge(me, 'hunt', 1, true);
 
-            // Adiciona carne como ingrediente
             me.ingredients = me.ingredients || {};
-            const meatQty = 1 + (Math.random() < 0.25 ? 1 : 0); // 1-2 carnes (25% chance de pegar 2)
+            const meatQty = 1 + (Math.random() < 0.25 ? 1 : 0);
             me.ingredients.carne = (me.ingredients.carne || 0) + meatQty;
 
-            // Adiciona materiais da caça
             const huntMats = {};
-            if (Math.random() < 0.5) huntMats.couro = 1 + Math.floor(Math.random() * 2); // 50% chance, 1-2 couro
+            if (Math.random() < 0.5) huntMats.couro = 1 + Math.floor(Math.random() * 2);
 
             for (const [mk, mq] of Object.entries(huntMats)) giveMaterial(me, mk, mq);
 
@@ -6322,7 +6091,7 @@ Entre em contato com o dono do bot:
           }
 
           if (sub === 'forjar' || sub === 'forge') {
-            // Mostra receitas disponíveis se não especificar item
+
             const rawCraftKey = (args[0] || '');
             if (!rawCraftKey) {
               let text = `╭━━━⊱ ⚒️ *RECEITAS DE FORJA* ⊱━━━╮\n`;
@@ -6353,20 +6122,18 @@ Entre em contato com o dono do bot:
               return reply(text);
             }
 
-            // Modo 1: craft a partir de receitas
-            // Normaliza o nome da receita ignorando acentos
             const craftKey = findKeyIgnoringAccents(econ.recipes || {}, rawCraftKey) || normalizeParam(rawCraftKey);
             if (craftKey && (econ.recipes || {})[craftKey]) {
               const rec = econ.recipes[craftKey];
               const reqs = rec.requires || {};
-              // Verifica materiais
+
               for (const [mk, mq] of Object.entries(reqs)) {
                 if ((me.materials?.[mk] || 0) < mq) return reply(`Faltam materiais: ${mk} x${mq}. Veja ${prefix}materiais.`);
               }
-              // Verifica gold
+
               const goldCost = rec.gold || 0;
               if (me.wallet < goldCost) return reply(`Você precisa de ${fmt(goldCost)} para forjar.`);
-              // Consome
+
               for (const [mk, mq] of Object.entries(reqs)) { me.materials[mk] -= mq; }
               me.wallet -= goldCost;
               const item = (econ.shop || {})[craftKey];
@@ -6375,23 +6142,23 @@ Entre em contato com o dono do bot:
                 saveEconomy(econ);
                 return reply(`⚒️ Você forjou e equipou ${item.name}! Durabilidade ${item.durability}.`);
               }
-              // Senão, adiciona ao inventário
+
               me.inventory[craftKey] = (me.inventory[craftKey] || 0) + 1;
               saveEconomy(econ);
               return reply(`⚒️ Você forjou ${item?.name || craftKey}!`);
             }
-            // Modo 2: minigame de forja (antigo) - NERFADO
+
             const cd = me.cooldowns?.forge || 0; if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para forjar novamente.`);
-            const cost = 150; if (me.wallet < cost) return reply(`Você precisa de ${fmt(cost)} para materiais.`); // custo aumentado (era 100)
+            const cost = 150; if (me.wallet < cost) return reply(`Você precisa de ${fmt(cost)} para materiais.`);
             me.wallet -= cost;
-            const success = Math.random() < 0.35; // 35% chance (era 60%)
+            const success = Math.random() < 0.35;
             if (success) {
-              const gain = 80 + Math.floor(Math.random() * 101); // 80-180 (era 180-400)
-              const bonus = Math.floor(gain * (forgeBonus || 0) * 0.5); const total = gain + bonus; // bônus reduzido
-              me.wallet += total; me.cooldowns.forge = Date.now() + 25 * 60 * 1000; saveEconomy(econ); // 25 min (era 6 min)
+              const gain = 80 + Math.floor(Math.random() * 101);
+              const bonus = Math.floor(gain * (forgeBonus || 0) * 0.5); const total = gain + bonus;
+              me.wallet += total; me.cooldowns.forge = Date.now() + 25 * 60 * 1000; saveEconomy(econ);
               return reply(`⚒️ Forja bem-sucedida! Lucro ${fmt(total)} ${bonus > 0 ? `(bônus ${fmt(bonus)})` : ''}.`);
             } else {
-              me.cooldowns.forge = Date.now() + 25 * 60 * 1000; saveEconomy(econ); // 25 min (era 6 min)
+              me.cooldowns.forge = Date.now() + 25 * 60 * 1000; saveEconomy(econ);
               return reply(`🔥 A forja falhou e os materiais foram perdidos.`);
             }
           }
@@ -6399,17 +6166,17 @@ Entre em contato com o dono do bot:
           if (sub === 'crime') {
             const cd = me.cooldowns?.crime || 0;
             if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para tentar de novo.`);
-            const success = Math.random() < 0.18; // 18% sucesso (era 35%)
+            const success = Math.random() < 0.18;
             if (success) {
-              const base = 40 + Math.floor(Math.random() * 61); // 40-100 (era 90-230)
+              const base = 40 + Math.floor(Math.random() * 61);
               const skillB = getSkillBonus(me, 'crime');
-              const gain = Math.floor(base * (1 + skillB * 0.3)); // skill bônus reduzido
+              const gain = Math.floor(base * (1 + skillB * 0.3));
               me.wallet += gain;
-              me.cooldowns.crime = Date.now() + 30 * 60 * 1000; // 30 min
+              me.cooldowns.crime = Date.now() + 30 * 60 * 1000;
               addSkillXP(me, 'crime', 1);
               updateChallenge(me, 'crimeSuccess', 1, true);
               updatePeriodChallenge(me, 'crimeSuccess', 1, true);
-              // Rastrear stats
+
               if (!me.stats) me.stats = {};
               me.stats.totalCrimes = (me.stats.totalCrimes || 0) + 1;
               saveEconomy(econ);
@@ -6422,10 +6189,10 @@ Entre em contato com o dono do bot:
 │
 ╰━━━━━━━━━━━━━━━━━━━━━╯`);
             } else {
-              const fine = 200 + Math.floor(Math.random() * 401); // multa maior: 200-600 (era 120-320)
+              const fine = 200 + Math.floor(Math.random() * 401);
               const pay = Math.min(me.wallet, fine);
               me.wallet -= pay;
-              me.cooldowns.crime = Date.now() + 30 * 60 * 1000; // 30 min (era 10 min)
+              me.cooldowns.crime = Date.now() + 30 * 60 * 1000;
               saveEconomy(econ);
               return reply(`╭━━━⊱ 🚔 *PEGO!* 🚔 ⊱━━━╮
 │
@@ -6436,9 +6203,8 @@ Entre em contato com o dono do bot:
             }
           }
 
-          // ===== SISTEMA DE COZINHAR =====
           if (sub === 'receitas') {
-            // Inicializa receitas culinárias se não existir
+
             if (!econ.cookingRecipes) {
               econ.cookingRecipes = {
                 pao: { name: '🍞 Pão', requires: { trigo: 3 }, gold: 10, sellPrice: 50, energy: 10 },
@@ -6470,7 +6236,6 @@ Entre em contato com o dono do bot:
           if (sub === 'cozinhar' || sub === 'cook') {
             const recipeKey = (args[0] || '').toLowerCase();
 
-            // Inicializa receitas se não existir
             if (!econ.cookingRecipes) {
               econ.cookingRecipes = {
                 pao: { name: '🍞 Pão', requires: { trigo: 3 }, gold: 10, sellPrice: 50, energy: 10 },
@@ -6493,18 +6258,15 @@ Entre em contato com o dono do bot:
               return reply(`❌ Receita não encontrada! Use ${prefix}receitas para ver todas as receitas disponíveis.`);
             }
 
-            // Verifica cooldown
             const cd = me.cooldowns?.cook || 0;
             if (Date.now() < cd) {
               return reply(`⏳ Você ainda está cozinhando! Aguarde ${timeLeft(cd)}.`);
             }
 
-            // Verifica gold
             if (me.wallet < recipe.gold) {
               return reply(`💰 Você precisa de ${fmt(recipe.gold)} para cozinhar ${recipe.name}. Saldo atual: ${fmt(me.wallet)}`);
             }
 
-            // Verifica ingredientes
             me.ingredients = me.ingredients || {};
             for (const [ing, qty] of Object.entries(recipe.requires)) {
               if ((me.ingredients[ing] || 0) < qty) {
@@ -6512,25 +6274,20 @@ Entre em contato com o dono do bot:
               }
             }
 
-            // Consome recursos
             me.wallet -= recipe.gold;
             for (const [ing, qty] of Object.entries(recipe.requires)) {
               me.ingredients[ing] -= qty;
             }
 
-            // Adiciona comida ao inventário
             me.cookedFood = me.cookedFood || {};
             me.cookedFood[recipeKey] = (me.cookedFood[recipeKey] || 0) + 1;
 
-            // Skill e desafios
             addSkillXP(me, 'cooking', 2);
             updateChallenge(me, 'cook', 1, true);
             updatePeriodChallenge(me, 'cook', 1, true);
 
-            // Atualiza progresso de missões diárias
             updateQuestProgress(me, 'cook', 1);
 
-            // Cooldown de 3 minutos
             me.cooldowns.cook = Date.now() + 3 * 60 * 1000;
 
             saveEconomy(econ);
@@ -6538,7 +6295,6 @@ Entre em contato com o dono do bot:
             return reply(`👨‍🍳 *COZINHA CONCLUÍDA!*\n\n${recipe.name} preparado com sucesso!\n⚡ Energia: +${recipe.energy}\n💵 Valor de venda: ${fmt(recipe.sellPrice)}\n\n🍴 Use ${prefix}comer ${recipeKey} para consumir\n💰 Use ${prefix}vendercomida ${recipeKey} para vender`);
           }
 
-          // ===== SISTEMA DE PLANTAÇÃO =====
           if (sub === 'plantacao' || sub === 'plantação' || sub === 'horta') {
             me.farm = me.farm || { plots: [], maxPlots: 4, lastExpansion: 0 };
 
@@ -6577,7 +6333,6 @@ Entre em contato com o dono do bot:
           if (sub === 'plantar' || sub === 'plant' || sub === 'farm') {
             const seedKey = (args[0] || '').toLowerCase();
 
-            // Inicializa sistema de sementes
             if (!econ.seeds) {
               econ.seeds = {
                 trigo: { name: '🌾 Trigo', cost: 20, growTime: 5 * 60 * 1000, yield: { trigo: 3 } },
@@ -6615,20 +6370,16 @@ Entre em contato com o dono do bot:
               return reply(`❌ Semente não encontrada! Use ${prefix}plantar para ver as sementes disponíveis.`);
             }
 
-            // Inicializa fazenda do usuário
             me.farm = me.farm || { plots: [], maxPlots: 4, lastExpansion: 0 };
 
-            // Verifica se tem espaço
             if (me.farm.plots.length >= me.farm.maxPlots) {
               return reply(`🌾 Todos os seus terrenos estão ocupados! Aguarde a colheita ou expanda sua fazenda.\n\n🌾 Use ${prefix}colher para colher plantas prontas`);
             }
 
-            // Verifica gold
             if (me.wallet < seed.cost) {
               return reply(`💰 Você precisa de ${fmt(seed.cost)} para plantar ${seed.name}. Saldo: ${fmt(me.wallet)}`);
             }
 
-            // Planta
             me.wallet -= seed.cost;
             const now = Date.now();
             me.farm.plots.push({
@@ -6637,7 +6388,6 @@ Entre em contato com o dono do bot:
               readyAt: now + seed.growTime
             });
 
-            // Skill
             addSkillXP(me, 'farming', 1);
             updateChallenge(me, 'plant', 1, true);
             updatePeriodChallenge(me, 'plant', 1, true);
@@ -6664,7 +6414,6 @@ Entre em contato com o dono do bot:
               return reply(`⏳ Nenhuma planta está pronta para colher ainda.\n\n🕐 Próxima colheita em: ${timeLeft} minuto(s)\n\n💡 Use ${prefix}horta para ver o status de todas as plantações`);
             }
 
-            // Colhe todas as plantas prontas
             me.ingredients = me.ingredients || {};
             let harvestedText = '';
             let totalValue = 0;
@@ -6675,30 +6424,26 @@ Entre em contato com o dono do bot:
                 for (const [ingredient, qty] of Object.entries(seed.yield)) {
                   me.ingredients[ingredient] = (me.ingredients[ingredient] || 0) + qty;
                   harvestedText += `${ingredient} x${qty}, `;
-                  totalValue += qty * 10; // Valor estimado
+                  totalValue += qty * 10;
                 }
               }
             });
 
-            // Remove plantas colhidas
             me.farm.plots = me.farm.plots.filter(plot => plot.readyAt > now);
 
-            // Skill e desafios
             addSkillXP(me, 'farming', readyPlots.length * 2);
             updateChallenge(me, 'harvest', readyPlots.length, true);
             updatePeriodChallenge(me, 'harvest', readyPlots.length, true);
 
-            // Atualiza progresso de missões diárias (coletar recursos)
             updateQuestProgress(me, 'gather', readyPlots.length);
 
             saveEconomy(econ);
 
-            harvestedText = harvestedText.slice(0, -2); // Remove última vírgula
+            harvestedText = harvestedText.slice(0, -2);
 
             return reply(`🌾 *COLHEITA CONCLUÍDA!*\n\n✅ Plantas colhidas: ${readyPlots.length}\n📦 Ingredientes obtidos:\n${harvestedText}\n\n💵 Valor estimado: ${fmt(totalValue)}\n🌱 Terrenos livres: ${me.farm.maxPlots - me.farm.plots.length}/${me.farm.maxPlots}\n\n👨‍🍳 Use ${prefix}receitas para ver o que pode cozinhar!`);
           }
 
-          // ===== COMANDOS COMPLEMENTARES DE COZINHA =====
           if (sub === 'ingredientes') {
             me.ingredients = me.ingredients || {};
             const entries = Object.entries(me.ingredients).filter(([, qty]) => qty > 0);
@@ -6749,13 +6494,10 @@ Entre em contato com o dono do bot:
               return reply('❌ Receita não encontrada.');
             }
 
-            // Consome a comida
             me.cookedFood[foodKey] -= 1;
 
-            // Adiciona energia (pode ser usado para reduzir cooldowns ou dar bônus)
             me.energy = (me.energy || 0) + recipe.energy;
 
-            // Skill
             addSkillXP(me, 'cooking', 1);
 
             saveEconomy(econ);
@@ -6793,7 +6535,7 @@ Entre em contato com o dono do bot:
           }
 
           if (sub === 'sementes') {
-            // Inicializa sementes se não existir
+
             if (!econ.seeds) {
               econ.seeds = {
                 trigo: { name: '🌾 Trigo', cost: 20, growTime: 5 * 60 * 1000, yield: { trigo: 3 } },
@@ -6827,33 +6569,33 @@ Entre em contato com o dono do bot:
             if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para minerar novamente.`);
             const pk = getActivePickaxe(me);
             if (!pk) return reply(`⛏️ Você precisa de uma picareta para minerar. Compre na ${prefix}loja (ex: ${prefix}comprar pickaxe_bronze) ou repare com ${prefix}reparar.`);
-            // Cálculo de ouro com base na picareta e bônus (BALANCEADO)
+
             const tierMult = PICKAXE_TIER_MULT[pk.tier] || 1.0;
-            const base = 100 + Math.floor(Math.random() * 101); // 100-200 (AUMENTADO)
+            const base = 100 + Math.floor(Math.random() * 101);
             const skillB = getSkillBonus(me, 'mining');
             const raw = Math.floor(base * tierMult);
             const bonus = Math.floor(raw * ((mineBonus || 0) + skillB));
             const total = raw + bonus;
             me.wallet += total;
-            // Quedas de materiais (chances balanceadas)
-            let drops = { pedra: 2 + Math.floor(Math.random() * 3) }; // 2-4
+
+            let drops = { pedra: 2 + Math.floor(Math.random() * 3) };
             if (pk.tier === 'ferro' || pk.tier === 'diamante') {
-              drops.ferro = (drops.ferro || 0) + 1 + Math.floor(Math.random() * 2); // 1-2
-              drops.carvao = (drops.carvao || 0) + (Math.random() < 0.4 ? 1 : 0); // 40% chance
+              drops.ferro = (drops.ferro || 0) + 1 + Math.floor(Math.random() * 2);
+              drops.carvao = (drops.carvao || 0) + (Math.random() < 0.4 ? 1 : 0);
             }
             if (pk.tier === 'diamante') {
-              drops.ferro = (drops.ferro || 0) + (Math.random() < 0.7 ? 1 : 0); // 70% chance de +1
-              drops.ouro = (drops.ouro || 0) + (Math.random() < 0.3 ? 1 : 0); // 30% chance
-              drops.carvao = (drops.carvao || 0) + (Math.random() < 0.6 ? 1 : 0); // 60% chance
-              if (Math.random() < 0.1) drops.diamante = (drops.diamante || 0) + 1; // 10% chance
+              drops.ferro = (drops.ferro || 0) + (Math.random() < 0.7 ? 1 : 0);
+              drops.ouro = (drops.ouro || 0) + (Math.random() < 0.3 ? 1 : 0);
+              drops.carvao = (drops.carvao || 0) + (Math.random() < 0.6 ? 1 : 0);
+              if (Math.random() < 0.1) drops.diamante = (drops.diamante || 0) + 1;
             }
             for (const [mk, mq] of Object.entries(drops)) if (mq > 0) giveMaterial(me, mk, mq);
-            // Durabilidade
+
             const before = pk.dur; pk.dur = Math.max(0, pk.dur - 1);
             me.tools.pickaxe = { ...pk, max: pk.max ?? (pk.tier === 'bronze' ? 20 : pk.tier === 'ferro' ? 60 : pk.tier === 'diamante' ? 150 : pk.dur) };
-            me.cooldowns.mine = Date.now() + 10 * 60 * 1000; // 10 min
+            me.cooldowns.mine = Date.now() + 10 * 60 * 1000;
             addSkillXP(me, 'mining', 1); updateChallenge(me, 'mine', 1, true); updatePeriodChallenge(me, 'mine', 1, true);
-            // Rastrear stats
+
             if (!me.stats) me.stats = {};
             me.stats.totalMine = (me.stats.totalMine || 0) + 1;
             me.stats.mineCount = (me.stats.mineCount || 0) + 1;
@@ -6866,14 +6608,14 @@ Entre em contato com o dono do bot:
           if (sub === 'trabalhar' || sub === 'work') {
             const cd = me.cooldowns?.work || 0;
             if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para trabalhar novamente.`);
-            const base = 150 + Math.floor(Math.random() * 151); // 150-300 (AUMENTADO para economia balanceada)
+            const base = 150 + Math.floor(Math.random() * 151);
             const skillB = getSkillBonus(me, 'working');
             const bonus = Math.floor(base * (workBonus + skillB));
             const total = base + bonus;
             me.wallet += total;
-            me.cooldowns.work = Date.now() + 15 * 60 * 1000; // 15 min
+            me.cooldowns.work = Date.now() + 15 * 60 * 1000;
             addSkillXP(me, 'working', 1); updateChallenge(me, 'work', 1, true); updatePeriodChallenge(me, 'work', 1, true);
-            // Rastrear stats
+
             if (!me.stats) me.stats = {};
             me.stats.totalWork = (me.stats.totalWork || 0) + 1;
             me.stats.workCount = (me.stats.workCount || 0) + 1;
@@ -6881,7 +6623,6 @@ Entre em contato com o dono do bot:
             return reply(`💼 Você trabalhou e recebeu ${fmt(total)} ${bonus > 0 ? `(bônus ${fmt(bonus)})` : ''}!`);
           }
 
-          // ===== Mercado entre usuários =====
           if (sub === 'mercado') {
             const items = econ.market || [];
             if (items.length === 0) return reply('🛒 O mercado está vazio. Use listar para anunciar algo.');
@@ -6892,7 +6633,7 @@ Entre em contato com o dono do bot:
             return reply(text, { mentions: (items.map(i => i.seller)) });
           }
           if (sub === 'listar') {
-            // listar item <key> <qtd> <preco> | listar mat <material> <qtd> <preco>
+
             const kind = (args[0] || '').toLowerCase();
             if (!['item', 'mat', 'material'].includes(kind)) return reply(`Use: ${prefix}listar item <key> <qtd> <preco> | ${prefix}listar mat <material> <qtd> <preco>`);
             const qty = parseInt(args[2]); const price = parseInt(args[3]);
@@ -6928,7 +6669,7 @@ Entre em contato com o dono do bot:
             if (idx < 0) return reply('Anúncio não encontrado.');
             const ofr = econ.market[idx];
             if (ofr.seller !== sender) return reply('Apenas o vendedor pode cancelar.');
-            // devolve ao vendedor
+
             if (ofr.type === 'item') me.inventory[ofr.key] = (me.inventory[ofr.key] || 0) + ofr.qty; else me.materials[ofr.mat] = (me.materials[ofr.mat] || 0) + ofr.qty;
             econ.market.splice(idx, 1); saveEconomy(econ);
             return reply(`❌ Anúncio #${id} cancelado e itens devolvidos.`);
@@ -6942,14 +6683,13 @@ Entre em contato com o dono do bot:
             if (me.wallet < ofr.price) return reply('Saldo insuficiente.');
             const seller = getEcoUser(econ, ofr.seller);
             me.wallet -= ofr.price;
-            seller.wallet += (ofr.price - tax); // taxa de 5%
+            seller.wallet += (ofr.price - tax);
             if (ofr.type === 'item') me.inventory[ofr.key] = (me.inventory[ofr.key] || 0) + ofr.qty; else me.materials[ofr.mat] = (me.materials[ofr.mat] || 0) + ofr.qty;
             econ.market = (econ.market || []).filter(o => o.id !== id);
             saveEconomy(econ);
             return reply(`🛒 Compra realizada! Taxa de ${fmt(tax)} aplicada. Vendedor recebeu ${fmt(ofr.price - tax)}.`);
           }
 
-          // ===== Propriedades =====
           if (sub === 'propriedades') {
             const keys = Object.keys(econ.propertiesCatalog || {});
             let text = '🏠 Propriedades disponíveis\n\n';
@@ -6959,7 +6699,7 @@ Entre em contato com o dono do bot:
               const mats = Object.entries(incMat).map(([mk, mq]) => `${mk} x${mq}/dia`).join(', ');
               text += `• ${k} — ${p.name} — Preço: ${fmt(p.price)} — Manutenção: ${fmt(upkeep)}/dia — Renda: ${incGold > 0 ? `${fmt(incGold)} gold/dia` : ''}${mats ? `${incGold > 0 ? ' e ' : ''}${mats}` : ''}\n`;
             }
-            // minhas propriedades
+
             const mine = me.properties || {}; const owned = Object.keys(mine).filter(k => mine[k]?.owned);
             if (owned.length > 0) {
               text += '\n📦 Suas propriedades:\n';
@@ -7004,7 +6744,6 @@ Entre em contato com o dono do bot:
             return reply(msg);
           }
 
-          // ===== Habilidades & Desafios Periódicos (visualização) =====
           if (sub === 'habilidades') {
             ensureUserSkills(me);
             let text = '📚 Habilidades\n\n';
@@ -7040,7 +6779,7 @@ Entre em contato com o dono do bot:
             const chance = Math.random();
             const maxSteal = Math.min(target.wallet, 300);
             if (maxSteal <= 0) {
-              me.cooldowns.rob = Date.now() + 10 * 60 * 1000; // 10 min
+              me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
               saveEconomy(econ);
               return reply('A vítima está sem dinheiro na carteira. Roubo falhou.');
             }
@@ -7051,7 +6790,7 @@ Entre em contato com o dono do bot:
               saveEconomy(econ);
               return reply(`🦹 Sucesso! Você roubou ${fmt(amt)} de @${getUserName(mentioned)}.`, { mentions: [mentioned] });
             } else {
-              const multa = 80 + Math.floor(Math.random() * 121); // 80-200
+              const multa = 80 + Math.floor(Math.random() * 121);
               const pay = Math.min(me.wallet, multa);
               me.wallet -= pay; target.wallet += pay;
               me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
@@ -7068,7 +6807,6 @@ Entre em contato com o dono do bot:
               return reply(`⏳ Você já coletou hoje!\n\n🕐 Volte em: ${timeLeft(cd)}`);
             }
 
-            // Sistema de Streak (sequência diária)
             if (!me.streak) {
               me.streak = { count: 0, lastClaim: 0, record: 0 };
             }
@@ -7077,27 +6815,23 @@ Entre em contato com o dono do bot:
             const twoDaysMs = 48 * 60 * 60 * 1000;
             const timeSinceLastClaim = now - me.streak.lastClaim;
 
-            // Verifica se manteve a sequência (coletou no dia seguinte)
             if (timeSinceLastClaim <= twoDaysMs && timeSinceLastClaim >= oneDayMs) {
               me.streak.count += 1;
             } else if (timeSinceLastClaim > twoDaysMs) {
-              // Quebrou a sequência
+
               me.streak.count = 1;
             } else {
               me.streak.count = 1;
             }
 
-            // Atualiza recorde
             if (me.streak.count > me.streak.record) {
               me.streak.record = me.streak.count;
             }
 
-            // Calcula recompensa baseada no streak
             const baseReward = 150;
-            const streakBonus = Math.min(me.streak.count * 10, 300); // Máx +300
+            const streakBonus = Math.min(me.streak.count * 10, 300);
             const totalReward = baseReward + streakBonus;
 
-            // Bônus especial a cada 7 dias
             let extraBonus = 0;
             let bonusMessage = '';
             if (me.streak.count % 7 === 0) {
@@ -7105,7 +6839,6 @@ Entre em contato com o dono do bot:
               bonusMessage = '\n🎉 *BÔNUS DE 7 DIAS:* +500!';
             }
 
-            // Bônus especial a cada 30 dias
             if (me.streak.count % 30 === 0) {
               extraBonus += 2000;
               bonusMessage += '\n🏆 *BÔNUS DE 30 DIAS:* +2000!';
@@ -7117,11 +6850,9 @@ Entre em contato com o dono do bot:
             me.streak.lastClaim = now;
             me.cooldowns.daily = now + oneDayMs;
 
-            // Adiciona XP
             const xpGain = 50 + (me.streak.count * 5);
             me.exp = (me.exp || 0) + xpGain;
 
-            // Verifica level up
             const level = me.level || 1;
             const nextLevelXp = 100 * Math.pow(1.5, level - 1);
             let leveledUp = false;
@@ -7176,14 +6907,9 @@ Entre em contato com o dono do bot:
             return reply(text, { mentions });
           }
 
-
-
           return reply('Comando RPG inválido. Use ' + prefix + 'menurpg para ver todos os comandos.');
         }
 
-      // ==================== NOVOS COMANDOS RPG ====================
-
-      // Sistema de Equipamentos
       case 'equipamentos':
       case 'gear':
       case 'equip': {
@@ -7218,7 +6944,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Sistema de Conquistas
       case 'conquistas':
       case 'achievements':
       case 'medalhas': {
@@ -7270,7 +6995,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Sistema de Pets
       case 'pets':
       case 'meuspets': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -7281,7 +7005,6 @@ Entre em contato com o dono do bot:
 
         if (!me.pets) me.pets = [];
 
-        // Aplica degradação automática
         const degradation = applyPetDegradation(me.pets);
         if (degradation.changed) {
           saveEconomy(econ);
@@ -7311,7 +7034,6 @@ Entre em contato com o dono do bot:
           const hungerBar = '█'.repeat(Math.floor(pet.hunger / 10)) + '░'.repeat(10 - Math.floor(pet.hunger / 10));
           const moodBar = '█'.repeat(Math.floor(pet.mood / 10)) + '░'.repeat(10 - Math.floor(pet.mood / 10));
 
-          // Status de alerta
           let statusEmoji = '';
           if (pet.hunger < 20) {
             statusEmoji = ' ⚠️ FOME CRÍTICA';
@@ -7325,7 +7047,6 @@ Entre em contato com o dono do bot:
             hasWarnings = true;
           }
 
-          // Mostra evolução atual
           let evolutionText = '';
           if (pet.evolutions && pet.evolutions > 0) {
             evolutionText = ` ${'⭐'.repeat(pet.evolutions)}`;
@@ -7339,7 +7060,6 @@ Entre em contato com o dono do bot:
           if (pet.speed) text += `│ ⚡ SPD: ${pet.speed}\n`;
           text += `│ 🏆 ${pet.wins || 0}V | 💀 ${pet.losses || 0}D\n`;
 
-          // Mostra equipamentos
           if (pet.equipment && Object.keys(pet.equipment).length > 0) {
             text += `│ 📦 Equipado:\n`;
             Object.entries(pet.equipment).forEach(([slot, itemId]) => {
@@ -7392,7 +7112,6 @@ Entre em contato com o dono do bot:
           aguia: { emoji: '🦅', name: 'Águia', type: 'aguia', hp: 90, attack: 22, defense: 8, speed: 25, cost: 6000, desc: 'Ágil e preciso', element: 'wind' }
         };
 
-        // Normaliza o parâmetro ignorando acentos
         const inputType = (q || '').trim();
         const type = matchParam(inputType, petTypes) || findKeyIgnoringAccents(petTypes, inputType);
 
@@ -7462,7 +7181,6 @@ Entre em contato com o dono do bot:
 
         if (!me.pets || me.pets.length === 0) return reply('🐾 Você não tem pets para alimentar!');
 
-        // Aplica degradação antes de alimentar
         applyPetDegradation(me.pets);
 
         const index = parseInt(q) - 1;
@@ -7480,9 +7198,8 @@ Entre em contato com o dono do bot:
         const hungerGain = 30 + Math.floor(Math.random() * 20);
         pet.hunger = Math.min(100, pet.hunger + hungerGain);
         pet.mood = Math.min(100, pet.mood + 10);
-        pet.lastUpdate = Date.now(); // Atualiza timestamp
+        pet.lastUpdate = Date.now();
 
-        // Recupera HP se estava perdendo
         if (pet.hp < pet.maxHp) {
           const hpRecover = Math.floor(pet.maxHp * 0.1);
           pet.hp = Math.min(pet.maxHp, pet.hp + hpRecover);
@@ -7514,7 +7231,6 @@ Entre em contato com o dono do bot:
 
         if (!me.pets || me.pets.length === 0) return reply('🐾 Você não tem pets para treinar!');
 
-        // Aplica degradação antes de treinar
         applyPetDegradation(me.pets);
 
         const index = parseInt(q) - 1;
@@ -7536,7 +7252,6 @@ Entre em contato com o dono do bot:
         pet.hunger = Math.max(0, pet.hunger - 20);
         pet.lastTrain = now;
 
-        // Atualiza missão de treinar pet
         updateQuestProgress(me, 'train_pet', 1);
 
         let text = `╭━━━⊱ 💪 *TREINAMENTO* ⊱━━━╮\n`;
@@ -7601,7 +7316,6 @@ Entre em contato com o dono do bot:
         const pet = me.pets[index];
         if (!pet.evolutions) pet.evolutions = 0;
 
-        // Sistema de evoluções: cada pet pode evoluir 3 vezes
         const evolutionData = {
           lobo: [
             { name: 'Lobo Alpha', emoji: '🐺⭐', reqLevel: 10, atkBonus: 15, defBonus: 8, hpBonus: 50, spdBonus: 10 },
@@ -7637,12 +7351,10 @@ Entre em contato com o dono do bot:
 
         const nextEvolution = petEvolutions[pet.evolutions];
 
-        // Verifica requisitos
         if (pet.level < nextEvolution.reqLevel) {
           return reply(`❌ ${pet.emoji} *${pet.name}* precisa estar no nível ${nextEvolution.reqLevel}!\n\n📊 Nível atual: ${pet.level}`);
         }
 
-        // Verifica pedra da evolução (verifica em inventory e items)
         const hasStoneInInventory = me.inventory?.evolution_stone && me.inventory.evolution_stone >= 1;
         const hasStoneInItems = me.items?.evolution_stone && me.items.evolution_stone >= 1;
 
@@ -7650,7 +7362,6 @@ Entre em contato com o dono do bot:
           return reply(`❌ Você precisa de uma *Pedra da Evolução* para evoluir seu pet!\n\n🛒 Compre na ${prefix}loja ou ganhe em batalhas de pets.`);
         }
 
-        // Consome a pedra (verifica onde está)
         if (hasStoneInInventory) {
           me.inventory.evolution_stone--;
         } else {
@@ -7786,7 +7497,6 @@ Entre em contato com o dono do bot:
         if (!myPet.equipment) myPet.equipment = {};
         if (!oppPet.equipment) oppPet.equipment = {};
 
-        // Calcula stats com equipamentos
         const calcStats = (pet) => {
           let totalAtk = pet.attack;
           let totalDef = pet.defense;
@@ -7811,14 +7521,11 @@ Entre em contato com o dono do bot:
         const myStats = calcStats(myPet);
         const oppStats = calcStats(oppPet);
 
-        // Sistema de vantagem de tipo
         const hasAdvantage = myStats.advantage === oppPet.type;
         const oppHasAdvantage = oppStats.advantage === myPet.type;
 
-        // Determina quem ataca primeiro (velocidade)
         const myFirst = myStats.totalSpd >= oppStats.totalSpd;
 
-        // Batalha detalhada
         let myHp = myPet.hp;
         let oppHp = oppPet.hp;
         let turn = 0;
@@ -7852,24 +7559,20 @@ Entre em contato com o dono do bot:
 
             const advantage = attacker.isMe ? hasAdvantage : oppHasAdvantage;
 
-            // Calcula dano
             let baseDmg = Math.max(1, attacker.stats.totalAtk - Math.floor(defender.stats.totalDef / 2));
-            const variance = Math.floor(Math.random() * 11) - 5; // -5 a +5
+            const variance = Math.floor(Math.random() * 11) - 5;
             baseDmg += variance;
 
-            // Bônus de vantagem: 50% de dano extra
             if (advantage) {
               baseDmg = Math.floor(baseDmg * 1.5);
             }
 
-            // Chance de crítico (10% base + bônus de equipamento)
             const critChance = 10 + (attacker.stats.critBonus || 0);
             const isCrit = Math.random() * 100 < critChance;
             if (isCrit) {
               baseDmg = Math.floor(baseDmg * 1.8);
             }
 
-            // Aplica dano
             if (attacker.isMe) {
               oppHp -= baseDmg;
               battleLog += `⚔️ ${attacker.pet.emoji} ${attacker.pet.name} atacou!\n`;
@@ -7896,7 +7599,7 @@ Entre em contato com o dono do bot:
         let itemDropped = null;
 
         if (won) {
-          // Recompensas
+
           reward = 1000 + (oppPet.level * 150);
           expGain = 75 + (oppPet.level * 5);
 
@@ -7905,7 +7608,6 @@ Entre em contato com o dono do bot:
           myPet.exp = (myPet.exp || 0) + expGain;
           oppPet.losses = (oppPet.losses || 0) + 1;
 
-          // Sistema de drop de item (30% de chance)
           if (Math.random() < 0.3) {
             const oppEquipment = Object.entries(oppPet.equipment || {});
             if (oppEquipment.length > 0) {
@@ -7929,7 +7631,6 @@ Entre em contato com o dono do bot:
             battleLog += `🎁 Item dropado: *${itemDropped}*\n`;
           }
 
-          // Verifica level up
           if (myPet.exp >= myPet.level * 100) {
             myPet.level++;
             const atkGain = 2 + Math.floor(Math.random() * 3);
@@ -7963,7 +7664,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Apostar com Pets
       case 'apostarpet':
       case 'petbet': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -7996,7 +7696,6 @@ Entre em contato com o dono do bot:
         const myPet = me.pets[petIndex];
         const oppPet = opponent.pets[Math.floor(Math.random() * opponent.pets.length)];
 
-        // Batalha
         let myHp = myPet.hp;
         let oppHp = oppPet.hp;
 
@@ -8031,7 +7730,6 @@ Entre em contato com o dono do bot:
         return reply(resultMsg, { mentions: [target] });
       }
 
-      // Equipar item no Pet
       case 'equippet':
       case 'equiparpet': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -8054,7 +7752,6 @@ Entre em contato com o dono do bot:
 
         const pet = me.pets[petIndex];
 
-        // Busca o item no inventário
         const foundItemId = Object.keys(me.inventory).find(key => {
           return key.toLowerCase().includes(itemId) && me.inventory[key] > 0;
         });
@@ -8064,7 +7761,6 @@ Entre em contato com o dono do bot:
         const item = SHOP_ITEMS[foundItemId];
         if (!item) return reply('❌ Item inválido!');
 
-        // Determina o slot do equipamento
         let slot = 'weapon';
         if (item.name.includes('Armadura') || item.name.includes('Armor')) slot = 'armor';
         else if (item.name.includes('Escudo') || item.name.includes('Shield')) slot = 'shield';
@@ -8074,12 +7770,10 @@ Entre em contato com o dono do bot:
 
         if (!pet.equipment) pet.equipment = {};
 
-        // Se já tem item no slot, devolve ao inventário
         if (pet.equipment[slot]) {
           me.inventory[pet.equipment[slot]] = (me.inventory[pet.equipment[slot]] || 0) + 1;
         }
 
-        // Equipa o novo item
         pet.equipment[slot] = foundItemId;
         me.inventory[foundItemId]--;
 
@@ -8103,7 +7797,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Desequipar item do Pet
       case 'unequippet':
       case 'desequiparpet': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -8133,7 +7826,6 @@ Entre em contato com o dono do bot:
         return reply(`✅ *${item}* foi removido de ${pet.emoji} *${pet.name}* e devolvido ao inventário!`);
       }
 
-      // Equipar item para o Jogador
       case 'equipar':
       case 'equip': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -8150,7 +7842,6 @@ Entre em contato com o dono do bot:
           return reply(`❌ Informe o item para equipar!\n\n💡 Uso: ${prefix}equipar <item>\n📦 Veja seus itens: ${prefix}inventario`);
         }
 
-        // Procura o item no inventário
         let foundItemId = null;
         for (const [key, qty] of Object.entries(me.inventory)) {
           if (qty > 0 && (key.toLowerCase().includes(itemId) || key === itemId)) {
@@ -8173,12 +7864,10 @@ Entre em contato com o dono do bot:
           return reply('❌ Item sem slot definido!');
         }
 
-        // Se já tem item no slot, devolve ao inventário
         if (me.equipment[slot]) {
           me.inventory[me.equipment[slot]] = (me.inventory[me.equipment[slot]] || 0) + 1;
         }
 
-        // Equipa o novo item
         me.equipment[slot] = foundItemId;
         me.inventory[foundItemId]--;
 
@@ -8194,7 +7883,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Desequipar item do Jogador
       case 'desequipar':
       case 'unequip': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -8213,7 +7901,6 @@ Entre em contato com o dono do bot:
           return reply(text);
         }
 
-        // Mapeia nomes de slot
         let slot = null;
         if (slotName.includes('arma') || slotName.includes('weapon')) slot = 'weapon';
         else if (slotName.includes('armadura') || slotName.includes('armor')) slot = 'armor';
@@ -8236,7 +7923,6 @@ Entre em contato com o dono do bot:
           return reply('❌ Item inválido!');
         }
 
-        // Devolve ao inventário
         me.inventory[itemId] = (me.inventory[itemId] || 0) + 1;
         me.equipment[slot] = null;
 
@@ -8244,7 +7930,6 @@ Entre em contato com o dono do bot:
         return reply(`✅ *${item.name}* foi removido e devolvido ao inventário!`);
       }
 
-      // Sistema de Dungeons/Masmorras Solo
       case 'masmorrasolo':
       case 'dungeonsolo':
       case 'dg': {
@@ -8305,7 +7990,6 @@ Entre em contato com o dono do bot:
           me.wallet += reward;
           me.exp = (me.exp || 0) + dungeon.exp;
 
-          // Verifica level up
           if (!me.level) me.level = 1;
           const nextLevelXp = 100 * Math.pow(1.5, me.level - 1);
           let leveledUp = false;
@@ -8316,10 +8000,9 @@ Entre em contato com o dono do bot:
             me.level++;
             levelsGained++;
             leveledUp = true;
-            if (me.level > 100) break; // Safety cap
+            if (me.level > 100) break;
           }
 
-          // Atualiza missão de dungeon
           updateQuestProgress(me, 'dungeon', 1);
 
           let text = `╭━━━⊱ ⚔️ *VITÓRIA!* ⚔️ ⊱━━━╮\n`;
@@ -8375,7 +8058,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Chefe/Boss RPG
       case 'cheferpg':
       case 'bossrpg':
       case 'bossfight': {
@@ -8386,7 +8068,7 @@ Entre em contato com o dono do bot:
         const me = getEcoUser(econ, sender);
 
         const now = Date.now();
-        const BOSS_COOLDOWN = 4 * 60 * 60 * 1000; // 4 horas
+        const BOSS_COOLDOWN = 4 * 60 * 60 * 1000;
 
         if (me.lastBoss && (now - me.lastBoss) < BOSS_COOLDOWN) {
           const remaining = Math.ceil((BOSS_COOLDOWN - (now - me.lastBoss)) / 60000);
@@ -8419,7 +8101,7 @@ Entre em contato com o dono do bot:
         battleLog += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
         while (bossHp > 0 && playerHp > 0 && turns < maxTurns) {
-          // Player ataca
+
           const playerDmg = Math.max(10, Math.floor(playerPower * 0.3 + Math.random() * 30 - boss.defense * 0.2));
           bossHp -= playerDmg;
 
@@ -8428,7 +8110,6 @@ Entre em contato com o dono do bot:
             break;
           }
 
-          // Boss ataca
           const bossDmg = Math.max(5, boss.attack - Math.floor(playerPower * 0.1) + Math.floor(Math.random() * 20));
           playerHp -= bossDmg;
 
@@ -8462,7 +8143,6 @@ Entre em contato com o dono do bot:
         return reply(battleLog);
       }
 
-      // Sistema de Eventos
       case 'eventos':
       case 'events':
       case 'eventosrpg': {
@@ -8521,7 +8201,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Sistema de Duelos/PvP RPG
       case 'duelarrpg':
       case 'duelorpg':
       case 'duelrpg': {
@@ -8543,7 +8222,6 @@ Entre em contato com o dono do bot:
           return reply(`⏰ Você está cansado! Aguarde ${remaining} minutos para outro duelo.`);
         }
 
-        // Calcular stats
         const myPower = (me.power || 100) + (me.attackBonus || 0);
         const myDefense = (me.defenseBonus || 0) + 50;
         const oppPower = (opponent.power || 100) + (opponent.attackBonus || 0);
@@ -8562,14 +8240,12 @@ Entre em contato com o dono do bot:
         while (myHp > 0 && oppHp > 0 && turn < 10) {
           turn++;
 
-          // Meu ataque
           const myDmg = Math.max(5, myPower - Math.floor(Math.random() * oppDefense));
           oppHp -= myDmg;
           battle += `⚔️ ${pushname}: -${myDmg} HP\n`;
 
           if (oppHp <= 0) break;
 
-          // Ataque oponente
           const oppDmg = Math.max(5, oppPower - Math.floor(Math.random() * myDefense));
           myHp -= oppDmg;
           battle += `🛡️ Oponente: -${oppDmg} HP\n\n`;
@@ -8583,13 +8259,11 @@ Entre em contato com o dono do bot:
           opponent.wallet = Math.max(0, opponent.wallet - reward);
           me.exp = (me.exp || 0) + 150;
 
-          // Incrementar estatísticas de batalha
           if (!me.battlesWon) me.battlesWon = 0;
           if (!opponent.battlesLost) opponent.battlesLost = 0;
           me.battlesWon++;
           opponent.battlesLost++;
 
-          // Verifica level up
           if (!me.level) me.level = 1;
           const nextLevelXp = 100 * Math.pow(1.5, me.level - 1);
           let leveledUp = false;
@@ -8600,7 +8274,6 @@ Entre em contato com o dono do bot:
             leveledUp = true;
           }
 
-          // Atualiza missão de duelo
           updateQuestProgress(me, 'duel', 1);
 
           text += battle;
@@ -8632,13 +8305,11 @@ Entre em contato com o dono do bot:
           opponent.wallet += loss;
           opponent.exp = (opponent.exp || 0) + 150;
 
-          // Incrementar estatísticas de batalha
           if (!me.battlesLost) me.battlesLost = 0;
           if (!opponent.battlesWon) opponent.battlesWon = 0;
           me.battlesLost++;
           opponent.battlesWon++;
 
-          // Atualiza missão de duelo mesmo em derrota
           updateQuestProgress(me, 'duel', 1);
 
           text += battle;
@@ -8655,7 +8326,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Arena
       case 'arena': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
         if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
@@ -8714,9 +8384,8 @@ Entre em contato com o dono do bot:
           me.wallet += reward;
           me.exp = (me.exp || 0) + (arena.enemies * 50);
 
-          // Incrementar estatísticas de batalha (vitória na arena conta como batalhas ganhas)
           if (!me.battlesWon) me.battlesWon = 0;
-          me.battlesWon += Math.floor(arena.enemies * 0.7); // Conta o número de inimigos derrotados
+          me.battlesWon += Math.floor(arena.enemies * 0.7);
 
           let text = `╭━━━⊱ 🏆 *VITÓRIA NA ARENA!* 🏆 ⊱━━━╮\n`;
           text += `│\n`;
@@ -8738,7 +8407,6 @@ Entre em contato com o dono do bot:
           const loss = Math.floor(me.wallet * 0.08);
           me.wallet = Math.max(0, me.wallet - loss);
 
-          // Incrementar estatísticas de batalha (derrota na arena conta como batalha perdida)
           if (!me.battlesLost) me.battlesLost = 0;
           me.battlesLost++;
 
@@ -8761,7 +8429,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Encantamento
       case 'encantar':
       case 'enchant': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -8839,7 +8506,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Desmontar
       case 'desmontar':
       case 'dismantle': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -8904,9 +8570,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // ⚔️ SISTEMA DE CLASSES/PROFISSÕES
-      // ═══════════════════════════════════════════════════════════════
       case 'classe':
       case 'class':
       case 'profissao': {
@@ -8949,7 +8612,6 @@ Entre em contato com o dono do bot:
           return reply(`❌ Classe "${q}" não existe!\n\n📜 Classes: guerreiro, mago, arqueiro, curandeiro, ladino, paladino`);
         }
 
-        // Custo para trocar classe (grátis se não tiver nenhuma)
         const custo = me.classe ? 50000 : 0;
         if (me.wallet < custo) {
           return reply(`💰 Você precisa de ${custo.toLocaleString()} para trocar de classe!`);
@@ -8965,9 +8627,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ✨ *CLASSE ESCOLHIDA* ⊱━━━╮\n\n${classData.emoji} Você agora é um *${classData.name}*!\n\n📊 *Bônus:*\n⚔️ ATK +${classData.bonus.attack || 0}\n🛡️ DEF +${classData.bonus.defense || 0}\n\n✨ *Habilidade:* ${classData.skill}\n${classData.skillDesc}\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🏠 SISTEMA DE HOUSING (CASAS)
-      // ═══════════════════════════════════════════════════════════════
       case 'casa':
       case 'house':
       case 'lar': {
@@ -8999,7 +8658,6 @@ Entre em contato com o dono do bot:
 
         const sub = args[0]?.toLowerCase();
 
-        // Ver informações da casa
         if (!sub || sub === 'ver') {
           let text = `╭━━━⊱ 🏠 *SUA CASA* ⊱━━━╮\n\n`;
 
@@ -9035,7 +8693,6 @@ Entre em contato com o dono do bot:
           return reply(text);
         }
 
-        // Comprar casa
         if (sub === 'comprar') {
           const tipo = args[1]?.toLowerCase();
           if (!tipo || !casas[tipo]) {
@@ -9055,7 +8712,6 @@ Entre em contato com o dono do bot:
           return reply(`╭━━━⊱ 🎉 *CASA COMPRADA* ⊱━━━╮\n\n${casa.emoji} Você comprou uma *${casa.name}*!\n\n📦 Armazenamento: +${casa.bonus.storage}\n💰 Renda: ${casa.renda}/dia\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
-        // Coletar renda
         if (sub === 'coletar') {
           if (!me.house.type) return reply('❌ Você não tem uma casa!');
 
@@ -9071,7 +8727,7 @@ Entre em contato com o dono do bot:
             return reply(`⏰ Próxima coleta em: ${horas}h ${minutos}min`);
           }
 
-          const rendaTotal = Math.min(diasPassados, 7) * casa.renda; // Máximo 7 dias acumulados
+          const rendaTotal = Math.min(diasPassados, 7) * casa.renda;
           me.wallet += rendaTotal;
           me.house.lastCollect = agora;
 
@@ -9079,7 +8735,6 @@ Entre em contato com o dono do bot:
           return reply(`💰 *RENDA COLETADA*\n\n${casa.emoji} ${casa.name}\n💵 +${rendaTotal.toLocaleString()} (${Math.min(diasPassados, 7)} dias)`);
         }
 
-        // Decorar
         if (sub === 'decorar') {
           if (!me.house.type) return reply('❌ Você não tem uma casa!');
 
@@ -9111,9 +8766,6 @@ Entre em contato com o dono do bot:
         return reply(`💡 Use: ${prefix}casa para ver opções`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🏰 SISTEMA DE DUNGEONS EM GRUPO
-      // ═══════════════════════════════════════════════════════════════
       case 'dungeon':
       case 'masmorra':
       case 'raid': {
@@ -9124,7 +8776,6 @@ Entre em contato com o dono do bot:
         const me = getEcoUser(econ, sender);
         const args = q ? q.trim().toLowerCase().split(/\s+/) : [];
 
-        // Sistema de dungeons em grupo
         if (!econ.dungeonParties) econ.dungeonParties = {};
 
         const dungeons = {
@@ -9137,7 +8788,6 @@ Entre em contato com o dono do bot:
 
         const sub = args[0]?.toLowerCase();
 
-        // Listar dungeons
         if (!sub || sub === 'lista') {
           let text = `╭━━━⊱ 🏰 *DUNGEONS* ⊱━━━╮\n`;
           text += `│ Seu Nível: ${me.level || 1}\n`;
@@ -9159,7 +8809,6 @@ Entre em contato com o dono do bot:
           return reply(text);
         }
 
-        // Criar party
         if (sub === 'criar') {
           const tipo = args[1]?.toLowerCase();
           if (!tipo || !dungeons[tipo]) {
@@ -9171,7 +8820,6 @@ Entre em contato com o dono do bot:
             return reply(`🔒 Você precisa ser nível ${dg.level}+ para esta dungeon!`);
           }
 
-          // Verificar se já está em uma party
           for (const [id, party] of Object.entries(econ.dungeonParties)) {
             if (party.members.includes(sender)) {
               return reply(`❌ Você já está em uma party!\n\n💡 Use ${prefix}dungeon sair para sair`);
@@ -9193,12 +8841,10 @@ Entre em contato com o dono do bot:
           return reply(`╭━━━⊱ 🎉 *PARTY CRIADA* ⊱━━━╮\n\n${dg.emoji} *${dg.name}*\n\n🆔 ID: \`${partyId.slice(-8)}\`\n👥 Membros: 1/${dg.players}\n👹 Boss: ${dg.boss}\n\n💡 Outros jogadores podem usar:\n${prefix}dungeon entrar ${partyId.slice(-8)}\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
-        // Entrar em party
         if (sub === 'entrar') {
           const partyInput = args[1];
           if (!partyInput) return reply(`💡 Use: ${prefix}dungeon entrar <id da party>`);
 
-          // Encontrar party
           let partyId = null;
           for (const id of Object.keys(econ.dungeonParties)) {
             if (id.endsWith(partyInput)) {
@@ -9232,7 +8878,6 @@ Entre em contato com o dono do bot:
           return reply(`✅ Você entrou na party!\n\n${dg.emoji} *${dg.name}*\n👥 Membros: ${party.members.length}/${party.maxMembers}\n\n${party.members.length >= party.maxMembers ? `🎮 Party completa! Líder pode usar ${prefix}dungeon iniciar` : '⏳ Aguardando mais membros...'}`);
         }
 
-        // Iniciar dungeon
         if (sub === 'iniciar') {
           let myParty = null;
           for (const [id, party] of Object.entries(econ.dungeonParties)) {
@@ -9250,17 +8895,14 @@ Entre em contato com o dono do bot:
             return reply(`❌ Você precisa de pelo menos 2 membros para iniciar!`);
           }
 
-          // Calcular poder total do grupo
           let poderTotal = 0;
           myParty.members.forEach(member => {
             const user = getEcoUser(econ, member);
             poderTotal += (user.power || 100) + ((user.level || 1) * 10);
           });
 
-          // Poder do boss
           const poderBoss = dg.level * 100 + dg.players * 50;
 
-          // Calcular chance de vitória
           const chance = Math.min(95, Math.max(20, (poderTotal / poderBoss) * 50 + 25));
           const vitoria = Math.random() * 100 < chance;
 
@@ -9279,7 +8921,6 @@ Entre em contato com o dono do bot:
             text += `• ${Math.floor(dg.reward / myParty.members.length).toLocaleString()} moedas\n`;
             text += `• ${Math.floor(dg.xp / myParty.members.length)} XP\n`;
 
-            // Distribuir recompensas
             myParty.members.forEach(m => {
               const u = getEcoUser(econ, m);
               u.wallet += Math.floor(dg.reward / myParty.members.length);
@@ -9293,14 +8934,12 @@ Entre em contato com o dono do bot:
 
           text += `\n\n╰━━━━━━━━━━━━━━━━━━━━╯`;
 
-          // Deletar party
           delete econ.dungeonParties[myParty.id];
 
           saveEconomy(econ);
           return reply(text, { mentions: myParty.members });
         }
 
-        // Sair da party
         if (sub === 'sair') {
           for (const [id, party] of Object.entries(econ.dungeonParties)) {
             if (party.members.includes(sender)) {
@@ -9321,9 +8960,6 @@ Entre em contato com o dono do bot:
         return reply(`💡 Use ${prefix}dungeon para ver comandos`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🛒 MERCADO DE JOGADORES (AUCTION HOUSE)
-      // ═══════════════════════════════════════════════════════════════
       case 'mercadoplayer':
       case 'auction':
       case 'leilaoplayer': {
@@ -9333,11 +8969,10 @@ Entre em contato com o dono do bot:
         const econ = loadEconomy();
         const me = getEcoUser(econ, sender);
 
-        if (!econ.playerMarket) econ.playerMarket = { listings: [], fee: 0.05 }; // 5% taxa
+        if (!econ.playerMarket) econ.playerMarket = { listings: [], fee: 0.05 };
 
         const sub = args[0]?.toLowerCase();
 
-        // Listar itens à venda
         if (!sub || sub === 'ver') {
           const listings = econ.playerMarket.listings.filter(l => l.seller !== sender);
 
@@ -9363,7 +8998,6 @@ Entre em contato com o dono do bot:
           return reply(text);
         }
 
-        // Vender item
         if (sub === 'vender') {
           const itemName = args[1];
           const preco = parseInt(args[2]);
@@ -9376,7 +9010,6 @@ Entre em contato com o dono do bot:
             return reply('❌ Você não tem este item!');
           }
 
-          // Verificar limite de anúncios
           const meusAnuncios = econ.playerMarket.listings.filter(l => l.seller === sender);
           if (meusAnuncios.length >= 5) {
             return reply('❌ Você já tem 5 itens à venda! Cancele algum primeiro.');
@@ -9397,7 +9030,6 @@ Entre em contato com o dono do bot:
           return reply(`✅ *ITEM LISTADO*\n\n📦 ${itemName}\n💰 ${preco.toLocaleString()}\n\n⚠️ Taxa de ${econ.playerMarket.fee * 100}% será cobrada na venda`);
         }
 
-        // Comprar item
         if (sub === 'comprar') {
           const index = parseInt(args[1]) - 1;
           const listings = econ.playerMarket.listings.filter(l => l.seller !== sender);
@@ -9412,24 +9044,20 @@ Entre em contato com o dono do bot:
             return reply(`💰 Você precisa de ${listing.price.toLocaleString()}!`);
           }
 
-          // Processar compra
           me.wallet -= listing.price;
           if (!me.inventory) me.inventory = {};
           me.inventory[listing.name] = (me.inventory[listing.name] || 0) + 1;
 
-          // Pagar vendedor (menos taxa)
           const vendedor = getEcoUser(econ, listing.seller);
           const valorLiquido = Math.floor(listing.price * (1 - econ.playerMarket.fee));
           vendedor.wallet += valorLiquido;
 
-          // Remover do mercado
           econ.playerMarket.listings = econ.playerMarket.listings.filter(l => l.id !== listing.id);
 
           saveEconomy(econ);
           return reply(`✅ *COMPRA REALIZADA*\n\n📦 ${listing.name}\n💰 -${listing.price.toLocaleString()}\n\n📬 Vendedor @${listing.seller.split('@')[0]} recebeu ${valorLiquido.toLocaleString()}`);
         }
 
-        // Meus anúncios
         if (sub === 'meus') {
           const meusAnuncios = econ.playerMarket.listings.filter(l => l.seller === sender);
 
@@ -9448,7 +9076,6 @@ Entre em contato com o dono do bot:
           return reply(text);
         }
 
-        // Cancelar anúncio
         if (sub === 'cancelar') {
           const meusAnuncios = econ.playerMarket.listings.filter(l => l.seller === sender);
           const index = parseInt(args[1]) - 1;
@@ -9459,11 +9086,9 @@ Entre em contato com o dono do bot:
 
           const listing = meusAnuncios[index];
 
-          // Devolver item
           if (!me.inventory) me.inventory = {};
           me.inventory[listing.name] = (me.inventory[listing.name] || 0) + 1;
 
-          // Remover do mercado
           econ.playerMarket.listings = econ.playerMarket.listings.filter(l => l.id !== listing.id);
 
           saveEconomy(econ);
@@ -9473,7 +9098,6 @@ Entre em contato com o dono do bot:
         return reply(`💡 Use ${prefix}mercadoplayer para ver comandos`);
       }
 
-      // Sistema de Missões
       case 'missoes':
       case 'quests':
       case 'missao': {
@@ -9490,14 +9114,12 @@ Entre em contato com o dono do bot:
           };
         }
 
-        // Reset diário
         const now = Date.now();
         if (now - me.quests.lastReset > 86400000) {
           me.quests.daily = [];
           me.quests.lastReset = now;
         }
 
-        // Gerar missões diárias
         if (me.quests.daily.length === 0) {
           const allQuests = [
             { id: 'duel_3', name: '⚔️ Duelar 3 vezes', reward: 5000, exp: 200, progress: 0, goal: 3, claimed: false },
@@ -9507,12 +9129,10 @@ Entre em contato com o dono do bot:
             { id: 'train_pet', name: '🐾 Treinar pet 5 vezes', reward: 6000, exp: 250, progress: 0, goal: 5, claimed: false }
           ];
 
-          // Escolher 3 missões aleatórias
           const shuffled = allQuests.sort(() => Math.random() - 0.5);
           me.quests.daily = shuffled.slice(0, 3);
         }
 
-        // Garante que todas as missões existentes tenham a propriedade claimed
         me.quests.daily.forEach(quest => {
           if (quest.claimed === undefined) {
             quest.claimed = false;
@@ -9550,7 +9170,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Guerra de Clãs
       case 'guerra':
       case 'war':
       case 'guerracla': {
@@ -9583,7 +9202,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Criar clã
       case 'criarcla':
       case 'criarclã': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -9598,12 +9216,10 @@ Entre em contato com o dono do bot:
         const clanName = q.trim();
         if (clanName.length < 3 || clanName.length > 24) return reply('❌ Nome do clã precisa ter entre 3 e 24 caracteres.');
 
-        // Verificar duplicado
         const baseNormalized = normalizeClanName(clanName);
         const nameTaken = Object.values(econ.clans || {}).some(c => c.name && normalizeClanName(c.name) === baseNormalized);
         if (nameTaken) return reply('❌ Já existe um clã com esse nome!');
 
-        // Custo para criar clã
         const clanCost = 20000;
         if ((me.wallet || 0) < clanCost) return reply(`💰 Você precisa de ${clanCost.toLocaleString()} moedas para criar um clã.`);
 
@@ -9620,7 +9236,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Info de Clã
       case 'cla':
       case 'claninfo': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -9632,7 +9247,7 @@ Entre em contato com o dono do bot:
         let clanObj = null;
         if (!q && me.clan) clanObj = econ.clans[me.clan];
         if (q) {
-          // procurar por ID ou por nome
+
           const qTrim = q.trim();
           const qNormalized = normalizeClanName(qTrim);
           clanObj = econ.clans[qTrim] || Object.values(econ.clans || {}).find(c => c.name && normalizeClanName(c.name) === qNormalized);
@@ -9652,7 +9267,7 @@ Entre em contato com o dono do bot:
           mentions.push(m);
           text += `• @${m.split('@')[0]}\n`;
         });
-        // Mostrar convites pendentes
+
         if (Array.isArray(clanObj.pendingInvites) && clanObj.pendingInvites.length > 0) {
           text += `\n📨 Convites pendentes (${clanObj.pendingInvites.length}):\n`;
           clanObj.pendingInvites.forEach(m => { text += `• @${m.split('@')[0]}\n`; mentions.push(m); });
@@ -9662,7 +9277,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Convidar membro para o clã
       case 'convidar':
       case 'invite':
       case 'convite': {
@@ -9677,7 +9291,6 @@ Entre em contato com o dono do bot:
         const clan = econ.clans[me.clan];
         if (!clan) { me.clan = null; saveEconomy(econ); return reply('❌ Seu clã não foi encontrado.'); }
 
-        // Apenas líder pode convidar por enquanto
         if (clan.leader !== sender) return reply('👑 Apenas o líder do clã pode convidar novos membros!');
         const target = (menc_jid2 && menc_jid2[0]) || null;
         if (!target) return reply(`❗ Marque um membro para convidar. Ex: ${prefix}convidar @user`);
@@ -9686,19 +9299,16 @@ Entre em contato com o dono do bot:
         const targetUser = getEcoUser(econ, target);
         if (targetUser.clan) return reply('❌ Esta pessoa já pertence a outro clã!');
 
-        // Usar convites pendentes em vez de adicionar imediatamente.
         clan.pendingInvites = clan.pendingInvites || [];
         if (clan.pendingInvites.includes(target)) return reply('❗ Este usuário já tem um convite pendente para o clã.');
         clan.pendingInvites.push(target);
         saveEconomy(econ);
 
-        // Notificar no grupo com menção se possível
         await reply(`📨 Convite enviado para @${target.split('@')[0]}!
   Use ${prefix}aceitarconvite ${clan.id} para aceitar.`, { mentions: [target] });
         break;
       }
 
-      // Remover convite pendente (apenas líder)
       case 'rmconvite':
       case 'removerconvite': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -9718,8 +9328,6 @@ Entre em contato com o dono do bot:
       }
         break;
 
-
-      // Sair do clã
       case 'sair': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
         if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
@@ -9736,12 +9344,11 @@ Entre em contato com o dono do bot:
           return reply('❌ Seu clã não foi encontrado, seu status foi resetado.');
         }
 
-        // Se for líder
         if (clan.leader === sender) {
-          // Se houver outros membros, transferir liderança para o primeiro membro
+
           const remaining = clan.members.filter(m => m !== sender);
           if (remaining.length === 0) {
-            // Remover referência do clã em todos os membros
+
             (clan.members || []).forEach(m => {
               const u = getEcoUser(econ, m);
               if (u.clan === clan.id) u.clan = null;
@@ -9760,10 +9367,9 @@ Entre em contato com o dono do bot:
           }
         }
 
-        // Membro comum
         clan.members = clan.members.filter(m => m !== sender);
         me.clan = null;
-        // remover convites pendentes que o membro tinha em outros clãs (limpeza)
+
         for (const [k, c] of Object.entries(econ.clans || {})) {
           if (Array.isArray(c.pendingInvites) && c.pendingInvites.includes(sender)) {
             c.pendingInvites = c.pendingInvites.filter(x => x !== sender);
@@ -9773,7 +9379,7 @@ Entre em contato com o dono do bot:
         return reply('✅ Você saiu do clã.');
         break;
       }
-      // Aceitar convite de clã
+
       case 'aceitarconvite':
       case 'aceitarrpg': {
         if (!isGroup) return reply('⚔️ Comandos de clã só funcionam em grupos com Modo RPG.');
@@ -9782,7 +9388,6 @@ Entre em contato com o dono do bot:
         const econ = loadEconomy();
         const me = getEcoUser(econ, sender);
 
-        // Procurar convites pendentes
         const clansWithInvite = Object.values(econ.clans || {}).filter(c => Array.isArray(c.pendingInvites) && c.pendingInvites.includes(sender));
         if (!q && clansWithInvite.length === 0) return reply('❌ Você não possui convites pendentes para clãs.');
         let clanObj = null;
@@ -9794,17 +9399,16 @@ Entre em contato com o dono do bot:
           clanObj = econ.clans[q] || Object.values(econ.clans || {}).find(c => (c.name || '').toLowerCase() === qLower);
         }
         if (!clanObj) return reply('❌ Clã não encontrado ou sem convite pendente.');
-        // Join
+
         clanObj.members = clanObj.members || [];
         if (!clanObj.members.includes(sender)) clanObj.members.push(sender);
-        // Remove pending invite
+
         clanObj.pendingInvites = (clanObj.pendingInvites || []).filter(id => id !== sender);
         me.clan = clanObj.id;
         saveEconomy(econ);
         return reply(`✅ Você entrou para o clã *${clanObj.name}*!`);
       }
 
-      // Recusar convite
       case 'recusarconvite':
       case 'recusar': {
         if (!isGroup) return reply('⚔️ Comandos de clã só funcionam em grupos com Modo RPG.');
@@ -9827,7 +9431,6 @@ Entre em contato com o dono do bot:
         return reply(`❗ Você recusou o convite do clã *${clanObj.name}*.`);
       }
 
-      // Expulsar membro do clã (apenas líder)
       case 'expulsar':
       case 'kickcla': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -9845,7 +9448,7 @@ Entre em contato com o dono do bot:
         clan.members = clan.members.filter(m => m !== target);
         const targetUser = getEcoUser(econ, target);
         if (targetUser.clan === clan.id) targetUser.clan = null;
-        // cleanup pending invites anywhere
+
         for (const [k, c] of Object.entries(econ.clans || {})) {
           if (Array.isArray(c.pendingInvites) && c.pendingInvites.includes(target)) c.pendingInvites = c.pendingInvites.filter(x => x !== target);
         }
@@ -9853,7 +9456,6 @@ Entre em contato com o dono do bot:
         return reply(`🗑️ @${target.split('@')[0]} foi expulso do clã *${clan.name}*.`, { mentions: [target] });
       }
 
-      // Sistema de Família
       case 'familia':
       case 'family': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -9868,7 +9470,6 @@ Entre em contato com o dono do bot:
         text += `│ ${pushname}\n`;
         text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
-        // Buscar relacionamento ativo do sistema de relacionamentos
         const activePair = relationshipManager.getActivePairForUser(sender);
         if (activePair && activePair.partnerId) {
           let relationshipEmoji = '💍';
@@ -9897,7 +9498,6 @@ Entre em contato com o dono do bot:
           text += `💔 *Relacionamento:* Solteiro(a)\n\n`;
         }
 
-        // Pais
         if (me.family.parents && me.family.parents.length > 0) {
           text += `👫 *Pais:*\n`;
           me.family.parents.forEach(parent => {
@@ -9906,7 +9506,6 @@ Entre em contato com o dono do bot:
           text += `\n`;
         }
 
-        // Filhos
         if (me.family.children && me.family.children.length > 0) {
           text += `👶 *Filhos (${me.family.children.length}):*\n`;
           me.family.children.forEach((child, i) => {
@@ -9917,7 +9516,6 @@ Entre em contato com o dono do bot:
           text += `👶 *Filhos:* Nenhum\n\n`;
         }
 
-        // Irmãos
         if (me.family.siblings && me.family.siblings.length > 0) {
           text += `👫 *Irmãos (${me.family.siblings.length}):*\n`;
           me.family.siblings.forEach(sibling => {
@@ -9935,7 +9533,6 @@ Entre em contato com o dono do bot:
           ...(me.family.siblings || [])
         ].filter(Boolean);
 
-        // Adiciona o parceiro do sistema de relacionamentos nas menções
         const activePairForMentions = relationshipManager.getActivePairForUser(sender);
         if (activePairForMentions && activePairForMentions.partnerId) {
           mentions.push(activePairForMentions.partnerId);
@@ -9963,17 +9560,14 @@ Entre em contato com o dono do bot:
         if (!me.family) me.family = { spouse: null, children: [], parents: [], siblings: [] };
         if (!targetUser.family) targetUser.family = { spouse: null, children: [], parents: [], siblings: [] };
 
-        // Verificar se já é filho
         if (me.family.children && me.family.children.includes(target)) {
           return reply('❌ Esta pessoa já é seu filho(a)!');
         }
 
-        // Verificar se já tem pais
         if (targetUser.family.parents && targetUser.family.parents.length >= 2) {
           return reply('❌ Esta pessoa já tem 2 pais/mães!');
         }
 
-        // Custo da adoção
         const adoptCost = 10000;
         if (me.wallet < adoptCost) {
           return reply(`💰 Você precisa de ${adoptCost.toLocaleString()} moedas para adotar!`);
@@ -9981,15 +9575,12 @@ Entre em contato com o dono do bot:
 
         me.wallet -= adoptCost;
 
-        // Adicionar aos filhos
         if (!me.family.children) me.family.children = [];
         me.family.children.push(target);
 
-        // Adicionar aos pais
         if (!targetUser.family.parents) targetUser.family.parents = [];
         targetUser.family.parents.push(sender);
 
-        // Se tiver parceiro(a) no sistema de relacionamentos, adicionar como pai/mãe também
         const activePair = relationshipManager.getActivePairForUser(sender);
         if (activePair && activePair.partnerId) {
           const spouseData = getEcoUser(econ, activePair.partnerId);
@@ -10029,20 +9620,16 @@ Entre em contato com o dono do bot:
         if (!me.family) me.family = { spouse: null, children: [], parents: [], siblings: [] };
         if (!targetUser.family) targetUser.family = { spouse: null, children: [], parents: [], siblings: [] };
 
-        // Verificar se é filho
         if (!me.family.children || !me.family.children.includes(target)) {
           return reply('❌ Esta pessoa não é seu filho(a)!');
         }
 
-        // Remover dos filhos
         me.family.children = me.family.children.filter(child => child !== target);
 
-        // Remover dos pais
         if (targetUser.family.parents) {
           targetUser.family.parents = targetUser.family.parents.filter(parent => parent !== sender);
         }
 
-        // Se tiver parceiro(a) no sistema de relacionamentos, remover como pai/mãe também
         const activePair = relationshipManager.getActivePairForUser(sender);
         if (activePair && activePair.partnerId) {
           const spouseData = getEcoUser(econ, activePair.partnerId);
@@ -10078,7 +9665,6 @@ Entre em contato com o dono do bot:
         let text = `╭━━━⊱ 🌳 *ÁRVORE GENEALÓGICA* ⊱━━━╮\n`;
         text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
-        // Avós
         const grandparents = [];
         if (me.family.parents) {
           for (const parent of me.family.parents) {
@@ -10097,7 +9683,6 @@ Entre em contato com o dono do bot:
           text += `\n`;
         }
 
-        // Pais
         if (me.family.parents && me.family.parents.length > 0) {
           text += `👫 *Pais:*\n`;
           me.family.parents.forEach(parent => {
@@ -10106,10 +9691,8 @@ Entre em contato com o dono do bot:
           text += `\n`;
         }
 
-        // Você
         text += `👤 *Você:* ${pushname}\n`;
 
-        // Buscar relacionamento ativo do sistema de relacionamentos
         const activePair = relationshipManager.getActivePairForUser(sender);
         if (activePair && activePair.partnerId) {
           const relationshipEmoji = activePair.pair?.status === 'casamento' ? '💍' :
@@ -10120,7 +9703,6 @@ Entre em contato com o dono do bot:
         }
         text += `\n`;
 
-        // Filhos
         if (me.family.children && me.family.children.length > 0) {
           text += `👶 *Filhos:*\n`;
           me.family.children.forEach(child => {
@@ -10129,7 +9711,6 @@ Entre em contato com o dono do bot:
           text += `\n`;
         }
 
-        // Netos
         const grandchildren = [];
         if (me.family.children) {
           for (const child of me.family.children) {
@@ -10157,7 +9738,6 @@ Entre em contato com o dono do bot:
           ...grandchildren
         ].filter(Boolean);
 
-        // Adiciona o parceiro do sistema de relacionamentos nas menções
         const activePairForMentions = relationshipManager.getActivePairForUser(sender);
         if (activePairForMentions && activePairForMentions.partnerId) {
           allMembers.push(activePairForMentions.partnerId);
@@ -10167,7 +9747,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Torneio
       case 'torneio':
       case 'tournament': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -10188,7 +9767,7 @@ Entre em contato com o dono do bot:
         const tournament = econ.tournament;
 
         if (!tournament.active) {
-          // Criar torneio
+
           if (q === 'criar' && isGroupAdmins) {
             tournament.active = true;
             tournament.participants = [];
@@ -10202,7 +9781,6 @@ Entre em contato com o dono do bot:
           return reply(`❌ Não há torneio ativo!\n\n💡 Admins: Use ${prefix}torneio criar`);
         }
 
-        // Entrar no torneio
         if (q === 'entrar') {
           if (tournament.participants.includes(sender)) {
             return reply('❌ Você já está inscrito no torneio!');
@@ -10221,13 +9799,11 @@ Entre em contato com o dono do bot:
           return reply(`✅ Você entrou no torneio!\n\n👥 Participantes: ${tournament.participants.length}\n💰 Prêmio acumulado: ${tournament.prize.toLocaleString()}`);
         }
 
-        // Iniciar torneio
         if (q === 'iniciar' && isGroupAdmins) {
           if (tournament.participants.length < 2) {
             return reply('❌ Precisa de pelo menos 2 participantes!');
           }
 
-          // Simular batalhas
           let fighters = [...tournament.participants];
           let round = 1;
           let results = `╭━━━⊱ 🏆 *TORNEIO* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
@@ -10268,7 +9844,6 @@ Entre em contato com o dono do bot:
           return reply(results, { mentions: tournament.participants });
         }
 
-        // Ver info do torneio
         let text = `╭━━━⊱ 🏆 *TORNEIO ATIVO* ⊱━━━╮\n`;
         text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
         text += `👥 Participantes: ${tournament.participants.length}\n`;
@@ -10286,7 +9861,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Interações Sociais RPG
       case 'abracarrpg':
       case 'hugrpg': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -10370,7 +9944,7 @@ Entre em contato com o dono do bot:
         const targetData = getEcoUser(econ, target);
         if (!targetData.protection) targetData.protection = {};
         targetData.protection.protectedBy = sender;
-        targetData.protection.until = Date.now() + 3600000; // 1 hora
+        targetData.protection.until = Date.now() + 3600000;
 
         saveEconomy(econ);
 
@@ -10385,7 +9959,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Reputação
       case 'reputacao':
       case 'rep':
       case 'reputation': {
@@ -10475,11 +10048,6 @@ Entre em contato com o dono do bot:
         return reply(text, { mentions: [target] });
       }
 
-      // ═══════════════════════════════════════════
-      // COMANDOS ADMINISTRATIVOS DO RPG (DONO)
-      // ═══════════════════════════════════════════
-
-      // Ranking Global
       case 'rankglobal':
       case 'globalrank':
       case 'toprpgglobal':
@@ -10489,7 +10057,6 @@ Entre em contato com o dono do bot:
 
         if (allUsers.length === 0) return reply('📊 Nenhum jogador registrado no sistema RPG ainda.');
 
-        // Calcular poder total de cada jogador
         const rankedUsers = allUsers.map(([id, data]) => {
           const totalWealth = (data.wallet || 0) + (data.bank || 0);
           const level = data.level || 1;
@@ -10498,7 +10065,6 @@ Entre em contato com o dono do bot:
           const achievements = Object.keys(data.achievements || {}).length;
           const pets = (data.pets || []).length;
 
-          // Score composto
           const score = totalWealth + (level * 1000) + (power * 10) + (reputation * 50) + (achievements * 500) + (pets * 200);
 
           return { id, totalWealth, level, power, reputation, achievements, pets, score };
@@ -10527,7 +10093,6 @@ Entre em contato com o dono do bot:
         return reply(text, { mentions });
       }
 
-      // Adicionar dinheiro a jogador
       case 'rpgadd':
       case 'rpgaddmoney':
       case 'adicionardinheiro': {
@@ -10548,7 +10113,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ✅ *DINHEIRO ADICIONADO* ⊱━━━╮\n│\n│ 👤 @${target.split('@')[0]}\n│ 💰 +${amount.toLocaleString()} moedas\n│ 💼 Carteira atual: ${targetData.wallet.toLocaleString()}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [target] });
       }
 
-      // Remover dinheiro de jogador
       case 'rpgremove':
       case 'rpgremovemoney':
       case 'removerdinheiro': {
@@ -10570,7 +10134,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ✅ *DINHEIRO REMOVIDO* ⊱━━━╮\n│\n│ 👤 @${target.split('@')[0]}\n│ 💸 -${amount.toLocaleString()} moedas\n│ 💼 Carteira atual: ${targetData.wallet.toLocaleString()}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [target] });
       }
 
-      // Definir level de jogador
       case 'rpgsetlevel':
       case 'setlevel':
       case 'definirnivelrpg': {
@@ -10592,7 +10155,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ✅ *NÍVEL DEFINIDO* ⊱━━━╮\n│\n│ 👤 @${target.split('@')[0]}\n│ 📊 Nível: ${newLevel}\n│ ⚔️ Poder: ${targetData.power}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [target] });
       }
 
-      // Adicionar item ao jogador
       case 'rpgadditem':
       case 'adicionaritem': {
         if (!isOwnerOrSub) return reply('🚫 Apenas donos e subdonos podem usar este comando!');
@@ -10615,7 +10177,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ✅ *ITEM ADICIONADO* ⊱━━━╮\n│\n│ 👤 @${target.split('@')[0]}\n│ 📦 Item: ${itemArgs}\n│ 🔢 Quantidade: +${qty}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [target] });
       }
 
-      // Remover item do jogador
       case 'rpgremoveitem':
       case 'removeritem': {
         if (!isOwnerOrSub) return reply('🚫 Apenas donos e subdonos podem usar este comando!');
@@ -10638,7 +10199,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ✅ *ITEM REMOVIDO* ⊱━━━╮\n│\n│ 👤 @${target.split('@')[0]}\n│ 📦 Item: ${itemArgs}\n│ 🔢 Quantidade: -${qty}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [target] });
       }
 
-      // Reset total do jogador
       case 'rpgresetplayer':
       case 'resetarjogador': {
         if (!isOwnerOrSub) return reply('🚫 Apenas donos e subdonos podem usar este comando!');
@@ -10657,7 +10217,6 @@ Entre em contato com o dono do bot:
         }
       }
 
-      // Reset global de todo o RPG
       case 'rpgresetglobal':
       case 'resetrpgglobal': {
         if (!(isOwner && !isSubOwner)) return reply('🚫 Apenas o dono principal pode usar este comando!');
@@ -10674,7 +10233,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ⚠️ *RESET GLOBAL* ⊱━━━╮\n│\n│ 🗑️ Sistema RPG resetado!\n│ 👥 Todos os jogadores zerados\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
       }
 
-      // Estatísticas do sistema RPG
       case 'rpgstats':
       case 'rpgstatistics':
       case 'estatisticasrpg': {
@@ -10720,11 +10278,6 @@ Entre em contato com o dono do bot:
         return reply(text, { mentions });
       }
 
-      // ═══════════════════════════════════════════
-      // SISTEMA DE LOJA PREMIUM / GASTAR DINHEIRO
-      // ═══════════════════════════════════════════
-
-      // Loja Premium com itens caros
       case 'lojapremium':
       case 'premiumshop':
       case 'lojadeluxo': {
@@ -10758,7 +10311,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Comprar item premium
       case 'comprarpremium':
       case 'buypremium': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -10780,7 +10332,6 @@ Entre em contato com o dono do bot:
           'multiplicador_xp': { name: '✨ Multiplicador XP', price: 2500000 }
         };
 
-        // Normaliza a busca do item ignorando acentos
         const itemId = findKeyIgnoringAccents(premiumItems, rawItemId) || normalizeParam(rawItemId).replace(/\s+/g, '_');
         const item = premiumItems[itemId];
         if (!item) return reply(`❌ Item não encontrado!\n\n🛒 Veja a loja: ${prefix}lojapremium`);
@@ -10796,7 +10347,6 @@ Entre em contato com o dono do bot:
         me.premiumItems = me.premiumItems || {};
         me.premiumItems[itemId] = (me.premiumItems[itemId] || 0) + 1;
 
-        // Aplicar efeitos especiais
         if (itemId === 'boost_permanente') me.permanentBoost = true;
         if (itemId === 'protecao_vip') me.vipProtection = true;
         if (itemId === 'multiplicador_xp') me.xpMultiplier = 2;
@@ -10807,7 +10357,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ✅ *COMPRA PREMIUM* ⊱━━━╮\n│\n│ 🛒 ${item.name}\n│ 💰 -${item.price.toLocaleString()}\n│\n│ ✨ Item adicionado com sucesso!\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
       }
 
-      // Cassino Roleta - NERFADO
       case 'roleta':
       case 'roulette': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -10816,7 +10365,6 @@ Entre em contato com o dono do bot:
         const econ = loadEconomy();
         const me = getEcoUser(econ, sender);
 
-        // Cooldown de 10 minutos
         const cdRoleta = me.cooldowns?.roleta || 0;
         if (Date.now() < cdRoleta) return reply(`⏳ Aguarde ${timeLeft(cdRoleta)} para jogar roleta novamente.`);
 
@@ -10825,7 +10373,6 @@ Entre em contato com o dono do bot:
 
         if (bet <= 0) return reply(`🎰 *ROLETA*\n\n💡 Uso: ${prefix}roleta <valor> <cor>\n\nCores: vermelho, preto, verde\n\n🔴 Vermelho: 1.5x\n⚫ Preto: 1.5x\n🟢 Verde (0): 5x`);
 
-        // Normaliza a cor escolhida
         const colorMap = {
           'vermelho': 'vermelho', 'red': 'vermelho', 'rubro': 'vermelho', 'encarnado': 'vermelho',
           'preto': 'preto', 'black': 'preto', 'negro': 'preto',
@@ -10840,19 +10387,18 @@ Entre em contato com o dono do bot:
 
         if (bet > me.wallet) return reply('❌ Saldo insuficiente na carteira!');
 
-        // ROLETA NERFADA: A cor que o jogador NÃO escolheu tem 85% de chance de sair
         const result = Math.random();
         let winColor;
         const otherColors = ['vermelho', 'preto', 'verde'].filter(c => c !== choice);
 
         if (result < 0.85) {
-          // 85% de chance de cair na cor que o jogador NÃO escolheu
+
           winColor = otherColors[Math.floor(Math.random() * otherColors.length)];
         } else if (result < 0.97) {
-          // 12% de chance de cair na cor escolhida (se não for verde)
+
           winColor = choice === 'verde' ? otherColors[0] : choice;
         } else {
-          // 3% de chance de verde (se escolheu verde, ainda assim só 3%)
+
           winColor = 'verde';
         }
 
@@ -10860,14 +10406,14 @@ Entre em contato com o dono do bot:
         const normalizedChoice = choice;
 
         me.cooldowns = me.cooldowns || {};
-        me.cooldowns.roleta = Date.now() + 10 * 60 * 1000; // 10 minutos
+        me.cooldowns.roleta = Date.now() + 10 * 60 * 1000;
 
         let text = `╭━━━⊱ 🎰 *ROLETA* ⊱━━━╮\n\n`;
         text += `🎯 Sua aposta: ${colorEmoji[choice]} ${bet.toLocaleString()}\n`;
         text += `🎲 Resultado: ${colorEmoji[winColor]} ${winColor.toUpperCase()}\n\n`;
 
         if (normalizedChoice === winColor) {
-          const multiplier = winColor === 'verde' ? 5 : 1.5; // multiplicadores reduzidos (era 14x e 2x)
+          const multiplier = winColor === 'verde' ? 5 : 1.5;
           const winnings = Math.floor(bet * multiplier);
           me.wallet += winnings - bet;
           text += `🏆 *VITÓRIA RARA!*\n💰 +${winnings.toLocaleString()} (${multiplier}x)`;
@@ -10882,7 +10428,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Blackjack - NERFADO
       case 'blackjack':
       case 'bj':
       case '21': {
@@ -10892,7 +10437,6 @@ Entre em contato com o dono do bot:
         const econ = loadEconomy();
         const me = getEcoUser(econ, sender);
 
-        // Cooldown de 10 minutos
         const cdBJ = me.cooldowns?.blackjack || 0;
         if (Date.now() < cdBJ) return reply(`⏳ Aguarde ${timeLeft(cdBJ)} para jogar blackjack novamente.`);
 
@@ -10900,11 +10444,10 @@ Entre em contato com o dono do bot:
         if (bet <= 0) return reply(`🃏 *BLACKJACK*\n\n💡 Uso: ${prefix}blackjack <valor>\n\n📜 Regras: Chegue mais perto de 21 sem passar!`);
         if (bet > me.wallet) return reply('❌ Saldo insuficiente!');
 
-        // BLACKJACK NERFADO: Dealer tem cartas viciadas
         const getPlayerCard = () => {
-          // Jogador tem mais chance de pegar cartas altas (que causam bust)
+
           const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-          const weights = [5, 3, 3, 4, 5, 6, 8, 10, 12, 15, 12, 10, 7]; // Cartas altas mais prováveis
+          const weights = [5, 3, 3, 4, 5, 6, 8, 10, 12, 15, 12, 10, 7];
           const total = weights.reduce((a, b) => a + b, 0);
           let rand = Math.random() * total;
           for (let i = 0; i < values.length; i++) {
@@ -10915,9 +10458,9 @@ Entre em contato com o dono do bot:
         };
 
         const getDealerCard = () => {
-          // Dealer tem mais chance de pegar cartas médias (evita bust)
+
           const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-          const weights = [8, 6, 7, 8, 9, 10, 12, 10, 8, 6, 5, 5, 6]; // Cartas médias mais prováveis
+          const weights = [8, 6, 7, 8, 9, 10, 12, 10, 8, 6, 5, 5, 6];
           const total = weights.reduce((a, b) => a + b, 0);
           let rand = Math.random() * total;
           for (let i = 0; i < values.length; i++) {
@@ -10942,7 +10485,6 @@ Entre em contato com o dono do bot:
         const playerCards = [getPlayerCard(), getPlayerCard()];
         const dealerCards = [getDealerCard(), getDealerCard()];
 
-        // Simular jogo (simplificado) - jogador mais agressivo
         while (getValue(playerCards) < 17) playerCards.push(getPlayerCard());
         while (getValue(dealerCards) < 17) dealerCards.push(getDealerCard());
 
@@ -10950,7 +10492,7 @@ Entre em contato com o dono do bot:
         const dealerValue = getValue(dealerCards);
 
         me.cooldowns = me.cooldowns || {};
-        me.cooldowns.blackjack = Date.now() + 10 * 60 * 1000; // 10 minutos
+        me.cooldowns.blackjack = Date.now() + 10 * 60 * 1000;
 
         let text = `╭━━━⊱ 🃏 *BLACKJACK* ⊱━━━╮\n\n`;
         text += `👤 Você: ${playerCards.join(' ')} = ${playerValue}\n`;
@@ -10960,12 +10502,12 @@ Entre em contato com o dono do bot:
           me.wallet -= bet;
           text += `💀 *BUST!* Você passou de 21!\n💸 -${bet.toLocaleString()}\n🃏 Que azar...`;
         } else if (dealerValue > 21 || playerValue > dealerValue) {
-          // Ganhos reduzidos
+
           const winnings = playerValue === 21 && playerCards.length === 2 ? Math.floor(bet * 1.8) : Math.floor(bet * 1.4);
           me.wallet += winnings - bet;
           text += `🏆 *VITÓRIA RARA!*\n💰 +${(winnings - bet).toLocaleString()}`;
         } else if (playerValue === dealerValue) {
-          // Empate agora perde 30% da aposta
+
           const loss = Math.floor(bet * 0.3);
           me.wallet -= loss;
           text += `🤝 *EMPATE!*\n💸 Taxa de empate: -${loss.toLocaleString()}`;
@@ -10980,7 +10522,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Sistema de Slots (Caça-níqueis) - NERFADO
       case 'slots':
       case 'slotmachine':
       case 'cacaniquel': {
@@ -10990,7 +10531,6 @@ Entre em contato com o dono do bot:
         const econ = loadEconomy();
         const me = getEcoUser(econ, sender);
 
-        // Cooldown de 8 minutos
         const cdSlots2 = me.cooldowns?.slots2 || 0;
         if (Date.now() < cdSlots2) return reply(`⏳ Aguarde ${timeLeft(cdSlots2)} para jogar slots novamente.`);
 
@@ -10998,11 +10538,10 @@ Entre em contato com o dono do bot:
         if (bet <= 0) return reply(`🎰 *CAÇA-NÍQUEIS*\n\n💡 Uso: ${prefix}slots <valor>\n\n🎲 Alinhe 3 símbolos iguais para ganhar!`);
         if (bet > me.wallet) return reply('❌ Saldo insuficiente!');
 
-        // SLOTS NERFADO: Cada posição tem preferência por símbolos diferentes
         const symbols = ['🍒', '🍋', '🍊', '🍇', '⭐', '💎', '7️⃣'];
 
         const getSymbol = (position) => {
-          // Cada posição tem pesos diferentes para quase nunca combinar
+
           const baseWeights = [25, 20, 18, 15, 12, 7, 3];
           const shifted = [...baseWeights.slice(position * 2), ...baseWeights.slice(0, position * 2)];
           const total = shifted.reduce((a, b) => a + b);
@@ -11018,13 +10557,12 @@ Entre em contato com o dono do bot:
         const slot2 = getSymbol(1);
         const slot3 = getSymbol(2);
 
-        // Multiplicadores reduzidos
         const multipliers = {
           '🍒': 1.5, '🍋': 2, '🍊': 2.5, '🍇': 3, '⭐': 5, '💎': 10, '7️⃣': 25
         };
 
         me.cooldowns = me.cooldowns || {};
-        me.cooldowns.slots2 = Date.now() + 8 * 60 * 1000; // 8 minutos
+        me.cooldowns.slots2 = Date.now() + 8 * 60 * 1000;
 
         let text = `╭━━━⊱ 🎰 *SLOTS* ⊱━━━╮\n\n`;
         text += `┏━━━━━━━━━━━━━━┓\n`;
@@ -11032,14 +10570,14 @@ Entre em contato com o dono do bot:
         text += `┗━━━━━━━━━━━━━━┛\n\n`;
 
         if (slot1 === slot2 && slot2 === slot3) {
-          // Jackpot! (muito raro agora)
+
           const multi = multipliers[slot1];
           const winnings = Math.floor(bet * multi);
           me.wallet += winnings - bet;
           text += `🎉 *JACKPOT RARO!* 🎉\n`;
           text += `💰 Você ganhou ${winnings.toLocaleString()}! (${multi}x)`;
         } else if (slot1 === slot2 || slot2 === slot3 || slot1 === slot3) {
-          // 2 iguais - agora paga menos
+
           const winnings = Math.floor(bet * 1.1);
           me.wallet += winnings - bet;
           text += `⭐ *PAR!*\n`;
@@ -11055,7 +10593,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Loteria
       case 'loteria':
       case 'lottery':
       case 'mega': {
@@ -11077,7 +10614,6 @@ Entre em contato com o dono do bot:
           };
         }
 
-        // Garantir que lastDraw seja sempre válido
         if (!econ.lottery.lastDraw || econ.lottery.lastDraw === 0) {
           econ.lottery.lastDraw = Date.now();
         }
@@ -11085,7 +10621,7 @@ Entre em contato com o dono do bot:
         if (!sub || sub === 'ver') {
           const myTickets = econ.lottery.tickets[sender] || 0;
           const totalTickets = Object.values(econ.lottery.tickets).reduce((a, b) => a + b, 0);
-          const nextDrawTime = econ.lottery.lastDraw + 86400000; // +24 horas
+          const nextDrawTime = econ.lottery.lastDraw + 86400000;
           const nextDraw = new Date(nextDrawTime).toLocaleString('pt-BR');
 
           let text = `╭━━━⊱ 🎫 *LOTERIA* ⊱━━━╮\n\n`;
@@ -11119,7 +10655,6 @@ Entre em contato com o dono do bot:
         return reply(`❌ Subcomando inválido!\n\n💡 Use:\n${prefix}loteria - Ver informações\n${prefix}loteria comprar <qtd> - Comprar bilhetes`);
       }
 
-      // Corrida de cavalos
       case 'corrida':
       case 'horserace':
       case 'cavalos': {
@@ -11157,7 +10692,6 @@ Entre em contato com o dono do bot:
 
         const selectedHorse = horses[horse - 1];
 
-        // Determinar vencedor
         let random = Math.random() * 100;
         let winner = 0;
         for (let i = 0; i < horses.length; i++) {
@@ -11186,7 +10720,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Leilão
       case 'leilao':
       case 'leilaorpg':
       case 'leiloar': {
@@ -11242,7 +10775,7 @@ Entre em contato com o dono do bot:
             startPrice: price,
             currentBid: price,
             highestBidder: null,
-            endTime: Date.now() + 3600000 // 1 hora
+            endTime: Date.now() + 3600000
           });
 
           saveEconomy(econ);
@@ -11272,7 +10805,6 @@ Entre em contato com o dono do bot:
             return reply('❌ Saldo insuficiente!');
           }
 
-          // Devolver dinheiro ao lance anterior
           if (auction.highestBidder) {
             const prevBidder = getEcoUser(econ, auction.highestBidder);
             prevBidder.wallet += auction.currentBid;
@@ -11290,7 +10822,6 @@ Entre em contato com o dono do bot:
         return reply(`❌ Subcomando inválido!\n\n💡 Use:\n${prefix}leilao - Ver leilões\n${prefix}leilao criar <item> <preço>\n${prefix}leilao dar <nº> <valor>`);
       }
 
-      // Ranking de riqueza global
       case 'topriqueza':
       case 'toprich':
       case 'maiores': {
@@ -11319,7 +10850,6 @@ Entre em contato com o dono do bot:
         return reply(text, { mentions });
       }
 
-      // Sistema de Boost/Buff temporário
       case 'boost':
       case 'buff':
       case 'impulsionar': {
@@ -11338,13 +10868,12 @@ Entre em contato com o dono do bot:
         };
 
         const rawSub = (args[0] || '');
-        // Normaliza o parâmetro do boost
+
         const sub = rawSub ? (resolveParamAlias(rawSub) || findKeyIgnoringAccents(boosts, rawSub) || normalizeParam(rawSub)) : '';
 
         if (!sub || sub === 'ver') {
           let text = `╭━━━⊱ ⚡ *BOOSTS* ⊱━━━╮\n\n`;
 
-          // Verificar boosts ativos
           if (me.activeBoosts && Object.keys(me.activeBoosts).length > 0) {
             text += `🔥 *BOOSTS ATIVOS:*\n`;
             for (const [key, boost] of Object.entries(me.activeBoosts)) {
@@ -11388,7 +10917,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ ⚡ *BOOST ATIVADO* ⊱━━━╮\n\n${boost.name}\n⏰ Duração: ${boost.duration / 60000} minutos\n💰 Custo: -${boost.price.toLocaleString()}\n\n🔥 Aproveite os bônus!\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
       }
 
-      // Sistema de Tributos/Impostos
       case 'tributos':
       case 'impostos':
       case 'taxes': {
@@ -11400,31 +10928,30 @@ Entre em contato com o dono do bot:
 
         const totalWealth = (me.wallet || 0) + (me.bank || 0);
 
-        // Taxa de imposto baseada na riqueza
         let taxRate = 0;
         let taxBracket = '';
 
         if (totalWealth >= 10000000) {
-          taxRate = 0.1; // 10%
+          taxRate = 0.1;
           taxBracket = '💎 Elite (10%)';
         } else if (totalWealth >= 5000000) {
-          taxRate = 0.07; // 7%
+          taxRate = 0.07;
           taxBracket = '🏆 Rico (7%)';
         } else if (totalWealth >= 1000000) {
-          taxRate = 0.05; // 5%
+          taxRate = 0.05;
           taxBracket = '💰 Classe Alta (5%)';
         } else if (totalWealth >= 500000) {
-          taxRate = 0.03; // 3%
+          taxRate = 0.03;
           taxBracket = '📈 Classe Média (3%)';
         } else if (totalWealth >= 100000) {
-          taxRate = 0.01; // 1%
+          taxRate = 0.01;
           taxBracket = '📊 Trabalhador (1%)';
         } else {
           taxRate = 0;
           taxBracket = '🆓 Isento (0%)';
         }
 
-        const dailyTax = Math.floor(totalWealth * taxRate / 7); // Semanal dividido por dia
+        const dailyTax = Math.floor(totalWealth * taxRate / 7);
 
         if (!me.taxes) {
           me.taxes = {
@@ -11486,7 +11013,6 @@ Entre em contato com o dono do bot:
         return reply(`❌ Subcomando inválido!\n\n💡 Use:\n${prefix}tributos - Ver situação\n${prefix}tributos pagar - Pagar tributos`);
       }
 
-      // Sistema de Doação
       case 'doar':
       case 'donate':
       case 'doacao': {
@@ -11503,7 +11029,6 @@ Entre em contato com o dono do bot:
 
         me.wallet -= amount;
 
-        // Ganhar karma e reputação
         if (!me.reputation) me.reputation = { points: 0, upvotes: 0, downvotes: 0, karma: 0, fame: 0 };
         const karmaGain = Math.floor(amount / 1000);
         me.reputation.karma = (me.reputation.karma || 0) + karmaGain;
@@ -11514,7 +11039,6 @@ Entre em contato com o dono do bot:
         me.donations.total += amount;
         me.donations.count++;
 
-        // Adicionar ao tesouro do RPG
         if (!econ.treasury) econ.treasury = 0;
         econ.treasury += amount;
 
@@ -11523,7 +11047,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ 💝 *DOAÇÃO* ⊱━━━╮\n\n💰 Valor: ${amount.toLocaleString()}\n☯️ Karma: +${karmaGain}\n⭐ Reputação: +${Math.floor(karmaGain / 2)}\n\n📊 Total doado: ${me.donations.total.toLocaleString()}\n🏦 Tesouro: ${econ.treasury.toLocaleString()}\n\n✨ Obrigado pela generosidade!\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
       }
 
-      // Sistema de Presente
       case 'presente':
       case 'gift': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -11557,7 +11080,6 @@ Entre em contato com o dono do bot:
         return reply(`╭━━━⊱ 🎁 *PRESENTE ENVIADO* ⊱━━━╮\n\n📦 Item: ${item}\n🔢 Quantidade: ${qty}\n👤 Para: @${target.split('@')[0]}\n\n✨ Presente entregue!\n\n╰━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [target] });
       }
 
-      // Estatísticas pessoais detalhadas
       case 'meustats':
       case 'mystats':
       case 'statsrpg': {
@@ -11617,7 +11139,6 @@ Entre em contato com o dono do bot:
         return reply(text);
       }
 
-      // Sistema de Evolução/Prestige (DIFICULDADE AUMENTADA)
       case 'evoluir':
       case 'evolucao':
       case 'prestige': {
@@ -11629,13 +11150,12 @@ Entre em contato com o dono do bot:
 
         if (!me.prestige) me.prestige = { level: 0, totalResets: 0, bonusMultiplier: 1 };
 
-        // Requisitos balanceados e alcançáveis
-        const requiredLevel = 50 + (me.prestige.level * 15); // Level 50, 65, 80...
-        const requiredCoins = 100000 + (me.prestige.level * 50000); // 100k, 150k, 200k... (linear)
-        const requiredAchievements = 3 + (me.prestige.level * 2); // 3, 5, 7... conquistas
-        const requiredTotalWealth = 150000 + (me.prestige.level * 100000); // 150k, 250k, 350k...
-        const requiredBattlesWon = 20 + (me.prestige.level * 15); // 20, 35, 50... batalhas
-        const requiredWorkTimes = 50 + (me.prestige.level * 30); // 50, 80, 110... trabalhos
+        const requiredLevel = 50 + (me.prestige.level * 15);
+        const requiredCoins = 100000 + (me.prestige.level * 50000);
+        const requiredAchievements = 3 + (me.prestige.level * 2);
+        const requiredTotalWealth = 150000 + (me.prestige.level * 100000);
+        const requiredBattlesWon = 20 + (me.prestige.level * 15);
+        const requiredWorkTimes = 50 + (me.prestige.level * 30);
 
         const currentAchievements = Object.keys(me.achievements || {}).length;
         const currentBattlesWon = me.battlesWon || 0;
@@ -11694,7 +11214,6 @@ Entre em contato com o dono do bot:
 
         if (q !== 'confirmar') return reply('❌ Use "confirmar" para prestigiar');
 
-        // Verificar todos os requisitos
         if ((me.level || 1) < requiredLevel) {
           return reply(`❌ Você precisa ser nível ${requiredLevel}!\n📊 Atual: ${me.level || 1}`);
         }
@@ -11719,12 +11238,11 @@ Entre em contato com o dono do bot:
           return reply(`💼 Você precisa trabalhar ${requiredWorkTimes} vezes!\n📊 Atual: ${currentWorkTimes}`);
         }
 
-        // Resetar com penalidades maiores (preservando estatísticas de batalha e trabalho)
         me.level = 1;
         me.exp = 0;
         me.wallet = 0;
-        me.bank = Math.floor((me.bank || 0) * 0.5); // Mantém 50% do banco
-        // Preservar estatísticas de batalha e trabalho para progressão de prestige
+        me.bank = Math.floor((me.bank || 0) * 0.5);
+
         const preservedBattlesWon = me.battlesWon || 0;
         const preservedStats = me.stats ? { ...me.stats } : {};
 
@@ -11732,12 +11250,10 @@ Entre em contato com o dono do bot:
         me.prestige.totalResets++;
         me.prestige.bonusMultiplier = 1 + (me.prestige.level * 0.15);
 
-        // Restaurar estatísticas preservadas
         me.battlesWon = preservedBattlesWon;
         if (!me.stats) me.stats = {};
         me.stats = { ...preservedStats };
 
-        // Bônus especiais por prestige
         if (!me.prestigeRewards) me.prestigeRewards = {};
         me.prestigeRewards[`prestige_${me.prestige.level}`] = {
           title: `⭐ Prestige ${me.prestige.level}`,
@@ -11761,7 +11277,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Investimentos
       case 'investir':
       case 'invest': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -11791,11 +11306,10 @@ Entre em contato com o dono do bot:
           };
         }
 
-        // Atualizar preços diariamente
         const now = Date.now();
         if (now - econ.stockMarket.lastUpdate > 86400000) {
           for (const stock in econ.stockMarket.prices) {
-            const change = (Math.random() - 0.5) * 20; // -10% a +10%
+            const change = (Math.random() - 0.5) * 20;
             econ.stockMarket.prices[stock] = Math.max(10, econ.stockMarket.prices[stock] + change);
           }
           econ.stockMarket.lastUpdate = now;
@@ -11903,7 +11417,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Apostas/Cassino - NERFADO
       case 'dados':
       case 'dice': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -11916,19 +11429,17 @@ Entre em contato com o dono do bot:
         if (bet < 100) return reply('💰 Aposta mínima: 100 moedas');
         if (me.wallet < bet) return reply('💰 Você não tem moedas suficientes!');
 
-        // Cooldown de 8 minutos
         const cdDados = me.cooldowns?.dados || 0;
         if (Date.now() < cdDados) return reply(`⏳ Aguarde ${timeLeft(cdDados)} para jogar dados novamente.`);
 
-        // DADOS NERFADO: Bot tem dados viciados (sempre rola 4-6, jogador rola 1-6)
         const playerRoll = Math.floor(Math.random() * 6) + 1;
-        // Bot tem 80% de chance de rolar 5 ou 6
+
         let botRoll;
         const botLuck = Math.random();
         if (botLuck < 0.4) botRoll = 6;
         else if (botLuck < 0.8) botRoll = 5;
         else if (botLuck < 0.9) botRoll = 4;
-        else botRoll = Math.floor(Math.random() * 3) + 1; // 1-3 apenas 10% das vezes
+        else botRoll = Math.floor(Math.random() * 3) + 1;
 
         let text = `╭━━━⊱ 🎲 *JOGO DE DADOS* 🎲 ⊱━━━╮\n`;
         text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
@@ -11937,10 +11448,10 @@ Entre em contato com o dono do bot:
         text += `╭━━━━━━━━━━━━━━━━━━━━━╮\n`;
 
         me.cooldowns = me.cooldowns || {};
-        me.cooldowns.dados = Date.now() + 8 * 60 * 1000; // 8 minutos
+        me.cooldowns.dados = Date.now() + 8 * 60 * 1000;
 
         if (playerRoll > botRoll) {
-          const win = Math.floor(bet * 1.5); // ganha apenas 1.5x (era 2x)
+          const win = Math.floor(bet * 1.5);
           me.wallet += win - bet;
           text += `│\n`;
           text += `│ 🎉 *VITÓRIA RARA!*\n`;
@@ -11956,7 +11467,7 @@ Entre em contato com o dono do bot:
           text += `│ 🎲 Os dados parecem viciados...\n`;
           text += `│\n`;
         } else {
-          // Empate agora perde metade da aposta
+
           const loss = Math.floor(bet * 0.5);
           me.wallet -= loss;
           text += `│\n`;
@@ -11983,7 +11494,7 @@ Entre em contato com o dono do bot:
 
         const args = q.split(' ');
         const rawChoice = args[0] || '';
-        // Normaliza "cara/coroa" com aliases (heads/tails, etc)
+
         const resolvedChoice = resolveParamAlias(rawChoice);
         const choice = resolvedChoice === 'cara' || resolvedChoice === 'coroa' ? resolvedChoice : null;
         const bet = parseInt(args[1]) || 0;
@@ -11995,12 +11506,9 @@ Entre em contato com o dono do bot:
         if (bet < 100) return reply('💰 Aposta mínima: 100 moedas');
         if (me.wallet < bet) return reply('💰 Você não tem moedas suficientes!');
 
-        // Cooldown de 8 minutos
         const cdCoin = me.cooldowns?.coinflip || 0;
         if (Date.now() < cdCoin) return reply(`⏳ Aguarde ${timeLeft(cdCoin)} para jogar novamente.`);
 
-        // COINFLIP NERFADO: 5% de chance de ganhar (era 50%)
-        // A moeda é "viciada" - quase sempre cai no lado oposto
         const playerWins = Math.random() < 0.05;
         const result = playerWins ? choice : (choice === 'cara' ? 'coroa' : 'cara');
 
@@ -12010,10 +11518,10 @@ Entre em contato com o dono do bot:
         text += `🪙 Resultado: *${result}*\n\n`;
 
         me.cooldowns = me.cooldowns || {};
-        me.cooldowns.coinflip = Date.now() + 8 * 60 * 1000; // 8 minutos
+        me.cooldowns.coinflip = Date.now() + 8 * 60 * 1000;
 
         if (choice === result) {
-          const win = Math.floor(bet * 1.5); // ganha apenas 1.5x (era 2x)
+          const win = Math.floor(bet * 1.5);
           me.wallet += win - bet;
           text += `🎉 *VITÓRIA RARA!*\n\n`;
           text += `💰 +${win.toLocaleString()}`;
@@ -12039,24 +11547,20 @@ Entre em contato com o dono do bot:
         if (bet < 100) return reply('💰 Aposta mínima: 100 moedas');
         if (me.wallet < bet) return reply('💰 Você não tem moedas suficientes!');
 
-        // Cooldown de 10 minutos
         const cdCrash = me.cooldowns?.crash || 0;
         if (Date.now() < cdCrash) return reply(`⏳ Aguarde ${timeLeft(cdCrash)} para jogar crash novamente.`);
 
-        // CRASH NERFADO: 85% de chance de crashar antes de 1.1x (perda quase garantida)
-        // Crash point viciado para valores baixos
         let crashPoint;
         const crashRoll = Math.random();
         if (crashRoll < 0.85) {
-          crashPoint = (1.00 + Math.random() * 0.1).toFixed(2); // 1.00x a 1.10x (crash instantâneo)
+          crashPoint = (1.00 + Math.random() * 0.1).toFixed(2);
         } else if (crashRoll < 0.95) {
-          crashPoint = (1.10 + Math.random() * 0.4).toFixed(2); // 1.10x a 1.50x
+          crashPoint = (1.10 + Math.random() * 0.4).toFixed(2);
         } else {
-          crashPoint = (1.50 + Math.random() * 1.5).toFixed(2); // 1.50x a 3.00x (raro)
+          crashPoint = (1.50 + Math.random() * 1.5).toFixed(2);
         }
 
-        // User exit também viciado para sair tarde demais
-        const userExit = (1.05 + Math.random() * 1.5).toFixed(2); // 1.05x a 2.55x
+        const userExit = (1.05 + Math.random() * 1.5).toFixed(2);
 
         let text = `╭━━━⊱ 🚀 *CRASH* ⊱━━━╮\n`;
         text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
@@ -12064,10 +11568,10 @@ Entre em contato com o dono do bot:
         text += `💥 Crash em: ${crashPoint}x\n\n`;
 
         me.cooldowns = me.cooldowns || {};
-        me.cooldowns.crash = Date.now() + 10 * 60 * 1000; // 10 minutos
+        me.cooldowns.crash = Date.now() + 10 * 60 * 1000;
 
         if (parseFloat(userExit) < parseFloat(crashPoint)) {
-          const win = Math.floor(bet * (parseFloat(userExit) - 1)); // ganha apenas a diferença, não o total
+          const win = Math.floor(bet * (parseFloat(userExit) - 1));
           me.wallet += win;
           text += `🎉 *VOCÊ GANHOU!*\n\n`;
           text += `💰 +${win.toLocaleString()}`;
@@ -12082,7 +11586,6 @@ Entre em contato com o dono do bot:
         break;
       }
 
-      // Sistema de Streaks
       case 'streak':
       case 'serie': {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -12102,19 +11605,18 @@ Entre em contato com o dono do bot:
         }
 
         const now = Date.now();
-        const oneDay = 86400000; // 24 horas
+        const oneDay = 86400000;
         const twoDays = oneDay * 2;
         const timeSinceLogin = now - me.streak.lastLogin;
 
-        // Verificar e atualizar streak
         if (me.streak.lastLogin === 0) {
-          // Primeira vez usando o sistema
+
           me.streak.current = 0;
         } else if (timeSinceLogin > twoDays) {
-          // Perdeu o streak (mais de 2 dias)
+
           me.streak.current = 0;
         } else if (timeSinceLogin >= oneDay) {
-          // Passou 1 dia, pode incrementar
+
           const timeSinceLastClaim = now - (me.streak.lastClaim || 0);
           if (timeSinceLastClaim >= oneDay) {
             me.streak.current++;
@@ -12125,7 +11627,6 @@ Entre em contato com o dono do bot:
           }
         }
 
-        // Atualiza lastLogin sempre que o comando é usado
         me.streak.lastLogin = now;
 
         let text = `╭━━━⊱ 🔥 *STREAK* ⊱━━━╮\n`;
@@ -12174,12 +11675,10 @@ Entre em contato com o dono do bot:
         const econ = loadEconomy();
         const me = getEcoUser(econ, sender);
 
-        // Inicializa streak se não existir
         if (!me.streak || !me.streak.rewards) {
           me.streak = { current: 0, best: 0, lastLogin: 0, rewards: [] };
         }
 
-        // Inicializa quests se não existir
         if (!me.quests) {
           me.quests = {
             daily: [],
@@ -12187,7 +11686,6 @@ Entre em contato com o dono do bot:
           };
         }
 
-        // Reset diário de missões se necessário
         const now = Date.now();
         if (now - me.quests.lastReset > 86400000) {
           me.quests.daily = [];
@@ -12199,7 +11697,6 @@ Entre em contato com o dono do bot:
         let text = `╭━━━⊱ 🎁 *RECOMPENSAS* ⊱━━━╮\n`;
         text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
-        // Verifica recompensas de streak
         const streakRewards = [
           { days: 7, amount: 10000 },
           { days: 15, amount: 25000 },
@@ -12217,7 +11714,6 @@ Entre em contato com o dono do bot:
           }
         }
 
-        // Verifica recompensas de missões diárias
         if (me.quests.daily && Array.isArray(me.quests.daily)) {
           for (const quest of me.quests.daily) {
             if (quest.progress >= quest.goal && !quest.claimed) {
@@ -12242,11 +11738,10 @@ Entre em contato com o dono do bot:
           saveEconomy(econ);
           return reply(text);
         } else {
-          // Verifica se há recompensas disponíveis mas não reivindicadas
+
           let hasAvailableRewards = false;
           let availableText = `╭━━━⊱ 🎁 *RECOMPENSAS DISPONÍVEIS* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
-          // Verifica streak
           const hasStreakReward = streakRewards.some(r =>
             me.streak.current >= r.days && !me.streak.rewards.includes(r.days)
           );
@@ -12256,7 +11751,6 @@ Entre em contato com o dono do bot:
             availableText += `💡 Use ${prefix}streak para ver seu progresso\n\n`;
           }
 
-          // Verifica missões
           if (me.quests.daily && Array.isArray(me.quests.daily)) {
             const availableQuests = me.quests.daily.filter(q =>
               q.progress >= q.goal && !q.claimed
@@ -12482,10 +11976,10 @@ Entre em contato com o dono do bot:
           await reply("❌ Ocorreu um erro interno. Tente novamente em alguns minutos.");
         }
         break;
-      //INTELIGENCIA ARTIFICIAL
+
       case 'gemma':
         if (!q) return reply(`🤔 Qual sua dúvida para o Gemma? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Gemma... ✨`).then(() => {
           ia.makeCognimaRequest('google/gemma-7b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12498,7 +11992,7 @@ Entre em contato com o dono do bot:
       case 'phi':
       case 'phi3':
         if (!q) return reply(`🤔 Qual sua dúvida para o Phi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Phi... ✨`).then(() => {
           ia.makeCognimaRequest('microsoft/phi-3-medium-4k-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12510,7 +12004,7 @@ Entre em contato com o dono do bot:
         break;
       case 'qwen2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwen2? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Qwen2... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen2-7b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12523,7 +12017,7 @@ Entre em contato com o dono do bot:
       case 'qwen':
       case 'qwen3':
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwen? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Qwen... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12536,7 +12030,7 @@ Entre em contato com o dono do bot:
       case 'llama':
       case 'llama3':
         if (!q) return reply(`🤔 Qual sua dúvida para o Llama? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Llama... ✨`).then(() => {
           ia.makeCognimaRequest('abacusai/dracarys-llama-3.1-70b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12549,7 +12043,7 @@ Entre em contato com o dono do bot:
       case 'baichuan':
       case 'baichuan2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Baichuan? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Baichuan... ✨`).then(() => {
           ia.makeCognimaRequest('baichuan-inc/baichuan2-13b-chat', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12561,7 +12055,7 @@ Entre em contato com o dono do bot:
         break;
       case 'marin':
         if (!q) return reply(`🤔 Qual sua dúvida para o Marin? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Marin... ✨`).then(() => {
           ia.makeCognimaRequest('marin/marin-8b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12574,7 +12068,7 @@ Entre em contato com o dono do bot:
       case 'kimi':
       case 'kimik2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Kimi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Kimi... ✨`).then(() => {
           ia.makeCognimaRequest('moonshotai/kimi-k2-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12586,7 +12080,7 @@ Entre em contato com o dono do bot:
         break;
       case 'mistral':
         if (!q) return reply(`🤔 Qual sua dúvida para o Mistral? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Mistral... ✨`).then(() => {
           ia.makeCognimaRequest('mistralai/mistral-small-24b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12598,7 +12092,7 @@ Entre em contato com o dono do bot:
         break;
       case 'magistral':
         if (!q) return reply(`🤔 Qual sua dúvida para o Magistral? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Magistral... ✨`).then(() => {
           ia.makeCognimaRequest('mistralai/magistral-small-2506', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12611,7 +12105,7 @@ Entre em contato com o dono do bot:
       case 'rakutenai':
       case 'rocket':
         if (!q) return reply(`🤔 Qual sua dúvida para o RakutenAI? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o RakutenAI... ✨`).then(() => {
           ia.makeCognimaRequest('rakuten/rakutenai-7b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12623,7 +12117,7 @@ Entre em contato com o dono do bot:
         break;
       case 'yi':
         if (!q) return reply(`🤔 Qual sua dúvida para o Yi? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Yi... ✨`).then(() => {
           ia.makeCognimaRequest('01-ai/yi-large', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12635,7 +12129,7 @@ Entre em contato com o dono do bot:
         break;
       case 'gemma2':
         if (!q) return reply(`🤔 Qual sua dúvida para o Gemma2? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Gemma2... ✨`).then(() => {
           ia.makeCognimaRequest('google/gemma-2-27b-it', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12647,7 +12141,7 @@ Entre em contato com o dono do bot:
         break;
       case 'swallow':
         if (!q) return reply(`🤔 Qual sua dúvida para o Swallow? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Swallow... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12659,7 +12153,7 @@ Entre em contato com o dono do bot:
         break;
       case 'falcon':
         if (!q) return reply(`🤔 Qual sua dúvida para o Falcon? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Falcon... ✨`).then(() => {
           ia.makeCognimaRequest('tiiuae/falcon3-7b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12671,7 +12165,7 @@ Entre em contato com o dono do bot:
         break;
       case 'qwencoder':
         if (!q) return reply(`🤔 Qual sua dúvida para o Qwencoder? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o Qwencoder... ✨`).then(() => {
           ia.makeCognimaRequest('qwen/qwen2.5-coder-32b-instruct', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12683,7 +12177,7 @@ Entre em contato com o dono do bot:
         break;
       case 'codegemma':
         if (!q) return reply(`🤔 Qual sua dúvida para o CodeGemma? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
-        
+
         reply(`⏳ Só um segundinho, estou consultando o CodeGemma... ✨`).then(() => {
           ia.makeCognimaRequest('google/codegemma-7b', q, null, null).then((response) => {
             reply(formatAIResponse(response.data.choices[0].message.content));
@@ -12695,7 +12189,7 @@ Entre em contato com o dono do bot:
         break;
       case 'resumir':
         if (!q) return reply(`📝 *Resumidor de Texto*\n\n💡 *Como usar:*\n• Envie o texto que deseja resumir após o comando\n• Ex: ${prefix}resumir [seu texto aqui]\n\n✨ O texto será resumido de forma clara e objetiva!`);
-        
+
         reply('⏳ Aguarde enquanto preparo um resumo bem caprichado... ✨').then(() => {
           const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara e objetiva, destacando as informações mais importantes:\n\n${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
@@ -12708,7 +12202,7 @@ Entre em contato com o dono do bot:
         break;
       case 'resumirurl':
         if (!q) return reply(`🌐 Quer resumir uma página? Envie a URL após o comando ${prefix}resumirurl! Exemplo: ${prefix}resumirurl https://exemplo.com/artigo 😊`);
-        
+
         if (!q.startsWith('http://') && !q.startsWith('https://')) {
           return reply(`🚫 Ops, parece que a URL é inválida! Certifique-se de incluir http:// ou https://. Exemplo: ${prefix}resumirurl https://exemplo.com/artigo 😊`);
         }
@@ -12749,7 +12243,7 @@ Entre em contato com o dono do bot:
       case 'ideias':
       case 'ideia':
         if (!q) return reply(`💡 Quer ideias criativas? Diga o tema após o comando ${prefix}ideias! Exemplo: ${prefix}ideias nomes para um aplicativo de receitas 😊`);
-        
+
         reply('⏳ Um segundinho, estou pensando em ideias incríveis... ✨').then(() => {
           const prompt = `Gere 15 ideias criativas e detalhadas para o seguinte tema: ${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
@@ -12763,7 +12257,7 @@ Entre em contato com o dono do bot:
       case 'explicar':
       case 'explique':
         if (!q) return reply(`🤓 Quer entender algo? Diga o que deseja explicar após o comando ${prefix}explicar! Exemplo: ${prefix}explicar o que é inteligência artificial 😊`);
-        
+
         reply('⏳ Um momentinho, estou preparando uma explicação bem clara... ✨').then(() => {
           const prompt = `Explique o seguinte conceito de forma simples e clara, como se fosse para alguém sem conhecimento prévio: ${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
@@ -12777,7 +12271,7 @@ Entre em contato com o dono do bot:
       case 'corrigir':
       case 'correcao':
         if (!q) return reply(`✍️ Quer corrigir um texto? Envie o texto após o comando ${prefix}corrigir! Exemplo: ${prefix}corrigir Eu foi no mercado e comprei frutas. 😊`);
-        
+
         reply('⏳ Aguarde enquanto dou um polimento no seu texto... ✨').then(() => {
           const prompt = `Corrija os erros gramaticais, ortográficos e de estilo no seguinte texto, mantendo o significado original: ${q}`;
           ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null).then((response) => {
@@ -12789,9 +12283,6 @@ Entre em contato com o dono do bot:
         });
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // 💬 RESUMIDOR DE CONVERSAS DO GRUPO
-      // ═══════════════════════════════════════════════════════════════
       case 'resumirchat':
       case 'resumirgrupo':
       case 'resumirconversa': {
@@ -12799,18 +12290,15 @@ Entre em contato com o dono do bot:
           return reply('⚠️ Este comando só pode ser usado em grupos!');
         }
 
-        
-
         const quantidade = parseInt(args[0]) || 50;
-        const limite = Math.min(Math.max(quantidade, 10), 200); // Entre 10 e 200 mensagens
+        const limite = Math.min(Math.max(quantidade, 10), 200);
 
         reply(`💬 Coletando as últimas ${limite} mensagens para resumir... ⏳`).then(() => {
-          // Buscar mensagens do cache
+
           const mensagensGrupo = [];
 
           if (messagesCache && typeof messagesCache.keys === 'function') {
-            // Tentar pegar do cache de mensagens
-            // Chaves estão no formato: remoteJid_messageId
+
             const cacheKeys = Array.from(messagesCache.keys());
             const groupMessages = cacheKeys
               .filter(key => key.startsWith(`${from}_`))
@@ -12831,7 +12319,6 @@ Entre em contato com o dono do bot:
             }
           }
 
-          // Se não conseguiu do cache, usar store
           if (mensagensGrupo.length < 10 && store?.messages) {
             const storeMessages = store.messages[from];
             if (storeMessages?.array) {
@@ -12884,13 +12371,9 @@ Faça um resumo conciso mas completo, destacando o que é mais relevante.`;
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 📖 GERADOR DE HISTÓRIAS COM IA
-      // ═══════════════════════════════════════════════════════════════
       case 'historia':
       case 'story':
       case 'gerarhistoria': {
-        
 
         if (!q) {
           return reply(`📖 *Gerador de Histórias*\n\n💡 *Como usar:*\n• ${prefix}historia <gênero> <tema opcional>\n\n📚 *Gêneros disponíveis:*\n• fantasia, terror, romance, ficção científica, aventura, mistério, comédia, drama, ação, suspense\n\n✨ *Exemplos:*\n• ${prefix}historia fantasia dragões\n• ${prefix}historia terror casa abandonada\n• ${prefix}historia romance escola\n• ${prefix}historia ficção científica viagem no tempo`);
@@ -12946,14 +12429,10 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🎬 RECOMENDADOR DE MÍDIA COM IA
-      // ═══════════════════════════════════════════════════════════════
       case 'recomendar':
       case 'recomendacao':
       case 'recomendação':
       case 'suggest': {
-        
 
         if (!q) {
           return reply(`🎬 *Recomendador de Mídia*\n\n💡 *Como usar:*\n• ${prefix}recomendar <tipo> <gênero/preferência>\n\n📺 *Tipos disponíveis:*\n• anime, jogo, musica, livro\n\n✨ *Exemplos:*\n• ${prefix}recomendar anime ação\n• ${prefix}recomendar jogo rpg\n• ${prefix}recomendar musica rock\n• ${prefix}recomendar livro fantasia`);
@@ -13002,12 +12481,9 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🎮 WORDLE - Jogo de adivinhar palavra
-      // ═══════════════════════════════════════════════════════════════
       case 'wordle':
       case 'palavra': {
-        // Carregar palavras do JSON
+
         const wordlePath = pathz.join(__dirname, 'funcs', 'json', 'wordle.json');
         let palavrasPorTamanho = {};
         try {
@@ -13018,37 +12494,31 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           palavrasPorTamanho = { "5": ['amigo', 'barco', 'canto', 'dança', 'entre', 'falar', 'gosto', 'hotel', 'igual', 'jogar'] };
         }
 
-        // Estado dos jogos de wordle ativos
         if (!global.wordleGames) global.wordleGames = {};
         const gameKey = isGroup ? from : sender;
 
-        // Subcomando para chutar
         if (args[0] && global.wordleGames[gameKey]) {
           const game = global.wordleGames[gameKey];
           const chute = normalizar(args[0].toLowerCase());
           const tamanhoEsperado = game.palavra.length;
 
-          // Validar tamanho do chute
           if (chute.length !== tamanhoEsperado) {
             return reply(`❌ A palavra deve ter ${tamanhoEsperado} letras!\n\n💡 Você tem um jogo ativo com palavra de ${tamanhoEsperado} letras.\n\n📝 Chute: ${prefix}wordle [palavra de ${tamanhoEsperado} letras]`);
           }
 
           game.tentativas++;
 
-          // Verificar letras com lógica correta do Wordle
           let resultado = '';
           const palavraArray = game.palavra.split('');
           const chuteArray = chute.split('');
 
-          // Array para rastrear letras disponíveis na palavra original
           const letrasDisponiveis = [...palavraArray];
-          const statusLetras = new Array(tamanhoEsperado).fill(null); // null = não processado
+          const statusLetras = new Array(tamanhoEsperado).fill(null);
 
-          // Primeira passada: marcar letras no lugar certo (verde)
           for (let i = 0; i < tamanhoEsperado; i++) {
             if (chuteArray[i] === palavraArray[i]) {
-              statusLetras[i] = '🟩'; // Verde
-              // Remover essa letra do array disponível
+              statusLetras[i] = '🟩';
+
               const index = letrasDisponiveis.indexOf(chuteArray[i]);
               if (index !== -1) {
                 letrasDisponiveis.splice(index, 1);
@@ -13056,21 +12526,20 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             }
           }
 
-          // Segunda passada: marcar letras no lugar errado (amarelo) ou erradas (preto)
           for (let i = 0; i < tamanhoEsperado; i++) {
             if (statusLetras[i] === null) {
-              // Letra não está no lugar certo
+
               if (letrasDisponiveis.includes(chuteArray[i])) {
-                // Letra existe na palavra e ainda há ocorrências disponíveis
-                statusLetras[i] = '🟨'; // Amarelo
-                // Remover essa ocorrência do array disponível
+
+                statusLetras[i] = '🟨';
+
                 const index = letrasDisponiveis.indexOf(chuteArray[i]);
                 if (index !== -1) {
                   letrasDisponiveis.splice(index, 1);
                 }
               } else {
-                // Letra não existe ou já foi usada
-                statusLetras[i] = '⬛'; // Preto
+
+                statusLetras[i] = '⬛';
               }
             }
           }
@@ -13093,7 +12562,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`🎯 *WORDLE* (${game.tentativas}/6)\n\n${game.historico.join('\n')}\n\n💡 Continue chutando com: ${prefix}wordle [palavra de ${tamanhoEsperado} letras]`);
         }
 
-        // Novo jogo
         if (global.wordleGames[gameKey]) {
           const game = global.wordleGames[gameKey];
           const tamanho = game.palavra.length;
@@ -13106,7 +12574,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`🏳️ Você desistiu!\n\nA palavra era: *${palavra.toUpperCase()}*`);
         }
 
-        // Iniciar novo jogo - escolher tamanho aleatório
         const tamanhosDisponiveis = Object.keys(palavrasPorTamanho).filter(t => palavrasPorTamanho[t] && palavrasPorTamanho[t].length > 0);
         if (tamanhosDisponiveis.length === 0) {
           return reply('❌ Erro: Nenhuma palavra disponível no banco de dados!');
@@ -13127,13 +12594,10 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // ❓ QUIZ - Perguntas e Respostas
-      // ═══════════════════════════════════════════════════════════════
       case 'quiz':
       case 'trivia':
       case 'pergunta': {
-        // Carregar perguntas do JSON
+
         const quizPath = pathz.join(__dirname, 'funcs', 'json', 'quiz.json');
         let quizDB = {};
         try {
@@ -13149,14 +12613,11 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           };
         }
 
-        // Estado dos jogos de quiz ativos
         if (!global.quizGames) global.quizGames = {};
         const quizKey = isGroup ? from : sender;
 
-        // Carregar categorias disponíveis
         const categoriasDisponiveis = Object.keys(quizDB);
 
-        // Responder quiz ativo
         if (global.quizGames[quizKey] && args.length > 0 && !categoriasDisponiveis.includes(args[0].toLowerCase())) {
           const game = global.quizGames[quizKey];
           const resposta = normalizar(args.join(' ').toLowerCase());
@@ -13174,26 +12635,22 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           }
         }
 
-        // Quiz ativo - mostrar pergunta atual
         if (global.quizGames[quizKey] && args.length === 0) {
           const game = global.quizGames[quizKey];
           return reply(`❓ *QUIZ* (${game.categoria})\n\n${game.pergunta}\n\n💡 Responda com: ${prefix}quiz [resposta]\n🔄 Pular: ${prefix}quiz pular`);
         }
 
-        // Pular pergunta
         if (args[0] === 'pular' && global.quizGames[quizKey]) {
           const resposta = global.quizGames[quizKey].display;
           delete global.quizGames[quizKey];
           return reply(`⏭️ Pergunta pulada!\n\nA resposta era: *${resposta}*`);
         }
 
-        // Mostrar categorias
         if (!args[0]) {
           const categoriasList = Object.keys(quizDB).map(cat => `• ${prefix}quiz ${cat}`).join('\n');
           return reply(`❓ *QUIZ - Teste seus conhecimentos!*\n\n📚 *Categorias disponíveis:*\n${categoriasList}\n\n💡 Responda rápido para ganhar mais pontos!`);
         }
 
-        // Nova pergunta
         const categoria = args[0].toLowerCase();
         const perguntas = quizDB[categoria];
 
@@ -13215,12 +12672,9 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🎯 FORCA - Jogo da Forca em Grupo
-      // ═══════════════════════════════════════════════════════════════
       case 'forca':
       case 'hangman': {
-        // Carregar palavras do JSON
+
         const forcaPath = pathz.join(__dirname, 'funcs', 'json', 'forca.json');
         let palavrasForca = [];
         try {
@@ -13245,22 +12699,18 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           '```\n  ┌───┐\n  │   │\n  😵  │\n ─│─  │\n / \\  │\n══════╧══```'
         ];
 
-        // Estado dos jogos de forca ativos
         if (!global.forcaGames) global.forcaGames = {};
         const forcaKey = isGroup ? from : sender;
 
-        // Mostrar dica
         if (args[0] === 'dica' && global.forcaGames[forcaKey]) {
           const game = global.forcaGames[forcaKey];
           return reply(`${desenhoForca[game.erros]}\n\n🎯 *FORCA*\n\n📝 ${game.progresso.join(' ')}\n\n💡 *Dica:* ${game.dica}\n❌ Letras erradas: ${game.letrasErradas.join(', ') || 'Nenhuma'}\n⚠️ Erros: ${game.erros}/6\n\n💬 Chute com: ${prefix}forca [letra]\n🔤 Ou chute a palavra: ${prefix}forca [palavra]`);
         }
 
-        // Chutar letra ou palavra
         if (global.forcaGames[forcaKey] && args.length > 0 && args[0] !== 'desistir' && args[0] !== 'dica') {
           const game = global.forcaGames[forcaKey];
           const chute = normalizar(args.join('').toLowerCase());
 
-          // Chutar palavra inteira
           if (chute.length > 1) {
             if (chute === normalizar(game.palavra)) {
               delete global.forcaGames[forcaKey];
@@ -13275,7 +12725,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             }
           }
 
-          // Chutar letra
           const letra = chute[0];
 
           if (game.letrasCorretas.includes(letra) || game.letrasErradas.includes(letra)) {
@@ -13286,14 +12735,13 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
 
           if (palavraNorm.includes(letra)) {
             game.letrasCorretas.push(letra);
-            // Atualizar progresso
+
             for (let i = 0; i < palavraNorm.length; i++) {
               if (palavraNorm[i] === letra) {
                 game.progresso[i] = game.palavra[i].toUpperCase();
               }
             }
 
-            // Verificar vitória
             if (!game.progresso.includes('_')) {
               delete global.forcaGames[forcaKey];
               return reply(`🎉 *PARABÉNS!*\n\n📝 ${game.progresso.join(' ')}\n\n✅ Vocês descobriram a palavra!\n🏆 *${game.palavra.toUpperCase()}*`);
@@ -13313,20 +12761,17 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           }
         }
 
-        // Desistir
         if (args[0] === 'desistir' && global.forcaGames[forcaKey]) {
           const palavra = global.forcaGames[forcaKey].palavra;
           delete global.forcaGames[forcaKey];
           return reply(`🏳️ Vocês desistiram!\n\nA palavra era: *${palavra.toUpperCase()}*`);
         }
 
-        // Jogo ativo
         if (global.forcaGames[forcaKey] && args.length === 0) {
           const game = global.forcaGames[forcaKey];
           return reply(`${desenhoForca[game.erros]}\n\n🎯 *FORCA*\n\n📝 ${game.progresso.join(' ')}\n\n❌ Letras erradas: ${game.letrasErradas.join(', ') || 'Nenhuma'}\n⚠️ Erros: ${game.erros}/6\n\n💬 Chute com: ${prefix}forca [letra]\n🔤 Ou chute a palavra: ${prefix}forca [palavra]\n💡 Ver dica: ${prefix}forca dica\n🏳️ Desistir: ${prefix}forca desistir`);
         }
 
-        // Novo jogo
         const escolhida = palavrasForca[Math.floor(Math.random() * palavrasForca.length)];
         const progresso = escolhida.palavra.split('').map(() => '_');
 
@@ -13344,15 +12789,11 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // ⚡ CORRIDA DE DIGITAÇÃO - Quem digita mais rápido?
-      // ═══════════════════════════════════════════════════════════════
       case 'digitar':
       case 'typing':
       case 'digitacao': {
         if (!isGroup) return reply('⚡ Este jogo só funciona em grupos!');
 
-        // Carregar frases do JSON
         const digitacaoPath = pathz.join(__dirname, 'funcs', 'json', 'digitacao.json');
         let frasesDigitacao = [];
         try {
@@ -13363,25 +12804,21 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           frasesDigitacao = ['A tecnologia está mudando o mundo rapidamente'];
         }
 
-        // Estado dos desafios de digitação
         if (!global.digitacaoChallenges) global.digitacaoChallenges = {};
         if (!global.digitacaoGames) global.digitacaoGames = {};
 
         const challengeKey = isGroup ? from : sender;
 
-        // Desafiar alguém
         if (menc_os2 && menc_os2 !== sender) {
-          // Limpar desafios expirados (60 segundos)
+
           if (global.digitacaoChallenges[challengeKey] && Date.now() - global.digitacaoChallenges[challengeKey].created > 60000) {
             delete global.digitacaoChallenges[challengeKey];
           }
 
-          // Verificar se já existe desafio pendente
           if (global.digitacaoChallenges[challengeKey]) {
             return reply('⚠️ Já existe um desafio pendente neste grupo!');
           }
 
-          // Criar desafio
           global.digitacaoChallenges[challengeKey] = {
             challenger: sender,
             challenged: menc_os2,
@@ -13392,7 +12829,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`⚡ *DESAFIO DE DIGITAÇÃO*\n\n@${sender.split('@')[0]} desafiou @${menc_os2.split('@')[0]} para uma corrida de digitação!\n\n💡 O desafiado deve usar: ${prefix}digitar aceitar\n⏱️ O desafio expira em 60 segundos.`, { mentions: [sender, menc_os2] });
         }
 
-        // Aceitar desafio
         if (args[0]?.toLowerCase() === 'aceitar' || args[0]?.toLowerCase() === 'aceitar') {
           const challenge = global.digitacaoChallenges[challengeKey];
 
@@ -13408,31 +12844,28 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply('❌ Este desafio já foi aceito ou expirado!');
           }
 
-          // Verificar expiração (60 segundos)
           if (Date.now() - challenge.created > 60000) {
             delete global.digitacaoChallenges[challengeKey];
             return reply('⏰ O desafio expirou!');
           }
 
-          // Iniciar jogo
           const fraseEscolhida = frasesDigitacao[Math.floor(Math.random() * frasesDigitacao.length)];
           const gameId = `game_${Date.now()}`;
 
           challenge.status = 'accepted';
           challenge.gameId = gameId;
 
-          // Enviar frase para ambos (com delay mínimo para evitar copy/paste)
-          const delay = 2000; // 2 segundos de delay
+          const delay = 2000;
 
           setTimeout(async () => {
-            // Iniciar o jogo quando a frase for enviada
+
             global.digitacaoGames[gameId] = {
               challenger: challenge.challenger,
               challenged: challenge.challenged,
               frase: fraseEscolhida,
               fraseNormalizada: normalizar(fraseEscolhida.toLowerCase()),
               status: 'active',
-              iniciado: Date.now(), // Timer começa quando frase é enviada
+              iniciado: Date.now(),
               resultados: {}
             };
 
@@ -13442,28 +12875,24 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`✅ Desafio aceito! A frase será enviada em ${delay / 1000} segundos... ⏱️`, { mentions: [challenge.challenger] });
         }
 
-        // Verificar resposta (digitação)
         if (global.digitacaoGames) {
-          // Procurar jogo ativo onde o jogador participa
+
           for (const [gameId, game] of Object.entries(global.digitacaoGames)) {
             if (game.status === 'active' && (game.challenger === sender || game.challenged === sender)) {
               const resposta = normalizar(q.toLowerCase());
               const fraseEsperada = game.fraseNormalizada;
 
-              // Verificar tempo mínimo (proteção anti-copy/paste) - 3 segundos
               const tempoDecorrido = Date.now() - game.iniciado;
-              const tempoMinimo = 3000; // 3 segundos
+              const tempoMinimo = 3000;
 
               if (tempoDecorrido < tempoMinimo) {
                 return reply(`⏱️ Muito rápido! Aguarde pelo menos ${(tempoMinimo - tempoDecorrido) / 1000} segundos antes de responder.\n\n⚠️ Isso previne cópia e cola!`);
               }
 
-              // Verificar se já respondeu
               if (game.resultados[sender]) {
                 return reply('⚠️ Você já respondeu! Aguarde o resultado.');
               }
 
-              // Verificar se acertou
               const acertou = resposta === fraseEsperada;
               const tempoResposta = Date.now() - game.iniciado;
 
@@ -13473,7 +12902,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
                 resposta: q
               };
 
-              // Verificar se ambos responderam
               if (game.resultados[game.challenger] && game.resultados[game.challenged]) {
                 game.status = 'finished';
 
@@ -13484,7 +12912,7 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
                 let perdedor = null;
 
                 if (challengerResult.acertou && challengedResult.acertou) {
-                  // Ambos acertaram, quem foi mais rápido?
+
                   if (challengerResult.tempo < challengedResult.tempo) {
                     vencedor = game.challenger;
                     perdedor = game.challenged;
@@ -13522,32 +12950,26 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
                   resultadoMsg += `@${game.challenged.split('@')[0]}: ${challengedResult.acertou ? '✅' : '❌'} ${(challengedResult.tempo / 1000).toFixed(2)}s`;
                 }
 
-                // Limpar desafio e jogo
                 delete global.digitacaoChallenges[challengeKey];
                 delete global.digitacaoGames[gameId];
 
                 return reply(resultadoMsg, { mentions: [game.challenger, game.challenged] });
               } else {
-                // Ainda aguardando outro jogador
+
                 return reply(`✅ Resposta recebida! Aguardando o oponente...`);
               }
             }
           }
         }
 
-        // Mostrar ajuda
         return reply(`⚡ *CORRIDA DE DIGITAÇÃO*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}digitar @usuario\n\n2️⃣ O desafiado aceita:\n${prefix}digitar aceitar\n\n3️⃣ Digite a frase exatamente como aparecer!\n\n🏆 Quem digitar primeiro e corretamente vence!\n\n⚠️ Proteção anti-cópia: mínimo de 3 segundos`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🚢 BATALHA NAVAL - Jogo de estratégia naval
-      // ═══════════════════════════════════════════════════════════════
       case 'batalhanaval':
       case 'batalha':
       case 'naval': {
         if (!isGroup) return reply('🚢 Este jogo só funciona em grupos!');
 
-        // Carregar configuração do JSON
         const navalPath = pathz.join(__dirname, 'funcs', 'json', 'batalhanaval.json');
         let configNaval = {
           tamanhoTabuleiro: 10,
@@ -13566,18 +12988,15 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           console.error('Erro ao carregar batalhanaval.json:', e);
         }
 
-        // Estado dos jogos
         if (!global.navalGames) global.navalGames = {};
         if (!global.navalChallenges) global.navalChallenges = {};
 
         const gameKey = isGroup ? from : sender;
 
-        // Função para criar tabuleiro vazio
         const criarTabuleiro = (tamanho) => {
           return Array(tamanho).fill(null).map(() => Array(tamanho).fill('🌊'));
         };
 
-        // Função para posicionar navios automaticamente
         const posicionarNavios = (tabuleiro, navios) => {
           const tamanho = tabuleiro.length;
           const naviosPosicionados = [];
@@ -13593,7 +13012,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
                 const linha = Math.floor(Math.random() * tamanho);
                 const coluna = Math.floor(Math.random() * tamanho);
 
-                // Verificar se cabe
                 let cabe = true;
                 const posicoes = [];
 
@@ -13627,7 +13045,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return naviosPosicionados;
         };
 
-        // Função para converter coordenada (A1, B5, etc) para índices
         const parseCoordenada = (coord) => {
           const match = coord.match(/^([A-J])(\d+)$/i);
           if (!match) return null;
@@ -13637,7 +13054,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return { linha, coluna };
         };
 
-        // Função para formatar tabuleiro para exibição
         const formatarTabuleiro = (tabuleiro, mostrarNavios = false) => {
           let resultado = '   A B C D E F G H I J\n';
           for (let i = 0; i < tabuleiro.length; i++) {
@@ -13656,14 +13072,12 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return resultado;
         };
 
-        // Desafiar alguém
         if (menc_os2 && menc_os2 !== sender) {
-          // Limpar desafios expirados (60 segundos)
+
           if (global.navalChallenges[gameKey] && Date.now() - global.navalChallenges[gameKey].created > 60000) {
             delete global.navalChallenges[gameKey];
           }
 
-          // Limpar jogos abandonados (10 minutos sem atividade)
           if (global.navalGames[gameKey] && global.navalGames[gameKey].ultimaJogada && Date.now() - global.navalGames[gameKey].ultimaJogada > 600000) {
             delete global.navalGames[gameKey];
           }
@@ -13682,7 +13096,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`🚢 *DESAFIO DE BATALHA NAVAL*\n\n@${sender.split('@')[0]} desafiou @${menc_os2.split('@')[0]} para uma batalha naval!\n\n💡 O desafiado deve usar: ${prefix}batalhanaval aceitar\n⏱️ O desafio expira em 60 segundos.`, { mentions: [sender, menc_os2] });
         }
 
-        // Aceitar desafio
         if (args[0]?.toLowerCase() === 'aceitar') {
           const challenge = global.navalChallenges[gameKey];
 
@@ -13695,13 +13108,11 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply('⏰ O desafio expirou!');
           }
 
-          // Criar tabuleiros e posicionar navios
           const tabuleiro1 = criarTabuleiro(configNaval.tamanhoTabuleiro);
           const tabuleiro2 = criarTabuleiro(configNaval.tamanhoTabuleiro);
           const navios1 = posicionarNavios(tabuleiro1, configNaval.navios);
           const navios2 = posicionarNavios(tabuleiro2, configNaval.navios);
 
-          // Criar tabuleiros de tiros (o que o jogador vê do oponente)
           const tiros1 = criarTabuleiro(configNaval.tamanhoTabuleiro);
           const tiros2 = criarTabuleiro(configNaval.tamanhoTabuleiro);
 
@@ -13714,7 +13125,7 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             tiros2: tiros2,
             navios1: navios1,
             navios2: navios2,
-            turno: challenge.challenger, // Jogador 1 começa
+            turno: challenge.challenger,
             status: 'active',
             ultimaJogada: Date.now()
           };
@@ -13724,7 +13135,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`🚢 *BATALHA NAVAL INICIADA!*\n\n@${challenge.challenger.split('@')[0]} vs @${challenge.challenged.split('@')[0]}\n\n🎯 É a vez de @${challenge.challenger.split('@')[0]} atirar!\n\n💡 Use: ${prefix}batalhanaval [coordenada]\n📌 Exemplo: ${prefix}batalhanaval A5`, { mentions: [challenge.challenger, challenge.challenged] });
         }
 
-        // Processar tiro
         if (global.navalGames[gameKey] && args[0]) {
           const game = global.navalGames[gameKey];
 
@@ -13732,7 +13142,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply('❌ Este jogo já terminou!');
           }
 
-          // Verificar se é a vez do jogador
           if (game.turno !== sender) {
             return reply('⏳ Não é sua vez! Aguarde o oponente.');
           }
@@ -13742,7 +13151,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(`❌ Coordenada inválida! Use formato: A1, B5, J10, etc.\n\n💡 Exemplo: ${prefix}batalhanaval A5`);
           }
 
-          // Determinar qual tabuleiro atacar e qual tabuleiro de tiros atualizar
           let tabuleiroAlvo, tirosJogador, naviosAlvo, jogadorAtual, oponente;
 
           if (sender === game.jogador1) {
@@ -13759,24 +13167,21 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             oponente = game.jogador1;
           }
 
-          // Verificar se já atirou aqui
           if (tirosJogador[coordenada.linha][coordenada.coluna] !== '🌊') {
             return reply('⚠️ Você já atirou nesta coordenada!');
           }
 
-          // Processar tiro
           const celula = tabuleiroAlvo[coordenada.linha][coordenada.coluna];
           let resultado = '';
           let acertou = false;
           let navioAfundado = null;
 
           if (celula === '🚢') {
-            // Acertou um navio
+
             acertou = true;
             tabuleiroAlvo[coordenada.linha][coordenada.coluna] = '💥';
             tirosJogador[coordenada.linha][coordenada.coluna] = '💥';
 
-            // Verificar qual navio foi atingido
             let navioAtingido = null;
             for (const navio of naviosAlvo) {
               const posicao = navio.posicoes.find(p => p.linha === coordenada.linha && p.coluna === coordenada.coluna);
@@ -13796,10 +13201,9 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
               const faltam = navioAtingido.tamanho - navioAtingido.acertos;
               resultado = `💥 *ACERTOU!*\n🚢 Navio de ${navioAtingido.tamanho} partes\n✅ Acertou: ${navioAtingido.acertos}/${navioAtingido.tamanho}\n🎯 Faltam: ${faltam} parte${faltam > 1 ? 's' : ''}`;
 
-              // Verificar direção do navio baseado nos acertos
               if (navioAtingido.acertos >= 2) {
                 const acertosPos = navioAtingido.posicoes.filter((pos, idx) => {
-                  // Verificar se essa posição já foi acertada
+
                   return tabuleiroAlvo[pos.linha][pos.coluna] === '💥';
                 });
 
@@ -13817,13 +13221,12 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
               resultado = '💥 *ACERTOU!*';
             }
           } else {
-            // Errou
+
             tabuleiroAlvo[coordenada.linha][coordenada.coluna] = '❌';
             tirosJogador[coordenada.linha][coordenada.coluna] = '❌';
             resultado = '❌ *ÁGUA!*';
           }
 
-          // Verificar vitória
           const todosNaviosAfundados = naviosAlvo.every(n => n.acertos === n.tamanho);
 
           if (todosNaviosAfundados) {
@@ -13840,7 +13243,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(msgVitoria, { mentions: [jogadorAtual, oponente] });
           }
 
-          // Preparar resposta
           let resposta = `${resultado}\n\n`;
           resposta += `🎯 Coordenada: ${args[0].toUpperCase()}\n`;
 
@@ -13848,7 +13250,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             resposta += `\n🚢 *${navioAfundado.nome} AFUNDADO!*\n`;
           }
 
-          // Mostrar status dos navios do oponente
           const naviosAfundados = naviosAlvo.filter(n => n.acertos === n.tamanho);
           const naviosAtingidos = naviosAlvo.filter(n => n.acertos > 0 && n.acertos < n.tamanho);
           const naviosIntactos = naviosAlvo.filter(n => n.acertos === 0);
@@ -13875,14 +13276,12 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(resposta, { mentions: [jogadorAtual, oponente] });
         }
 
-        // Ver status do jogo
         if (global.navalGames[gameKey]) {
           const game = global.navalGames[gameKey];
           const isJogador1 = sender === game.jogador1;
           const tirosJogador = isJogador1 ? game.tiros1 : game.tiros2;
           const naviosAlvoStatus = isJogador1 ? game.navios2 : game.navios1;
 
-          // Status dos navios do oponente
           const naviosAfundadosStatus = naviosAlvoStatus.filter(n => n.acertos === n.tamanho);
           const naviosAtingidosStatus = naviosAlvoStatus.filter(n => n.acertos > 0 && n.acertos < n.tamanho);
           const naviosIntactosStatus = naviosAlvoStatus.filter(n => n.acertos === 0);
@@ -13912,14 +13311,10 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         return reply(`🚢 *BATALHA NAVAL*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}batalhanaval @usuario\n\n2️⃣ O desafiado aceita:\n${prefix}batalhanaval aceitar\n\n3️⃣ Atire em coordenadas:\n${prefix}batalhanaval A5\n\n🎯 Objetivo: Afundar todos os navios do oponente!\n\n📌 Coordenadas: A-J (colunas) e 1-10 (linhas)\n💥 = Acerto | ❌ = Água`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🛑 STOP/ADEDONHA - Jogo de palavras por categorias
-      // ═══════════════════════════════════════════════════════════════
       case 'stop':
       case 'adedonha': {
         if (!isGroup) return reply('🛑 Este jogo só funciona em grupos!');
 
-        // Carregar categorias do JSON
         const stopPath = pathz.join(__dirname, 'funcs', 'json', 'stop.json');
         let categoriasStop = ['Nome', 'País', 'Cidade', 'Animal', 'Cor', 'Fruta', 'Objeto', 'Profissão'];
         try {
@@ -13929,15 +13324,12 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           console.error('Erro ao carregar stop.json:', e);
         }
 
-        // Estado dos jogos
         if (!global.stopGames) global.stopGames = {};
 
         const gameKey = isGroup ? from : sender;
 
-        // Letras válidas (sem acentos problemáticos)
         const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-        // Iniciar novo jogo
         if (!global.stopGames[gameKey] || global.stopGames[gameKey].status === 'finished') {
           const letraEscolhida = letras[Math.floor(Math.random() * letras.length)];
           const numCategorias = Math.min(5, categoriasStop.length);
@@ -13955,7 +13347,7 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             respostas: {},
             status: 'active',
             iniciado: Date.now(),
-            tempoLimite: 300000 // 5 minutos
+            tempoLimite: 300000
           };
 
           let msg = `🛑 *STOP/ADEDONHA*\n\n`;
@@ -13977,7 +13369,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
 
         const game = global.stopGames[gameKey];
 
-        // Verificar tempo limite
         if (Date.now() - game.iniciado > game.tempoLimite) {
           game.status = 'finished';
           let resultado = `⏰ *TEMPO ESGOTADO!*\n\n`;
@@ -13991,7 +13382,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(resultado);
           }
 
-          // Contar pontos
           const pontos = {};
           jogadores.forEach(jogador => {
             pontos[jogador] = Object.keys(game.respostas[jogador]).length;
@@ -14007,23 +13397,18 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(resultado, { mentions: jogadores });
         }
 
-        // Processar resposta
         if (args.length >= 2) {
           const categoriaInput = args[0];
           const palavraInput = args.slice(1).join(' ');
 
-          // Normalizar input
           const categoriaInputNorm = normalizar(categoriaInput.toLowerCase()).trim();
 
-          // Encontrar categoria (case insensitive, com busca parcial)
           let categoria = null;
 
-          // Primeiro tenta correspondência exata
           categoria = game.categorias.find(cat =>
             normalizar(cat.toLowerCase()) === categoriaInputNorm
           );
 
-          // Se não encontrou, tenta correspondência parcial (includes)
           if (!categoria) {
             const matches = game.categorias.map(cat => {
               const catNorm = normalizar(cat.toLowerCase());
@@ -14038,13 +13423,13 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             }).filter(score => score.exact || score.startsWith || score.includes);
 
             if (matches.length > 0) {
-              // Prioriza: exata > começa com > inclui, depois pela maior similaridade
+
               matches.sort((a, b) => {
                 if (a.exact && !b.exact) return -1;
                 if (!a.exact && b.exact) return 1;
                 if (a.startsWith && !b.startsWith) return -1;
                 if (!a.startsWith && b.startsWith) return 1;
-                // Se ambas incluem, escolhe a mais longa (mais específica)
+
                 return b.length - a.length;
               });
 
@@ -14056,7 +13441,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(`❌ Categoria inválida!\n\n📋 Categorias disponíveis:\n${game.categorias.map((c, i) => `${i + 1}. ${c}`).join('\n')}`);
           }
 
-          // Verificar se palavra começa com a letra
           const palavraNorm = normalizar(palavraInput.toLowerCase());
           const letraNorm = normalizar(game.letra.toLowerCase());
 
@@ -14064,17 +13448,14 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(`❌ A palavra "${palavraInput}" não começa com a letra "${game.letra}"!`);
           }
 
-          // Inicializar respostas do jogador se necessário
           if (!game.respostas[sender]) {
             game.respostas[sender] = {};
           }
 
-          // Verificar se já respondeu esta categoria
           if (game.respostas[sender][categoria]) {
             return reply(`⚠️ Você já respondeu a categoria "${categoria}"!\n\n📝 Sua resposta: ${game.respostas[sender][categoria]}`);
           }
 
-          // Verificar se outro jogador já usou esta palavra
           const palavraJaUsada = Object.values(game.respostas).some(resp =>
             Object.values(resp).some(pal => normalizar(pal.toLowerCase()) === palavraNorm)
           );
@@ -14083,10 +13464,8 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(`⚠️ Outro jogador já usou a palavra "${palavraInput}"!`);
           }
 
-          // Adicionar resposta
           game.respostas[sender][categoria] = palavraInput;
 
-          // Verificar se completou todas as categorias
           const categoriasCompletas = Object.keys(game.respostas[sender]).length;
           const totalCategorias = game.categorias.length;
 
@@ -14107,7 +13486,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(vitoria, { mentions: [sender] });
           }
 
-          // Mostrar progresso
           let progresso = `✅ *Resposta aceita!*\n\n`;
           progresso += `📋 ${categoria}: ${palavraInput}\n\n`;
           progresso += `📊 *Seu progresso:* ${categoriasCompletas}/${totalCategorias}\n\n`;
@@ -14121,7 +13499,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(progresso);
         }
 
-        // Mostrar status do jogo
         let status = `🛑 *STOP/ADEDONHA*\n\n`;
         status += `🔤 *Letra:* ${game.letra}\n\n`;
         status += `📋 *Categorias:*\n`;
@@ -14138,11 +13515,8 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         return reply(status);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🔀 ANAGRAMA - Descubra a palavra embaralhada
-      // ═══════════════════════════════════════════════════════════════
       case 'anagrama': {
-        // Carregar palavras do JSON
+
         const anagramaPath = pathz.join(__dirname, 'funcs', 'json', 'anagrama.json');
         let palavrasAnagrama = [];
         try {
@@ -14155,11 +13529,9 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           ];
         }
 
-        // Estado dos jogos
         if (!global.anagramaGames) global.anagramaGames = {};
         const gameKey = isGroup ? from : sender;
 
-        // Função para embaralhar palavra
         const embaralhar = (palavra) => {
           const letras = palavra.split('');
           for (let i = letras.length - 1; i > 0; i--) {
@@ -14169,7 +13541,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return letras.join('');
         };
 
-        // Verificar resposta
         if (global.anagramaGames[gameKey] && args.length > 0) {
           const game = global.anagramaGames[gameKey];
           const resposta = normalizar(args.join(' ').toLowerCase());
@@ -14190,13 +13561,11 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           }
         }
 
-        // Verificar se há jogo ativo
         if (global.anagramaGames[gameKey]) {
           const game = global.anagramaGames[gameKey];
           return reply(`🔀 *ANAGRAMA*\n\n📝 Anagrama: *${game.embaralhada.toUpperCase()}*\n💡 Dica: ${game.dica}\n📊 Tentativas: ${game.tentativas}/5\n\n💡 Descubra a palavra: ${prefix}anagrama [palavra]`);
         }
 
-        // Iniciar novo jogo
         const palavraEscolhida = palavrasAnagrama[Math.floor(Math.random() * palavrasAnagrama.length)];
         const palavraEmbaralhada = embaralhar(palavraEscolhida.palavra);
 
@@ -14212,14 +13581,10 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // ⚔️ DUELO DE QUIZ - Competição de perguntas
-      // ═══════════════════════════════════════════════════════════════
       case 'dueloquiz':
       case 'duelo': {
         if (!isGroup) return reply('⚔️ Este jogo só funciona em grupos!');
 
-        // Carregar perguntas do JSON
         const quizPath = pathz.join(__dirname, 'funcs', 'json', 'quiz.json');
         let quizDB = {};
         try {
@@ -14229,25 +13594,21 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           quizDB = { 'geral': [{ p: 'Qual é o maior planeta?', r: ['jupiter'], d: 'Júpiter' }] };
         }
 
-        // Estado dos duelos
         if (!global.dueloQuizGames) global.dueloQuizGames = {};
         if (!global.dueloQuizChallenges) global.dueloQuizChallenges = {};
 
         const gameKey = isGroup ? from : sender;
 
-        // Desafiar alguém
         if (menc_os2 && menc_os2 !== sender) {
-          // Limpar desafios expirados (60 segundos)
+
           if (global.dueloQuizChallenges[gameKey] && Date.now() - global.dueloQuizChallenges[gameKey].created > 60000) {
             delete global.dueloQuizChallenges[gameKey];
           }
 
-          // Limpar jogos abandonados (5 minutos sem atividade)
           if (global.dueloQuizGames[gameKey] && Date.now() - global.dueloQuizGames[gameKey].iniciado > 300000) {
             delete global.dueloQuizGames[gameKey];
           }
 
-          // Verificar quantidade de perguntas
           const numPerguntas = parseInt(args.find(arg => !isNaN(parseInt(arg)))) || 5;
 
           if (numPerguntas < 3 || numPerguntas > 20) {
@@ -14269,7 +13630,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`⚔️ *DESAFIO DE QUIZ*\n\n@${sender.split('@')[0]} desafiou @${menc_os2.split('@')[0]} para um duelo de ${numPerguntas} perguntas!\n\n💡 O desafiado deve usar: ${prefix}dueloquiz aceitar\n⏱️ O desafio expira em 60 segundos.`, { mentions: [sender, menc_os2] });
         }
 
-        // Aceitar desafio
         if (args[0]?.toLowerCase() === 'aceitar') {
           const challenge = global.dueloQuizChallenges[gameKey];
 
@@ -14282,13 +13642,11 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply('⏰ O desafio expirou!');
           }
 
-          // Selecionar perguntas aleatórias de categorias diferentes
           const categoriasDisponiveis = Object.keys(quizDB);
           const perguntasSelecionadas = [];
           const categoriasUsadas = new Set();
           const perguntasUsadas = new Set();
 
-          // Coletar todas as perguntas disponíveis
           const todasPerguntas = [];
           categoriasDisponiveis.forEach(cat => {
             quizDB[cat].forEach((pergunta, idx) => {
@@ -14300,7 +13658,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             });
           });
 
-          // Selecionar perguntas aleatórias sem repetir
           while (perguntasSelecionadas.length < challenge.numPerguntas && todasPerguntas.length > 0) {
             const idx = Math.floor(Math.random() * todasPerguntas.length);
             const pergunta = todasPerguntas.splice(idx, 1)[0];
@@ -14323,7 +13680,7 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             perguntaAtual: 0,
             respostas1: [],
             respostas2: [],
-            turno: challenge.challenger, // Jogador 1 começa
+            turno: challenge.challenger,
             status: 'active',
             iniciado: Date.now()
           };
@@ -14334,7 +13691,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`⚔️ *DUELO DE QUIZ INICIADO!*\n\n@${challenge.challenger.split('@')[0]} vs @${challenge.challenged.split('@')[0]}\n\n📊 ${challenge.numPerguntas} perguntas\n\n🎯 *Pergunta 1/${challenge.numPerguntas}*\n📂 Categoria: ${primeiraPergunta.categoria}\n\n❓ ${primeiraPergunta.pergunta.p}\n\n💡 É a vez de @${challenge.challenger.split('@')[0]} responder!\nUse: ${prefix}dueloquiz [resposta]`, { mentions: [challenge.challenger, challenge.challenged] });
         }
 
-        // Processar resposta
         if (global.dueloQuizGames[gameKey] && args.length > 0 && args[0].toLowerCase() !== 'aceitar') {
           const game = global.dueloQuizGames[gameKey];
 
@@ -14342,7 +13698,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply('❌ Este duelo já terminou!');
           }
 
-          // Verificar se é a vez do jogador
           if (game.turno !== sender) {
             return reply('⏳ Não é sua vez! Aguarde o oponente.');
           }
@@ -14353,20 +13708,16 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             normalizar(r) === resposta || resposta.includes(normalizar(r))
           );
 
-          // Registrar resposta
           if (sender === game.jogador1) {
             game.respostas1.push({ acertou, tempo: Date.now() - game.iniciado });
           } else {
             game.respostas2.push({ acertou, tempo: Date.now() - game.iniciado });
           }
 
-          // Avançar pergunta
           game.perguntaAtual++;
 
-          // Trocar turno
           game.turno = sender === game.jogador1 ? game.jogador2 : game.jogador1;
 
-          // Verificar se terminou
           if (game.perguntaAtual >= game.perguntas.length) {
             game.status = 'finished';
 
@@ -14390,7 +13741,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(resultado, { mentions: [game.jogador1, game.jogador2] });
           }
 
-          // Mostrar resultado e próxima pergunta
           const proximaPergunta = game.perguntas[game.perguntaAtual];
           let respostaMsg = acertou ? `✅ *CORRETO!*` : `❌ *ERRADO!*\n✅ Resposta: ${perguntaAtual.pergunta.d}`;
           respostaMsg += `\n\n🎯 *Pergunta ${game.perguntaAtual + 1}/${game.perguntas.length}*\n`;
@@ -14402,7 +13752,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(respostaMsg, { mentions: [game.jogador1, game.jogador2] });
         }
 
-        // Ver status do duelo
         if (global.dueloQuizGames[gameKey]) {
           const game = global.dueloQuizGames[gameKey];
           const perguntaAtual = game.perguntas[game.perguntaAtual];
@@ -14418,17 +13767,13 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(status, { mentions: [game.jogador1, game.jogador2] });
         }
 
-        // Mostrar ajuda
         return reply(`⚔️ *DUELO DE QUIZ*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}dueloquiz @usuario [número]\n\n2️⃣ O desafiado aceita:\n${prefix}dueloquiz aceitar\n\n3️⃣ Respondam as perguntas alternadamente!\n\n🏆 Quem acertar mais perguntas vence!\n\n📌 Exemplo: ${prefix}dueloquiz @usuario 10`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🔍 CAÇA PALAVRAS - Encontre palavras escondidas
-      // ═══════════════════════════════════════════════════════════════
       case 'cacapalavras':
       case 'cacapalavra':
       case 'caca': {
-        // Carregar configuração e palavras do JSON
+
         const cacaPath = pathz.join(__dirname, 'funcs', 'json', 'cacapalavras.json');
         let configCaca = {
           tamanho: 15,
@@ -14448,16 +13793,13 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           console.error('Erro ao carregar cacapalavras.json:', e);
         }
 
-        // Estado dos jogos
         if (!global.cacaPalavrasGames) global.cacaPalavrasGames = {};
         const gameKey = isGroup ? from : sender;
 
-        // Função para gerar grade de caça palavras
         const gerarGrade = (palavras, tamanho) => {
           const grade = Array(tamanho).fill(null).map(() => Array(tamanho).fill(''));
           const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-          // Posicionar palavras
           const palavrasPosicionadas = [];
 
           for (const palavra of palavras) {
@@ -14466,25 +13808,24 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
 
             while (!posicionado && tentativas < 50) {
               tentativas++;
-              const direcao = Math.floor(Math.random() * 8); // 0-7: horizontal, vertical, diagonais
+              const direcao = Math.floor(Math.random() * 8);
               const linha = Math.floor(Math.random() * tamanho);
               const coluna = Math.floor(Math.random() * tamanho);
 
-              // Verificar se cabe
               let cabe = true;
               const posicoes = [];
 
               for (let i = 0; i < palavra.length; i++) {
                 let l, c;
                 switch (direcao) {
-                  case 0: l = linha; c = coluna + i; break; // Horizontal →
-                  case 1: l = linha; c = coluna - i; break; // Horizontal ←
-                  case 2: l = linha + i; c = coluna; break; // Vertical ↓
-                  case 3: l = linha - i; c = coluna; break; // Vertical ↑
-                  case 4: l = linha + i; c = coluna + i; break; // Diagonal ↘
-                  case 5: l = linha + i; c = coluna - i; break; // Diagonal ↙
-                  case 6: l = linha - i; c = coluna + i; break; // Diagonal ↗
-                  case 7: l = linha - i; c = coluna - i; break; // Diagonal ↖
+                  case 0: l = linha; c = coluna + i; break;
+                  case 1: l = linha; c = coluna - i; break;
+                  case 2: l = linha + i; c = coluna; break;
+                  case 3: l = linha - i; c = coluna; break;
+                  case 4: l = linha + i; c = coluna + i; break;
+                  case 5: l = linha + i; c = coluna - i; break;
+                  case 6: l = linha - i; c = coluna + i; break;
+                  case 7: l = linha - i; c = coluna - i; break;
                 }
 
                 if (l < 0 || l >= tamanho || c < 0 || c >= tamanho ||
@@ -14508,7 +13849,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             }
           }
 
-          // Preencher espaços vazios com letras aleatórias
           for (let i = 0; i < tamanho; i++) {
             for (let j = 0; j < tamanho; j++) {
               if (grade[i][j] === '') {
@@ -14520,7 +13860,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return { grade, palavrasPosicionadas };
         };
 
-        // Função para formatar grade
         const formatarGrade = (grade) => {
           let resultado = '   ';
           for (let i = 0; i < grade.length; i++) {
@@ -14538,12 +13877,10 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return resultado;
         };
 
-        // Verificar resposta
         if (global.cacaPalavrasGames[gameKey] && args.length > 0) {
           const game = global.cacaPalavrasGames[gameKey];
           const palavraChutada = normalizar(args.join(' ').toUpperCase());
 
-          // Verificar se a palavra está na lista
           const palavraEncontrada = game.palavras.find(p =>
             normalizar(p) === palavraChutada
           );
@@ -14552,15 +13889,12 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             return reply(`❌ "${args.join(' ')}" não está na lista de palavras!\n\n📋 Palavras encontradas: ${game.palavrasEncontradas.length}/${game.palavras.length}\n💡 Tente novamente: ${prefix}cacapalavras [palavra]`);
           }
 
-          // Verificar se já encontrou
           if (game.palavrasEncontradas.includes(palavraEncontrada)) {
             return reply(`⚠️ Você já encontrou a palavra "${palavraEncontrada}"!\n\n📋 Palavras encontradas: ${game.palavrasEncontradas.length}/${game.palavras.length}`);
           }
 
-          // Adicionar à lista de encontradas
           game.palavrasEncontradas.push(palavraEncontrada);
 
-          // Verificar vitória
           if (game.palavrasEncontradas.length === game.palavras.length) {
             const tempoDecorrido = ((Date.now() - game.iniciado) / 1000).toFixed(1);
             delete global.cacaPalavrasGames[gameKey];
@@ -14570,7 +13904,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`✅ *PALAVRA ENCONTRADA!*\n\n📝 "${palavraEncontrada}"\n\n📋 Progresso: ${game.palavrasEncontradas.length}/${game.palavras.length}\n💡 Continue procurando: ${prefix}cacapalavras [palavra]`);
         }
 
-        // Verificar se há jogo ativo
         if (global.cacaPalavrasGames[gameKey]) {
           const game = global.cacaPalavrasGames[gameKey];
           const restantes = game.palavras.length - game.palavrasEncontradas.length;
@@ -14588,11 +13921,9 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(status);
         }
 
-        // Escolher dificuldade
         const dificuldade = args[0]?.toLowerCase() || 'medio';
         const configDificuldade = configCaca.dificuldades[dificuldade] || configCaca.dificuldades.medio;
 
-        // Filtrar palavras por tamanho
         const palavrasFiltradas = palavrasCaca.filter(p =>
           p.length >= configDificuldade.tamanhoMin &&
           p.length <= configDificuldade.tamanhoMax
@@ -14602,7 +13933,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`❌ Não há palavras suficientes para a dificuldade "${dificuldade}"!`);
         }
 
-        // Selecionar palavras aleatórias
         const palavrasSelecionadas = [];
         const palavrasDisponiveis = [...palavrasFiltradas];
         for (let i = 0; i < configDificuldade.palavras; i++) {
@@ -14610,7 +13940,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           palavrasSelecionadas.push(palavrasDisponiveis.splice(idx, 1)[0]);
         }
 
-        // Gerar grade
         const { grade, palavrasPosicionadas } = gerarGrade(palavrasSelecionadas, configCaca.tamanho);
 
         global.cacaPalavrasGames[gameKey] = {
@@ -14633,9 +13962,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🔒 VERIFICADOR DE URL - FishFish API
-      // ═══════════════════════════════════════════════════════════════
       case 'verificarurl':
       case 'checkurl':
       case 'urlsafe':
@@ -14644,25 +13970,23 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`🔒 *Verificador de Links*\n\n💡 *Como usar:*\n• ${prefix}verificarurl <link>\n\n✨ Verifica se um link é seguro ou malicioso usando a API FishFish.\n\n📌 *Exemplo:*\n${prefix}verificarurl exemplo.com`);
         }
 
-        // Limpar a URL
         let urlToCheck = q.trim().toLowerCase();
         urlToCheck = urlToCheck.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-        // Extrair domínio
         const domainMatch = urlToCheck.match(/^([^\/]+)/);
         const domain = domainMatch ? domainMatch[1] : urlToCheck;
 
         await reply('🔍 Verificando segurança do link... Aguarde!');
 
         try {
-          // Verificar domínio na API FishFish
+
           const response = await axios.get(`https://api.fishfish.gg/v1/domains/${encodeURIComponent(domain)}`, {
             timeout: 120000,
             validateStatus: (status) => status < 500
           });
 
           if (response.status === 404) {
-            // Domínio não encontrado na base de dados maliciosos = provavelmente seguro
+
             await reply(`✅ *Link Verificado*\n\n🔗 *Domínio:* ${domain}\n\n🟢 *Status:* Não encontrado em listas de ameaças\n\n⚠️ *Nota:* Isso não garante 100% de segurança, apenas que o link não está em bases de dados conhecidas de malware/phishing.`);
           } else if (response.data) {
             const data = response.data;
@@ -14695,9 +14019,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🌤️ CLIMA - Previsão do Tempo
-      // ═══════════════════════════════════════════════════════════════
       case 'clima':
       case 'tempo':
       case 'weather':
@@ -14709,7 +14030,7 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         await reply('🌤️ Consultando previsão do tempo... ⏳');
 
         try {
-          // Usar wttr.in que é gratuito e não precisa de API key
+
           const cidade = encodeURIComponent(q);
           const response = await axios.get(`https://wttr.in/${cidade}?format=j1&lang=pt`, {
             timeout: 120000,
@@ -14734,7 +14055,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           const region = location.region[0].value;
           const country = location.country[0].value;
 
-          // Emoji baseado na condição
           let weatherEmoji = '☀️';
           const desc = descPt.toLowerCase();
           if (desc.includes('chuva') || desc.includes('rain')) weatherEmoji = '🌧️';
@@ -14745,7 +14065,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           else if (desc.includes('parcialmente')) weatherEmoji = '⛅';
           else if (desc.includes('sol') || desc.includes('clear')) weatherEmoji = '☀️';
 
-          // Previsão dos próximos dias
           let forecast = '';
           if (data.weather && data.weather.length > 0) {
             forecast = '\n\n📅 *Próximos dias:*\n';
@@ -14765,9 +14084,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🕐 CONVERSOR DE FUSO HORÁRIO
-      // ═══════════════════════════════════════════════════════════════
       case 'hora':
       case 'fuso':
       case 'horario':
@@ -14837,7 +14153,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           const hora = agora.toLocaleString('pt-BR', { timeZone: timezone, hour: '2-digit', minute: '2-digit', second: '2-digit' });
           const data = agora.toLocaleDateString('pt-BR', { timeZone: timezone, weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
-          // Calcular diferença com Brasil
           const brTime = new Date(agora.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
           const localTime = new Date(agora.toLocaleString('en-US', { timeZone: timezone }));
           const diffHours = Math.round((localTime - brTime) / (1000 * 60 * 60));
@@ -14851,9 +14166,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         break;
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🎂 SISTEMA DE ANIVERSÁRIOS
-      // ═══════════════════════════════════════════════════════════════
       case 'aniversario':
       case 'niver':
       case 'birthday': {
@@ -14861,7 +14173,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply('⚠️ Este comando só funciona em grupos!');
         }
 
-        // Carregar dados de aniversários do grupo
         const aniversariosPath = pathz.join(GRUPOS_DIR, `${from}_aniversarios.json`);
         let aniversarios = {};
         try {
@@ -14874,7 +14185,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
 
         const subCmd = args[0]?.toLowerCase();
 
-        // Definir aniversário
         if (subCmd === 'definir' || subCmd === 'set') {
           const data = args[1];
           if (!data || !/^\d{1,2}\/\d{1,2}$/.test(data)) {
@@ -14892,7 +14202,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(`🎂 Aniversário definido!\n\n📅 *Data:* ${dia.toString().padStart(2, '0')}/${mes.toString().padStart(2, '0')}\n👤 *Nome:* ${pushname}`);
         }
 
-        // Listar aniversariantes do mês
         if (subCmd === 'mes' || subCmd === 'month') {
           const mesAtual = new Date().getMonth() + 1;
           const aniversariantes = Object.entries(aniversarios)
@@ -14911,7 +14220,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           return reply(lista);
         }
 
-        // Listar próximos aniversários
         if (subCmd === 'proximos' || subCmd === 'next' || !subCmd) {
           const hoje = new Date();
           const diaAtual = hoje.getDate();
@@ -14949,9 +14257,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
         return reply(`🎂 *Sistema de Aniversários*\n\n💡 *Comandos:*\n• ${prefix}aniversario - Ver próximos\n• ${prefix}aniversario definir DD/MM\n• ${prefix}aniversario mes\n• ${prefix}aniversario proximos`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // 📊 ESTATÍSTICAS DO GRUPO
-      // ═══════════════════════════════════════════════════════════════
       case 'groupstats':
       case 'estatisticas':
       case 'statsgrupo': {
@@ -14967,12 +14272,10 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
           const admins = participants.filter(p => p.admin).length;
           const members = participants.length;
 
-          // Buscar dados do grupo
           const groupCreation = groupMeta.creation ? new Date(groupMeta.creation * 1000).toLocaleDateString('pt-BR') : 'Desconhecido';
           const groupName = groupMeta.subject || 'Grupo';
           const groupDesc = groupMeta.desc || 'Sem descrição';
 
-          // Estatísticas de atividade do grupo (se disponível)
           let activityStats = '';
           if (groupData.activity) {
             const totalMsgs = groupData.activity.totalMessages || 0;
@@ -14981,7 +14284,6 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
             activityStats = `\n\n📈 *Atividade:*\n• Total de mensagens: ${totalMsgs.toLocaleString()}\n• Mensagens hoje: ${todayMsgs}`;
           }
 
-          // Recursos ativos
           let recursos = [];
           if (groupData.modorpg) recursos.push('⚔️ Modo RPG');
           if (groupData.welcome) recursos.push('👋 Boas-vindas');
@@ -15005,7 +14307,7 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
       case 'chatgpt':
       case 'cog':
         if (!q) return reply(`📢 Ei, falta a pergunta! Me diga o que quer saber após o comando ${prefix}ia! 😴`);
-        
+
         ia.makeCognimaRequest('gpt', q, null, null).then((response) => {
           reply(formatAIResponse(response.data.choices[0].message.content));
         }).catch((e) => {
@@ -15017,7 +14319,7 @@ await reply('🤖 *Sistema de IA temporariamente indisponível*\n\nO administrad
       case 'translator':
         if (!q) return reply(`🌍 Quer traduzir algo? Me diga o idioma e o texto assim: ${prefix}${command} idioma | texto
 Exemplo: ${prefix}tradutor inglês | Bom dia! 😊`);
-        
+
         {
           const partes = q.split('|');
           if (partes.length < 2) {
@@ -15136,7 +14438,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       case 'dicionario':
       case 'dictionary':
         if (!q) return reply(`📔 Qual palavra você quer procurar no dicionário? Me diga após o comando ${prefix}${command}! 😊`);
-        
+
         reply("📔 Procurando no dicionário... Aguarde um pouquinho! ⏳").then(() => {
           const palavra = q.trim().toLowerCase();
           axios.get(`https://dicio-api-ten.vercel.app/v2/${encodeURIComponent(palavra)}`).then((resp) => {
@@ -15201,10 +14503,9 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           let targetUserId;
 
           if (menc_jid2 && menc_jid2.length > 0) {
-            // Pegar o LID do usuário mencionado
+
             targetUserId = menc_jid2[0];
 
-            // Tentar obter o LID real do participante
             if (isGroup && groupMetadata?.participants) {
               const participant = groupMetadata.participants.find(p =>
                 p.id === targetUserId || p.lid === targetUserId
@@ -15213,7 +14514,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 targetUserId = participant.lid;
               }
             } else {
-              // Se não for grupo, usar onWhatsApp para pegar LID
+
               try {
                 const [result] = await nazu.onWhatsApp(targetUserId.replace(/@s\.whatsapp\.net|@lid/g, ''));
                 if (result && result.lid) {
@@ -15230,7 +14531,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             if (cleanNumber.length >= 10) {
               targetUserId = `${cleanNumber}@s.whatsapp.net`;
 
-              // Tentar buscar LID
               if (isGroup && groupMetadata?.participants) {
                 const participant = groupMetadata.participants.find(p =>
                   p.id === targetUserId
@@ -15239,7 +14539,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                   targetUserId = participant.lid;
                 }
               } else {
-                // Se não for grupo, usar onWhatsApp para pegar LID
+
                 try {
                   const [result] = await nazu.onWhatsApp(cleanNumber);
                   if (result && result.lid) {
@@ -15275,7 +14575,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           if (menc_jid2 && menc_jid2.length > 0) {
             targetUserId = menc_jid2[0];
 
-            // Tentar obter o LID real
             if (isGroup && groupMetadata?.participants) {
               const participant = groupMetadata.participants.find(p =>
                 p.id === targetUserId || p.lid === targetUserId
@@ -15284,7 +14583,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 targetUserId = participant.lid;
               }
             } else {
-              // Se não for grupo, usar onWhatsApp para pegar LID
+
               try {
                 const [result] = await nazu.onWhatsApp(targetUserId.replace(/@s\.whatsapp\.net|@lid/g, ''));
                 if (result && result.lid) {
@@ -15301,7 +14600,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             if (cleanNumber.length >= 10) {
               targetUserId = `${cleanNumber}@s.whatsapp.net`;
 
-              // Tentar buscar LID
               if (isGroup && groupMetadata?.participants) {
                 const participant = groupMetadata.participants.find(p =>
                   p.id === targetUserId
@@ -15310,7 +14608,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                   targetUserId = participant.lid;
                 }
               } else {
-                // Se não for grupo, usar onWhatsApp para pegar LID
+
                 try {
                   const [result] = await nazu.onWhatsApp(cleanNumber);
                   if (result && result.lid) {
@@ -15389,7 +14687,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply('⏳ Verificando número e registrando sub-bot... Aguarde...');
 
-          // Verifica se o número existe no WhatsApp e pega o LID
           try {
             const [result] = await nazu.onWhatsApp(phoneNumber);
 
@@ -15399,7 +14696,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
             const subBotLid = result.lid;
 
-            // Normalize owner to LID if possible before passing to subBotManager
             const ownerCandidate = buildUserId(numerodono, config);
             const ownerLid = await getLidFromJidCached(nazu, ownerCandidate);
 
@@ -15441,7 +14737,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply(msg);
           }
 
-          // Tenta remover por índice primeiro
           const listResult = subBotManager.listSubBots();
           if (listResult.success && listResult.subbots.length > 0) {
             const index = parseInt(q) - 1;
@@ -15453,7 +14748,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             }
           }
 
-          // Se não for índice, tenta pelo ID direto
           await reply('⏳ Removendo sub-bot... Aguarde...');
           const result = await subBotManager.removeSubBot(q.trim());
           await reply(result.message);
@@ -15535,14 +14829,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         try {
           const subBotManager = await import('./utils/subBotManager.js');
 
-          // Verifica se o usuário é um sub-bot cadastrado
           const result = await subBotManager.generatePairingCodeForSubBot(sender);
 
           if (!result.success) {
             return reply(result.message);
           }
 
-          // Envia o código no privado do sub-bot
           await reply(result.message);
 
         } catch (error) {
@@ -15646,12 +14938,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         try {
           const updateScriptPath = pathz.join(__dirname, '.scripts', 'update.js');
 
-          // Verifica se o script de atualização existe
           if (!fs.existsSync(updateScriptPath)) {
             return reply("❌ Script de atualização não encontrado!\n\n📂 Caminho esperado: dados/src/.scripts/update.js");
           }
 
-          // Se não passou o parâmetro "sim", mostra o aviso
           if (!q || q.toLowerCase() !== 'sim') {
             const avisoMsg = `⚠️ *ATENÇÃO - ATUALIZAÇÃO DO BOT* ⚠️
 
@@ -15659,10 +14949,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 ┃ 📢 *AVISOS IMPORTANTES:*
 ┣━━━━━━━━━━━━━━━━━━━━━
 ┃
-┃ ⚠️ Edições manuais no código 
+┃ ⚠️ Edições manuais no código
 ┃    serão *PERDIDAS*
 ┃
-┃ ✅ Banco de dados será 
+┃ ✅ Banco de dados será
 ┃    *PRESERVADO*
 ┃
 ┃ ✅ Configurações (config.json)
@@ -15688,17 +14978,14 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply(avisoMsg);
           }
 
-          // Confirmação recebida, iniciar atualização
           await reply("🚀 *INICIANDO ATUALIZAÇÃO...*\n\n⏸️ Pausando processamento de mensagens...");
 
-          // Pausa o processamento de mensagens
           const messageQueueModule = await import('./connect.js');
           if (messageQueueModule.messageQueue && typeof messageQueueModule.messageQueue.pause === 'function') {
             messageQueueModule.messageQueue.pause();
             await reply("✅ Processamento pausado com sucesso!\n\n🔄 Iniciando script de atualização...");
           }
 
-          // Cria o processo de atualização
           const updateProcess = spawn('node', [updateScriptPath], {
             cwd: pathz.join(__dirname, '..', '..'),
             stdio: ['ignore', 'pipe', 'pipe'],
@@ -15706,11 +14993,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           });
 
           let outputBuffer = '';
-          const messagesSent = new Set(); // Rastreia mensagens já enviadas para evitar duplicatas
-          const messageQueue = []; // Fila de mensagens pendentes
+          const messagesSent = new Set();
+          const messageQueue = [];
           let isProcessingQueue = false;
 
-          // Mapeamento de triggers para mensagens
           const updateMessages = {
             'Verificando requisitos': '🔍 Verificando requisitos do sistema...',
             'Criando backup': '📁 Criando backup dos arquivos importantes...',
@@ -15724,7 +15010,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             'Dependências instaladas': '✅ Dependências instaladas com sucesso!'
           };
 
-          // Processa a fila de mensagens sequencialmente
           const processMessageQueue = async () => {
             if (isProcessingQueue || messageQueue.length === 0) return;
 
@@ -15733,7 +15018,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               const message = messageQueue.shift();
               try {
                 await reply(message);
-                await new Promise(resolve => setTimeout(resolve, 1500)); // Delay entre mensagens
+                await new Promise(resolve => setTimeout(resolve, 1500));
               } catch (e) {
                 console.error('Erro ao enviar update:', e);
               }
@@ -15741,7 +15026,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             isProcessingQueue = false;
           };
 
-          // Adiciona mensagem à fila se não foi enviada ainda
           const queueUpdate = (trigger, message) => {
             if (!messagesSent.has(trigger)) {
               messagesSent.add(trigger);
@@ -15750,13 +15034,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             }
           };
 
-          // Captura stdout
           updateProcess.stdout.on('data', async (data) => {
             const output = data.toString();
             console.log('UPDATE:', output);
             outputBuffer += output;
 
-            // Verifica cada trigger e enfileira a mensagem correspondente
             for (const [trigger, message] of Object.entries(updateMessages)) {
               if (output.includes(trigger)) {
                 queueUpdate(trigger, message);
@@ -15764,13 +15046,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             }
           });
 
-          // Captura stderr
           updateProcess.stderr.on('data', (data) => {
             const error = data.toString();
             console.error('UPDATE ERROR:', error);
           });
 
-          // Quando o processo terminar
           updateProcess.on('close', async (code) => {
             if (code === 0) {
               await reply(`✅ *ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!*
@@ -15779,14 +15059,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
 🔄 Reiniciando automaticamente em 3 segundos...`);
 
-              // Aguarda 3 segundos antes de reiniciar
               setTimeout(async () => {
                 await reply('🔄 Reiniciando agora...');
 
-                // Aguarda mais 1 segundo para garantir que a mensagem foi enviada
                 setTimeout(() => {
                   console.log('[UPDATE] Reiniciando após atualização...');
-                  process.exit(0); // Exit code 0 indica sucesso, o gerenciador de processos deve reiniciar
+                  process.exit(0);
                 }, 1000);
               }, 3000);
             } else {
@@ -15807,14 +15085,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
 📂 Backup foi preservado para segurança.`);
 
-              // Retoma o processamento de mensagens
               if (messageQueueModule.messageQueue && typeof messageQueueModule.messageQueue.resume === 'function') {
                 messageQueueModule.messageQueue.resume();
               }
             }
           });
 
-          // Timeout de segurança (15 minutos)
           setTimeout(async () => {
             if (!updateProcess.killed) {
               updateProcess.kill();
@@ -15824,13 +15100,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 messageQueueModule.messageQueue.resume();
               }
             }
-          }, 15 * 60 * 1000); // 15 minutos
+          }, 15 * 60 * 1000);
 
         } catch (e) {
           console.error("Erro no comando atualizar:", e);
           await reply(`❌ Erro ao executar atualização: ${e.message}\n\n🔄 Retomando processamento de mensagens...`);
 
-          // Garante retomar o processamento em caso de erro
           try {
             const messageQueueModule = await import('./connect.js');
             if (messageQueueModule.messageQueue && typeof messageQueueModule.messageQueue.resume === 'function') {
@@ -15851,17 +15126,16 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
 ⏸️ Pausando processamento de mensagens...
 🔄 O bot voltará online em alguns segundos!`).then(() => {
-          // Pausa o processamento de mensagens
+
           return import('./connect.js');
         }).then((messageQueueModule) => {
           if (messageQueueModule.messageQueue && typeof messageQueueModule.messageQueue.pause === 'function') {
             messageQueueModule.messageQueue.pause();
           }
 
-          // Aguarda 2 segundos para garantir que a mensagem foi enviada
           setTimeout(() => {
             console.log('[RESTART] Reiniciando bot via comando...');
-            process.exit(0); // Exit code 0 indica reinício intencional
+            process.exit(0);
           }, 2000);
         }).catch((e) => {
           console.error("Erro no comando reiniciar:", e);
@@ -15916,7 +15190,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             }
             if (index === 1) {
 
-
               message += '📪 Nenhum grupo encontrado com esse filtro.';
             }
           }
@@ -15931,7 +15204,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         if (!isGroupAdmin) return reply("Apenas administradores podem usar este comando.");
         groupData.levelingEnabled = !groupData.levelingEnabled;
         writeJsonFile(groupFile, groupData);
-        // Otimização: Invalida cache quando groupData é salvo
+
         if (isGroup) {
           optimizer.invalidateGroup(from);
         }
@@ -16167,7 +15440,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         try {
           let targetGroupId = q?.trim() || '';
 
-          // Se não passou ID e está no grupo, usa o grupo atual
           if (!targetGroupId && isGroup) {
             targetGroupId = from;
           } else if (!targetGroupId) {
@@ -16178,7 +15450,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply(`💡 *Uso:* ${prefix}removeraluguel [id_do_grupo]\n\n📝 Use dentro de um grupo ou informe o ID.`);
           }
 
-          // Normaliza o ID do grupo
           if (!targetGroupId.includes('@g.us')) {
             targetGroupId += '@g.us';
           }
@@ -16189,7 +15460,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply(`❌ Este grupo não possui aluguel ativo.\n\n💡 Use ${prefix}listaraluguel para ver os grupos com aluguel.`);
           }
 
-          // Busca informações do grupo antes de remover
           let groupName = targetGroupId;
           try {
             const groupMeta = await getCachedGroupMetadata(targetGroupId);
@@ -16198,7 +15468,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             console.log("Erro ao buscar metadata do grupo:", e.message);
           }
 
-          // Remove o aluguel
           delete rentalData.groups[targetGroupId];
           saveRentalData(rentalData);
 
@@ -16215,7 +15484,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply(message);
 
-          // Tenta notificar o grupo
           try {
             await nazu.sendMessage(targetGroupId, {
               text: `⚠️ *AVISO IMPORTANTE*\n\nO aluguel deste grupo foi removido pelo proprietário do bot.\n\n❌ O bot não funcionará mais neste grupo.\n\nPara mais informações, entre em contato com o dono.`
@@ -16238,24 +15506,22 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           let targetGroupId;
           let daysToAdd;
 
-          // Se está no grupo e passou apenas 1 argumento (dias)
           if (isGroup && parts.length === 1) {
             targetGroupId = from;
             daysToAdd = parseInt(parts[0]);
           }
-          // Se passou 2 argumentos (id e dias)
+
           else if (parts.length >= 2) {
             targetGroupId = parts[0];
             daysToAdd = parseInt(parts[1]);
           }
-          // Nenhum argumento válido
+
             return reply(`💡 *Uso:* ${prefix}estenderaluguel <dias> (no grupo)\nou\n${prefix}estenderaluguel <id_do_grupo> <dias>\n\n📝 *Exemplo:*\n${prefix}estenderaluguel 7 (no grupo)\n${prefix}estenderaluguel 5511999999999 7\n\n💡 Use ${prefix}listaraluguel para ver os IDs.`);
 
           if (isNaN(daysToAdd) || daysToAdd <= 0) {
             return reply("❌ O número de dias deve ser um valor positivo!");
           }
 
-          // Normaliza o ID do grupo
           if (!targetGroupId.includes('@g.us')) {
             targetGroupId += '@g.us';
           }
@@ -16266,7 +15532,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply(`❌ ${result.message}`);
           }
 
-          // Busca informações do grupo
           let groupName = targetGroupId;
           try {
             const groupMeta = await getCachedGroupMetadata(targetGroupId);
@@ -16291,7 +15556,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply(message);
 
-          // Notifica o grupo
           try {
             await nazu.sendMessage(targetGroupId, {
               text: `🎉 *BOA NOTÍCIA!*\n\nSeu aluguel foi estendido!\n\n➕ Dias adicionados: *${daysToAdd}*\n📅 Nova data de expiração: *${newExpirationDate}*\n⏳ Dias restantes: *${daysLeft}*\n\n✨ Continue aproveitando o bot!`
@@ -16312,14 +15576,13 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         try {
           let targetGroupId = q.trim();
 
-          // Se não passou ID, usa o grupo atual
           if (!targetGroupId || targetGroupId === '') {
             if (!isGroup) {
               return reply(`💡 *Uso:* ${prefix}infoaluguel <id_do_grupo>\n\n📝 Ou use este comando dentro do grupo para ver o status dele.`);
             }
             targetGroupId = from;
           } else {
-            // Normaliza o ID
+
             if (!targetGroupId.includes('@g.us')) {
               targetGroupId += '@g.us';
             }
@@ -16332,7 +15595,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply(`❌ Este grupo não possui aluguel ativo.\n\n💡 Use ${prefix}addaluguel para adicionar.`);
           }
 
-          // Busca informações do grupo
           let groupName = targetGroupId;
           let memberCount = 0;
           try {
@@ -16371,7 +15633,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             if (!isExpired) {
               message += `⏳ *Tempo restante:* ${daysLeft} dia${daysLeft !== 1 ? 's' : ''}\n\n`;
 
-              // Alerta se está perto de expirar
               if (daysLeft <= 3) {
                 message += `⚠️ *ATENÇÃO:* O aluguel está próximo de expirar!\n\n`;
               }
@@ -16444,14 +15705,14 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const allGroups = await nazu.groupFetchAllParticipating();
           const groupIds = Object.keys(allGroups);
           let txt = `📋 *LISTA DE GRUPOS (${groupIds.length})*\n\n`;
-          
+
           for (const id of groupIds) {
             const metadata = allGroups[id];
             const rental = getGroupRentalStatus(id);
             const status = rental.active || rental.permanent ? '✅' : '❌';
             txt += `${status} *${metadata.subject}*\nID: \`\`\`${id}\`\`\`\n\n`;
           }
-          
+
           await reply(txt);
         } catch (e) {
           console.error("Erro no comando grupos:", e);
@@ -16493,7 +15754,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const currentGroupIds = Object.keys(currentGroups);
           const rentalGroupIds = Object.keys(rentalData.groups || {});
 
-          // Limpa grupos que não existem mais dos registros
           for (const groupId in rentalData.groups) {
             if (!currentGroupIds.includes(groupId)) {
               delete rentalData.groups[groupId];
@@ -16501,7 +15761,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             }
           }
 
-          // Processa grupos com aluguel vencido
           for (const groupId in rentalData.groups) {
             const rentalStatus = getGroupRentalStatus(groupId);
             if (rentalStatus.active || rentalStatus.permanent) continue;
@@ -16537,7 +15796,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
               await nazu.groupLeave(groupId);
 
-              // Deleta o chat do grupo
               try {
                 if (nazu.chatModify) {
                   await nazu.chatModify({ delete: true }, groupId);
@@ -16547,7 +15805,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 console.error(`Erro ao deletar chat ${groupId}:`, e.message);
               }
 
-              // Limpa conversa do grupo
               try {
                 if (nazu.chatModify) {
                   await nazu.chatModify({ clear: 'all' }, groupId);
@@ -16557,14 +15814,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 console.error(`Erro ao limpar conversa ${groupId}:`, e.message);
               }
 
-              // Delay entre grupos
               await new Promise(resolve => setTimeout(resolve, 1000));
             } catch (e) {
               console.error(`Erro ao processar grupo ${groupId}:`, e.message);
             }
           }
 
-          // Processa grupos sem aluguel registrado
           for (const groupId of currentGroupIds) {
             if (!rentalGroupIds.includes(groupId)) {
               groupsWithoutRental++;
@@ -16580,7 +15835,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
                 await nazu.groupLeave(groupId);
 
-                // Deleta o chat do grupo
                 try {
                   if (nazu.chatModify) {
                     await nazu.chatModify({ delete: true }, groupId);
@@ -16590,7 +15844,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                   console.error(`Erro ao deletar chat ${groupId}:`, e.message);
                 }
 
-                // Limpa conversa do grupo
                 try {
                   if (nazu.chatModify) {
                     await nazu.chatModify({ clear: 'all' }, groupId);
@@ -16600,7 +15853,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                   console.error(`Erro ao limpar conversa ${groupId}:`, e.message);
                 }
 
-                // Delay entre grupos
                 await new Promise(resolve => setTimeout(resolve, 1000));
               } catch (e) {
                 console.error(`Erro ao processar grupo sem aluguel ${groupId}:`, e.message);
@@ -16608,10 +15860,9 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             }
           }
 
-          // Limpa todas as conversas de grupo restantes (mantém apenas privadas)
           try {
             if (nazu.chatModify) {
-              // Busca todos os grupos restantes e limpa conversas
+
               const remainingGroups = await nazu.groupFetchAllParticipating();
               for (const groupId of Object.keys(remainingGroups)) {
                 try {
@@ -16685,7 +15936,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const trigger = q.trim();
           let responseData = null;
 
-          // Verificar se é resposta a uma mídia
           if (quotedMessageContent) {
             if (isQuotedImage) {
               const imageBuffer = await getFileBuffer(quotedMessageContent.imageMessage, 'image');
@@ -16767,7 +16017,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const trigger = q.trim();
           let responseData = null;
 
-          // Verificar se é resposta a uma mídia
           if (quotedMessageContent) {
             if (isQuotedImage) {
               const imageBuffer = await getFileBuffer(quotedMessageContent.imageMessage, 'image');
@@ -16826,10 +16075,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             const responseInfo = item.response;
 
             if (typeof responseInfo === 'string') {
-              // Compatibilidade com sistema antigo
+
               responseText += `${index + 1}. 📝 **${trigger}**\n   ↳ ${responseInfo}\n\n`;
             } else {
-              // Sistema novo com mídia
+
               const typeEmoji = {
                 text: '📝',
                 image: '🖼️',
@@ -17016,11 +16265,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const [trigger, ...commandParts] = q.split('/');
           const targetCommand = commandParts.join('/').trim();
           if (!trigger.trim() || !targetCommand) return reply("Formato inválido. Use: mensagem/comando [parâmetros]");
-          // Otimização: Cache de comandos sem prefixo
+
           const noPrefixCommands = await optimizer.memoize(
             `noprefix:${from}`,
             () => Promise.resolve(loadNoPrefixCommands()),
-            10000 // 10 segundos
+            10000
           );
           if (noPrefixCommands.some(cmd => cmd.trigger === trigger.trim())) {
             return reply(`A mensagem "${trigger.trim()}" já está mapeada para um comando.`);
@@ -17035,7 +16284,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             fixedParams: fixedParams || ''
           });
           if (saveNoPrefixCommands(noPrefixCommands)) {
-            // Invalida cache após salvar
+
             optimizer.clearStatic(`noprefix:${from}`);
             await reply(`✅ Comando sem prefixo adicionado!\nMensagem: ${trigger.trim()}\nComando: ${targetCommand}`);
           } else {
@@ -17050,11 +16299,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       case 'listnopref':
         try {
           if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
-          // Otimização: Cache de comandos sem prefixo
+
           const noPrefixCommands = await optimizer.memoize(
             `noprefix:${from}`,
             () => Promise.resolve(loadNoPrefixCommands()),
-            10000 // 10 segundos
+            10000
           );
           if (noPrefixCommands.length === 0) return reply("📜 Nenhum comando sem prefixo definido.");
           let responseText = `📜 *Comandos Sem Prefixo do Grupo ${groupName}*\n\n`;
@@ -17074,16 +16323,16 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
           if (!q || isNaN(parseInt(q))) return reply(`Por favor, forneça o número do comando sem prefixo a ser removido. Ex: ${groupPrefix}delnoprefix 1`);
           const index = parseInt(q) - 1;
-          // Otimização: Cache de comandos sem prefixo
+
           const noPrefixCommands = await optimizer.memoize(
             `noprefix:${from}`,
             () => Promise.resolve(loadNoPrefixCommands()),
-            10000 // 10 segundos
+            10000
           );
           if (index < 0 || index >= noPrefixCommands.length) return reply(`❌ Número inválido. Use ${groupPrefix}listnoprefix para ver a lista.`);
           const removed = noPrefixCommands.splice(index, 1)[0];
           if (saveNoPrefixCommands(noPrefixCommands)) {
-            // Invalida cache após salvar
+
             optimizer.clearStatic(`noprefix:${from}`);
             await reply(`🗑️ Comando sem prefixo removido:\nMensagem: ${removed.trigger}\nComando: ${removed.command}`);
           } else {
@@ -17166,7 +16415,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           const allTokens = q.trim().split(/ +/);
           const trigger = allTokens.shift();
-          // parse meta tokens like [admin], [owner], [group], [private], [param:name:required]
+
           const parsed = parseCustomCommandMeta(allTokens);
           const settings = parsed.settings || {};
           const responseText = parsed.rest.join(' ');
@@ -17178,17 +16427,15 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           const normalizedTrigger = normalizar(trigger).replace(/\s+/g, '');
 
-          // Verificar se já existe
           const existingCmd = findCustomCommand(normalizedTrigger);
           if (existingCmd) {
             return reply(`❌ Já existe um comando com o gatilho "${trigger}".\nUse ${groupPrefix}delcmd ${trigger} para removê-lo primeiro.`);
           }
 
-          // Otimização: Cache de comandos personalizados
           const commands = await optimizer.memoize(
             `customcmds:${from}`,
             () => Promise.resolve(loadCustomCommands()),
-            10000 // 10 segundos
+            10000
           );
           const usage = buildUsageFromParams(trigger, settings.params || []);
           commands.push({
@@ -17201,7 +16448,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           });
 
           if (saveCustomCommands(commands)) {
-            // Invalida cache após salvar
+
             optimizer.clearStatic(`customcmds:${from}`);
             const flagList = [];
             if (settings.ownerOnly) flagList.push('Dono');
@@ -17238,17 +16485,17 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           if (responseText) updatedCmd.response = responseText;
           updatedCmd.settings = settings;
           updatedCmd.usage = buildUsageFromParams(updatedCmd.trigger, settings.params || []);
-          // Otimização: Cache de comandos personalizados
+
           const commands = await optimizer.memoize(
             `customcmds:${from}`,
             () => Promise.resolve(loadCustomCommands()),
-            10000 // 10 segundos
+            10000
           );
           const idx = commands.findIndex(c => c.trigger === existingCmd.trigger);
           if (idx !== -1) {
             commands[idx] = updatedCmd;
             if (saveCustomCommands(commands)) {
-              // Invalida cache após salvar
+
               optimizer.clearStatic(`customcmds:${from}`);
               await reply(`✅ Comando atualizado: ${trigger}\n*Uso:* ${updatedCmd.usage}`);
             } else {
@@ -17298,17 +16545,17 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           if (responseData) updatedCmd.response = responseData;
           updatedCmd.settings = settings;
           updatedCmd.usage = buildUsageFromParams(updatedCmd.trigger, settings.params || []);
-          // Otimização: Cache de comandos personalizados
+
           const commands = await optimizer.memoize(
             `customcmds:${from}`,
             () => Promise.resolve(loadCustomCommands()),
-            10000 // 10 segundos
+            10000
           );
           const idx = commands.findIndex(c => c.trigger === existingCmd.trigger);
           if (idx !== -1) {
             commands[idx] = updatedCmd;
             if (saveCustomCommands(commands)) {
-              // Invalida cache após salvar
+
               optimizer.clearStatic(`customcmds:${from}`);
               await reply(`✅ Comando de mídia atualizado: ${trigger}\n*Uso:* ${updatedCmd.usage}`);
             } else {
@@ -17345,7 +16592,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           const normalizedTrigger = normalizar(trigger).replace(/\s+/g, '');
 
-          // Verificar se já existe
           const existingCmd = findCustomCommand(normalizedTrigger);
           if (existingCmd) {
             return reply(`❌ Já existe um comando com o gatilho "${trigger}".\nUse ${groupPrefix}delcmd ${trigger} para removê-lo primeiro.`);
@@ -17353,7 +16599,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           let responseData = null;
 
-          // Verificar se respondeu uma mídia
           if (quotedMessageContent) {
             if (isQuotedImage) {
               const imageBuffer = await getFileBuffer(quotedMessageContent.imageMessage, 'image');
@@ -17389,11 +16634,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply('❌ Por favor, responda a uma mídia para adicionar como comando!');
           }
 
-          // Otimização: Cache de comandos personalizados
           const commands = await optimizer.memoize(
             `customcmds:${from}`,
             () => Promise.resolve(loadCustomCommands()),
-            10000 // 10 segundos
+            10000
           );
           const usage = buildUsageFromParams(trigger, settings.params || []);
           commands.push({
@@ -17406,7 +16650,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           });
 
           if (saveCustomCommands(commands)) {
-            // Invalida cache após salvar
+
             optimizer.clearStatic(`customcmds:${from}`);
             const flagList = [];
             if (settings.ownerOnly) flagList.push('Dono');
@@ -17431,11 +16675,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         try {
           if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
 
-          // Otimização: Cache de comandos personalizados
           const commands = await optimizer.memoize(
             `customcmds:${from}`,
             () => Promise.resolve(loadCustomCommands()),
-            10000 // 10 segundos
+            10000
           );
           if (commands.length === 0) {
             return reply(`📜 *Nenhum comando personalizado criado.*\n\nUse ${groupPrefix}addcmd para criar um!`);
@@ -17504,14 +16747,13 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const arg = q.trim();
           let result;
 
-          // Tentar por número primeiro
           if (!isNaN(parseInt(arg))) {
             const index = parseInt(arg) - 1;
-            // Otimização: Cache de comandos personalizados
+
             const commands = await optimizer.memoize(
               `customcmds:${from}`,
               () => Promise.resolve(loadCustomCommands()),
-              10000 // 10 segundos
+              10000
             );
 
             if (index < 0 || index >= commands.length) {
@@ -17527,7 +16769,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               await reply('❌ Erro ao remover o comando.');
             }
           } else {
-            // Remover por nome
+
             const normalizedTrigger = normalizar(arg).replace(/\s+/g, '');
             const cmd = findCustomCommand(normalizedTrigger);
 
@@ -17575,7 +16817,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 argsListTest[restIndexTest] = restVal;
               }
             }
-            // Support named args in test mode (key=value)
+
             if (Array.isArray(argsListTest) && argsListTest.some(t => t.includes('='))) {
               const namedMapTest = {};
               const remainingPos = [];
@@ -17595,7 +16837,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 if (Object.prototype.hasOwnProperty.call(namedMapTest, p.name)) finalTestArgs[i] = namedMapTest[p.name];
                 else finalTestArgs[i] = remainingPos.length ? remainingPos.shift() : '';
               }
-              // join rest if any
+
               if (restIndexTest !== -1) {
                 const restVal = finalTestArgs.slice(restIndexTest).join(' ');
                 finalTestArgs.splice(restIndexTest, finalTestArgs.length - restIndexTest, restVal);
@@ -17628,7 +16870,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           await reply(`🧪 *Testando comando: ${cmd.trigger}*\n\n_Executando..._`);
 
-          // Simular execução
           const responseData = cmd.response;
           let processedResponse = responseData;
 
@@ -17641,7 +16882,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               .replace(/{nomebot}/gi, nomebot)
               .replace(/{user}/gi, pushname || 'Usuário')
               .replace(/{grupo}/gi, isGroup ? groupName : 'Privado');
-            // extras de teste: args/posições/menção/quoted
+
             const testArgs = testArgsStr || '';
             const argsListTest = parseArgsFromString(testArgs);
             const paramsMapTest = {};
@@ -17656,7 +16897,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               const i = parseInt(idx, 10) - 1;
               return argsListTest[i] || '';
             });
-            // Named param replacements in test mode
+
             for (const nm in paramsMapTest) {
               if (!Object.prototype.hasOwnProperty.call(paramsMapTest, nm)) continue;
               const val = paramsMapTest[nm];
@@ -17690,7 +16931,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             }
           } else if (processedResponse.type === 'text') {
             let content = processedResponse.content || 'Resposta personalizada';
-            // replacing with test args
+
             const allArgsExec = testArgsStr || '';
             const argsListExec = parseArgsFromString(allArgsExec);
             const paramsMapExec = {};
@@ -17705,7 +16946,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               const i = parseInt(idx, 10) - 1;
               return argsListExec[i] || '';
             });
-            // replace named params
+
             for (const nm in paramsMapExec) {
               if (!Object.prototype.hasOwnProperty.call(paramsMapExec, nm)) continue;
               const val = paramsMapExec[nm];
@@ -17748,13 +16989,13 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 .replace(/{nomebot}/gi, nomebot)
                 .replace(/{user}/gi, pushname || 'Usuário')
                 .replace(/{grupo}/gi, isGroup ? groupName : 'Privado');
-              // extras: args/posições/menção/quoted
+
               caption = caption.replace(/\{(?:args|all)\}/gi, testArgsStr || '');
               caption = caption.replace(/\{(\d+)\}/g, (m, idx) => {
                 const i = parseInt(idx, 10) - 1;
                 return argsListTest[i] || '';
               });
-              // Named param replacements in caption for media
+
               for (const nm in paramsMapTest) {
                 if (!Object.prototype.hasOwnProperty.call(paramsMapTest, nm)) continue;
                 const val = paramsMapTest[nm];
@@ -17801,7 +17042,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
                 const i = parseInt(idx, 10) - 1;
                 return argsListTest[i] || '';
               });
-              // Named param replacements in video caption
+
               for (const nm in paramsMapTest) {
                 if (!Object.prototype.hasOwnProperty.call(paramsMapTest, nm)) continue;
                 const val = paramsMapTest[nm];
@@ -17855,12 +17096,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const reason = args.length > 1 ? args.slice(1).join(' ') : 'Não especificado';
           let targetUser = menc_os2 || (q.split(' ')[0].includes('@') ? q.split(' ')[0] : (isValidJid(q.split(' ')[0]) || isValidLid(q.split(' ')[0])) ? q.split(' ')[0] : null);
 
-          // Se informou apenas número, tenta obter LID via onWhatsApp/cache
           if (!targetUser && q) {
             const cleanNumber = q.split(' ')[0].replace(/\D/g, '');
             if (cleanNumber.length >= 10) {
               const candidateJid = buildUserId(cleanNumber, config);
-              // Se estamos em grupo, tentar buscar participando via metadata
+
               if (isGroup && groupMetadata?.participants) {
                 const participant = groupMetadata.participants.find(p => p.id === candidateJid || p.lid === candidateJid || (p.lid && p.lid.includes(cleanNumber)));
                 if (participant && participant.lid) {
@@ -17869,7 +17109,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               }
 
               if (!targetUser) {
-                // Tenta usar cache/onWhatsApp
+
                 try {
                   const lid = await getLidFromJidCached(nazu, candidateJid);
                   if (lid && lid.includes('@lid')) {
@@ -17956,7 +17196,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           await reply("Ocorreu um erro ao listar a blacklist global 💔");
         }
         break;
-      //FERRAMENTAS
+
       case 'encurtalink':
       case 'tinyurl':
         try {
@@ -18015,7 +17255,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         }
         break;
 
-      // VERIFICADOR DE LINKS (FishFish API)
       case 'verificar':
       case 'checklink':
       case 'scanlink':
@@ -18023,12 +17262,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         try {
           if (!q) return reply(`🔒 *Verificador de Links*\n\n❌ Por favor, envie um link ou domínio para verificar.\n\n📝 *Uso:* ${prefix}${command} <link>\n\n📌 *Exemplos:*\n${prefix}${command} google.com\n${prefix}${command} https://exemplo.com/pagina`);
 
-          // Extrair domínio do link
           let urlToCheck = q.trim();
           let domain = urlToCheck;
 
           try {
-            // Tentar extrair domínio de uma URL completa
+
             if (urlToCheck.includes('://')) {
               const urlObj = new URL(urlToCheck);
               domain = urlObj.hostname;
@@ -18036,20 +17274,19 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               domain = urlToCheck.split('/')[0];
             }
           } catch {
-            // Se falhar, usar o valor original
+
             domain = urlToCheck.replace(/^(https?:\/\/)?/, '').split('/')[0];
           }
 
           await reply('🔍 Verificando segurança do link...');
 
-          // Verificar domínio na API FishFish
           const fishResponse = await axios.get(`https://api.fishfish.gg/v1/domains/${encodeURIComponent(domain)}`, {
             timeout: 120000,
             validateStatus: (status) => status < 500
           });
 
           if (fishResponse.status === 404) {
-            // Domínio não encontrado na base de dados = provavelmente seguro
+
             await reply(`✅ *Resultado da Verificação*\n\n🔗 *Link:* ${urlToCheck}\n🌐 *Domínio:* ${domain}\n\n📊 *Status:* Não encontrado na base de ameaças\n\n💚 *Análise:* Este domínio não está listado como malicioso na base de dados FishFish. Isso geralmente indica que é seguro, mas sempre tenha cuidado ao acessar links desconhecidos!\n\n⚠️ *Dica:* Mesmo links "seguros" podem ter conteúdo prejudicial. Navegue com cautela!`);
           } else if (fishResponse.status === 200) {
             const data = fishResponse.data;
@@ -18094,7 +17331,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         }
         break;
 
-      // FUSO HORÁRIO MUNDIAL (versão alternativa)
       case 'horamundial':
       case 'worldtime':
       case 'fusohorario':
@@ -18104,7 +17340,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
           const location = q.trim();
 
-          // Mapa de fusos horários comuns
           const timezoneMap = {
             'brasil': 'Africa/Maputo', 'brazil': 'Africa/Maputo', 'são paulo': 'Africa/Maputo', 'sao paulo': 'Africa/Maputo',
             'rio': 'Africa/Maputo', 'rio de janeiro': 'Africa/Maputo', 'brasilia': 'Africa/Maputo',
@@ -18138,7 +17373,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           let timezone = timezoneMap[locationLower];
 
           if (!timezone) {
-            // Tentar encontrar correspondência parcial
+
             for (const [key, tz] of Object.entries(timezoneMap)) {
               if (key.includes(locationLower) || locationLower.includes(key)) {
                 timezone = tz;
@@ -18151,7 +17386,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply(`❌ *Local não encontrado!*\n\n🔍 Não consegui encontrar o fuso horário para "${location}".\n\n💡 *Tente usar:*\n• Nomes de cidades grandes (Tokyo, London, New York)\n• Nomes de países (Brasil, Japan, USA)\n• Nomes em inglês geralmente funcionam melhor`);
           }
 
-          // Obter horário atual no fuso especificado
           const now = new Date();
           const options = {
             timeZone: timezone,
@@ -18168,7 +17402,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const formatter = new Intl.DateTimeFormat('pt-BR', options);
           const formattedTime = formatter.format(now);
 
-          // Calcular diferença com Brasil
           const brTime = new Date().toLocaleString('en-US', { timeZone: 'Africa/Maputo' });
           const targetTime = new Date().toLocaleString('en-US', { timeZone: timezone });
           const brDate = new Date(brTime);
@@ -18191,7 +17424,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         }
         break;
 
-      // CLIMA / PREVISÃO DO TEMPO (versão alternativa)
       case 'clima2':
       case 'tempo2':
       case 'weather2':
@@ -18200,7 +17432,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
         const city = q.trim();
 
-        // Usando a API wttr.in (gratuita, não precisa de API key)
         axios.get(`https://wttr.in/${encodeURIComponent(city)}?format=j1&lang=pt`, {
           timeout: 120000
         }).then((weatherResponse) => {
@@ -18212,7 +17443,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           const location_data = weatherResponse.data.nearest_area[0];
           const forecast = weatherResponse.data.weather;
 
-          // Mapear condições do tempo para emojis
           const getWeatherEmoji = (code) => {
             const weatherCodes = {
               '113': '☀️', '116': '⛅', '119': '☁️', '122': '☁️',
@@ -18258,8 +17488,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         });
         break;
 
-      //DOWNLOADS
-
       case 'mcplugin':
       case 'mcplugins':
         if (!q) return reply('Cadê o nome do plugin para eu pesquisar? 🤔');
@@ -18283,7 +17511,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             case 'ytmp3':
         try {
           if (!q) return reply('❌ Envie o link do YouTube.');
-          // Fire-and-forget: não bloqueia o handler de mensagens
+
           (async () => {
             try {
               await baixarDireto(nazu, from, info, q, 'audio');
@@ -18310,7 +17538,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
             return reply('❌ Por favor, envie um link válido do Spotify.\n\n💡 Dica: Use o comando play2 para buscar por nome!');
           }
 
-          // Fire-and-forget: não bloqueia o handler
           (async () => {
             try {
               const spRes = await downloadSpotify(q);
@@ -18347,11 +17574,8 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
 
-          
-
           await reply('🔎 Buscando no Spotify... Aguarde!');
 
-          // 1. Primeiro buscar a música usando search-one
           axios.get('/* API removida */', {
             params: { q: q },
             headers: { 'X-API-Key': KeyCog },
@@ -18376,7 +17600,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
               await reply(searchCaption);
 
-              // 2. Agora baixar a música usando o link encontrado
               axios.get('/* API removida */', {
                 params: { url: trackUrl },
                 headers: { 'X-API-Key': KeyCog },
@@ -18446,8 +17669,6 @@ reply('🤖 *Sistema de Spotify temporariamente indisponível*\n\n😅 Estou com
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
-
-          
 
           if (!q.includes('soundcloud.com/')) {
             return reply('❌ Por favor, envie um link válido do SoundCloud.\n\n💡 Dica: Use o comando play3 para buscar por nome!');
@@ -18520,8 +17741,6 @@ reply('🤖 *Sistema de Spotify temporariamente indisponível*\n\n😅 Estou com
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
-
-          
 
           await reply('🔎 Buscando no SoundCloud... Aguarde!');
 
@@ -18633,9 +17852,6 @@ return reply(`❌ Erro: ${result.msg}`);
         try {
           if (!q) return reply(`Digite uma URL para extrair todos os formatos disponíveis.\n> Ex: ${prefix}${command} https://www.youtube.com/watch?v=dQw4w9WgXcQ\n\n✨ Suporta 1000+ sites!`);
 
-          // Verificar se tem API key
-          
-
           reply('🔍 Analisando URL e extraindo todos os formatos disponíveis...\n⏳ Isso pode levar alguns segundos...');
 
           alldl.getAllMedia(q, null).then(result => {
@@ -18652,7 +17868,6 @@ return reply(`❌ Erro: ${result.msg}`);
               imageCount
             } = result;
 
-            // Preparar mensagem com informações
             let message = `╭━━━⊱🎬 ALL DOWNLOAD ⊱━━━╮\n\n`;
             message += `📝 *Título:* ${metadata.title || 'Desconhecido'}\n`;
 
@@ -18686,14 +17901,12 @@ return reply(`❌ Erro: ${result.msg}`);
             message += `📦 Total: ${totalItems} formatos\n`;
             message += `\n╰━━━━━━━━━━━━━━━━━━━╯\n\n`;
 
-            // Preparar dados para encurtamento
             const videos = media.filter(m => m.type === 'video').slice(0, 8);
             const audios = media.filter(m => m.type === 'audio').slice(0, 5);
             const images = media.filter(m => m.type === 'image').slice(0, 3);
 
             const allMediaItems = [...videos, ...audios, ...images];
 
-            // Função para encurtar com retry (máximo 5 tentativas)
             const shortenWithRetry = (item, maxRetries = 5) => {
               return new Promise((resolve) => {
                 const attempt = (retryCount = 0) => {
@@ -18707,7 +17920,7 @@ return reply(`❌ Erro: ${result.msg}`);
                     .catch(err => {
                       if (retryCount < maxRetries) {
                         console.warn(`⚠️ Tentativa ${retryCount + 1}/${maxRetries} de encurtar falhou, retentando...`);
-                        setTimeout(() => attempt(retryCount + 1), 500); // Aguarda 500ms antes de tentar novamente
+                        setTimeout(() => attempt(retryCount + 1), 500);
                       } else {
                         console.warn(`❌ Falha ao encurtar após ${maxRetries} tentativas`);
                         resolve({ ...item, shortUrl: null });
@@ -18718,11 +17931,9 @@ return reply(`❌ Erro: ${result.msg}`);
               });
             };
 
-            // Encurtar todos os links com retry
             Promise.all(allMediaItems.map(item => shortenWithRetry(item))).then(mediaWithLinks => {
               let finalMessage = message;
 
-              // Listar vídeos com links
               const videosWithLinks = mediaWithLinks.filter(m => m.type === 'video');
               if (videosWithLinks.length > 0) {
                 finalMessage += `\n🎥 *VÍDEOS DISPONÍVEIS:*\n`;
@@ -18745,7 +17956,6 @@ return reply(`❌ Erro: ${result.msg}`);
                 }
               }
 
-              // Listar áudios com links
               const audiosWithLinks = mediaWithLinks.filter(m => m.type === 'audio');
               if (audiosWithLinks.length > 0) {
                 finalMessage += `\n\n🎵 *ÁUDIOS DISPONÍVEIS:*\n`;
@@ -18766,7 +17976,6 @@ return reply(`❌ Erro: ${result.msg}`);
                 }
               }
 
-              // Listar imagens com links
               const imagesWithLinks = mediaWithLinks.filter(m => m.type === 'image');
               if (imagesWithLinks.length > 0) {
                 finalMessage += `\n\n🖼️ *THUMBNAILS DISPONÍVEIS:*\n`;
@@ -18786,11 +17995,10 @@ return reply(`❌ Erro: ${result.msg}`);
               finalMessage += `\n\n💡 *Dica:* Copie o link desejado e cole no navegador ou no seu dispositivo!`;
               reply(finalMessage);
             }).catch(() => {
-              // Se falhar em encurtar, mostra sem os links
+
               reply(message);
 
             });
-
 
           }).catch(error => {
             console.error('Erro ao extrair formatos:', error);
@@ -18825,10 +18033,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
         try {
           if (!q) return reply(`Digite um nome ou o link de um vídeo.\n> Ex: ${prefix}${command} Gato`);
 
-          // Verificar se tem API key
-          
-
-          // Validação de plataforma
           if (q.includes('instagram.com') || q.includes('instagr.am')) {
             return reply('❌ Esse link é do *Instagram*, não do TikTok!\n\n💡 Use: ' + prefix + 'ig ' + q);
           }
@@ -18866,7 +18070,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
             })
             .catch(async (e) => {
               console.error('Erro no comando TikTok (promise):', e);
-              
 
               reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
             });
@@ -18874,9 +18077,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
           return;
         } catch (e) {
           console.error('Erro no comando TikTok:', e);
-
-          // Verificar se é erro de API key e notificar o dono
-          
 
           reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
         }
@@ -18897,8 +18097,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
-
-          
 
           if (!q.includes('facebook.com/') && !q.includes('fb.watch') && !q.includes('fb.com/')) {
             return reply('❌ Por favor, envie um link válido do Facebook.');
@@ -18974,8 +18172,6 @@ return reply(`❌ Erro: ${result.msg}`);
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
           }
-
-          
 
           if (!q.includes('vimeo.com/')) {
             return reply('❌ Por favor, envie um link válido do Vimeo.');
@@ -19056,17 +18252,12 @@ return reply(`❌ Erro: ${result.msg}`);
         try {
           if (!q) return reply(`Digite um link do Twitch (clip ou VOD).\n> Ex: ${prefix}${command} https://www.twitch.tv/videos/12345678\n> Ex: ${prefix}${command} https://clips.twitch.tv/AbcdEfgh`);
 
-          // Verificar se tem API key
-          
-
-          // Verificar se é um link válido do Twitch
           if (!q.includes('twitch.tv')) {
             return reply('❌ Por favor, forneça um link válido do Twitch (clips ou VODs).');
           }
 
           reply('Aguarde um momentinho... ☀️');
 
-          // Helpers para formatação
           const formatDuration = (seconds) => {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
@@ -19097,7 +18288,6 @@ return reply(`❌ Erro: ${result.msg}`);
               filename
             } = result;
 
-            // Preparar a mensagem com informações do vídeo
             let caption = `╭━━━⊱🎮 TWITCH ${type === 'clip' ? 'CLIP' : 'VOD'} ⊱━━━╮\n\n`;
             caption += `📺 *Título:* ${title}\n`;
             caption += `👤 *Streamer:* ${streamer}\n`;
@@ -19121,7 +18311,6 @@ return reply(`❌ Erro: ${result.msg}`);
 
             caption += `\n╰━━━━━━━━━━━━━━━━━━━╯`;
 
-            // Enviar thumbnail primeiro
             if (thumbnail) {
               nazu.sendMessage(from, {
                 image: { url: thumbnail },
@@ -19131,11 +18320,10 @@ return reply(`❌ Erro: ${result.msg}`);
               });
             }
 
-            // Enviar o vídeo
             const fileSize = buffer.length;
             const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
 
-            if (fileSize > 100 * 1024 * 1024) { // > 100MB
+            if (fileSize > 100 * 1024 * 1024) {
               nazu.sendMessage(from, {
                 document: buffer,
                 mimetype: 'video/mp4',
@@ -19186,17 +18374,12 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
         try {
           if (!q) return reply(`Digite um link de um post do Reddit.\n> Ex: ${prefix}${command} https://www.reddit.com/r/videos/comments/abc123/...`);
 
-          // Verificar se tem API key
-          
-
-          // Verificar se é um link válido do Reddit
           if (!q.includes('reddit.com')) {
             return reply('❌ Por favor, forneça um link válido do Reddit.');
           }
 
           reply('Aguarde um momentinho... ☀️');
 
-          // Helpers para formatação
           const formatDuration = (seconds) => {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
@@ -19227,7 +18410,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               filename
             } = result;
 
-            // Preparar a mensagem com informações do post
             let caption = `╭━━━⊱🔴 REDDIT POST ⊱━━━╮\n\n`;
             caption += `📝 *Título:* ${title}\n`;
             caption += `👤 *Autor:* u/${author}\n`;
@@ -19243,7 +18425,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
 
             caption += `\n╰━━━━━━━━━━━━━━━━━━━╯`;
 
-            // Enviar thumbnail primeiro (se tiver e for vídeo)
             if (thumbnail && isVideo) {
               nazu.sendMessage(from, {
                 image: { url: thumbnail },
@@ -19253,13 +18434,12 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               });
             }
 
-            // Enviar o arquivo (vídeo ou imagem)
             const fileSize = buffer.length;
             const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
 
             if (isVideo) {
-              // É vídeo
-              if (fileSize > 100 * 1024 * 1024) { // > 100MB
+
+              if (fileSize > 100 * 1024 * 1024) {
                 nazu.sendMessage(from, {
                   document: buffer,
                   mimetype: 'video/mp4',
@@ -19284,7 +18464,7 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
                 });
               }
             } else {
-              // É imagem
+
               nazu.sendMessage(from, {
                 image: buffer,
                 caption: caption
@@ -19323,17 +18503,12 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
         try {
           if (!q) return reply(`Digite um link do Dailymotion.\n> Ex: ${prefix}${command} https://www.dailymotion.com/video/x8abc123`);
 
-          // Verificar se tem API key
-          
-
-          // Verificar se é um link válido do Dailymotion
           if (!q.includes('dailymotion.com')) {
             return reply('❌ Por favor, forneça um link válido do Dailymotion.');
           }
 
           reply('Aguarde um momentinho... ☀️');
 
-          // Helpers para formatação
           const formatDuration = (seconds) => {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
@@ -19365,7 +18540,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               filename
             } = result;
 
-            // Preparar a mensagem com informações do vídeo
             let caption = `╭━━━⊱📺 DAILYMOTION ⊱━━━╮\n\n`;
             caption += `📝 *Título:* ${title}\n`;
             caption += `👤 *Autor:* ${author}\n`;
@@ -19393,7 +18567,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
 
             caption += `\n╰━━━━━━━━━━━━━━━━━━━╯`;
 
-            // Enviar thumbnail primeiro
             if (thumbnail) {
               nazu.sendMessage(from, {
                 image: { url: thumbnail },
@@ -19403,11 +18576,10 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               });
             }
 
-            // Enviar o vídeo
             const fileSize = buffer.length;
             const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
 
-            if (fileSize > 100 * 1024 * 1024) { // > 100MB
+            if (fileSize > 100 * 1024 * 1024) {
               nazu.sendMessage(from, {
                 document: buffer,
                 mimetype: 'video/mp4',
@@ -19458,17 +18630,12 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
         try {
           if (!q) return reply(`Digite um link do Streamable.\n> Ex: ${prefix}${command} https://streamable.com/abc123`);
 
-          // Verificar se tem API key
-          
-
-          // Verificar se é um link válido do Streamable
           if (!q.includes('streamable.com')) {
             return reply('❌ Por favor, forneça um link válido do Streamable.');
           }
 
           reply('Aguarde um momentinho... ☀️');
 
-          // Helpers para formatação
           const formatDuration = (seconds) => {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
@@ -19499,7 +18666,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               filename
             } = result;
 
-            // Preparar a mensagem com informações do vídeo
             let caption = `╭━━━⊱🎬 STREAMABLE ⊱━━━╮\n\n`;
             caption += `📝 *Título:* ${title}\n`;
 
@@ -19526,7 +18692,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
 
             caption += `\n╰━━━━━━━━━━━━━━━━━━━╯`;
 
-            // Enviar thumbnail primeiro
             if (thumbnail) {
               nazu.sendMessage(from, {
                 image: { url: thumbnail },
@@ -19536,11 +18701,10 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               });
             }
 
-            // Enviar o vídeo
             const bufferSize = buffer.length;
             const bufferSizeMB = (bufferSize / (1024 * 1024)).toFixed(2);
 
-            if (bufferSize > 100 * 1024 * 1024) { // > 100MB
+            if (bufferSize > 100 * 1024 * 1024) {
               nazu.sendMessage(from, {
                 document: buffer,
                 mimetype: 'video/mp4',
@@ -19594,10 +18758,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
         try {
           if (!q) return reply(`Digite um link do Instagram.\n> Ex: ${prefix}${command} https://www.instagram.com/reel/DFaq_X7uoiT/?igsh=M3Q3N2ZyMWU1M3Bo`);
 
-          // Verificar se tem API key
-          
-
-          // Validação de plataforma
           if (q.includes('tiktok.com') || q.includes('vm.tiktok')) {
             return reply('❌ Esse link é do *TikTok*, não do Instagram!\n\n💡 Use: ' + prefix + 'tiktok ' + q);
           }
@@ -19621,15 +18781,12 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
             })
             .catch(async (e) => {
               console.error('Erro no comando Instagram (promise):', e);
-              
+
               reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
             });
           return;
         } catch (e) {
           console.error('Erro no comando Instagram:', e);
-
-          // Verificar se é erro de API key e notificar o dono
-          
 
           reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
         }
@@ -19707,8 +18864,6 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
         try {
           if (!q) return reply(`🔍 *Pesquisa Web*\n\n❌ Digite o que deseja pesquisar.\n\n📝 *Uso:* ${prefix}${command} <termo>\n\n📌 *Exemplo:*\n${prefix}${command} inteligência artificial`);
 
-          
-
           await reply('🔍 Pesquisando...');
 
           const searchResponse = await axios.get('/* API removida */', {
@@ -19747,8 +18902,6 @@ return reply('🤖 *Sistema temporariamente indisponível*');
       case 'noticia':
         try {
           if (!q) return reply(`📰 *Pesquisa de Notícias*\n\n❌ Digite o que deseja pesquisar.\n\n📝 *Uso:* ${prefix}${command} <termo>\n\n📌 *Exemplo:*\n${prefix}${command} tecnologia brasil`);
-
-          
 
           await reply('📰 Buscando notícias...');
 
@@ -19805,15 +18958,13 @@ return reply('🤖 *Sistema temporariamente indisponível*');
 ` +
                           `⏳ Enviando arquivo, aguarde...`;
 
-          // Envia o ícone com os detalhes primeiro
-          await nazu.sendMessage(from, { 
-              image: { url: appRes.icon }, 
-              caption 
+          await nazu.sendMessage(from, {
+              image: { url: appRes.icon },
+              caption
           }, { quoted: info });
 
-          // Envia o arquivo real
-          await nazu.sendMessage(from, { 
-              document: { url: appRes.dlUrl }, 
+          await nazu.sendMessage(from, {
+              document: { url: appRes.dlUrl },
               mimetype: 'application/vnd.android.package-archive',
               fileName: `${appRes.name}.apk`,
               caption: `✅ *${appRes.name}*`
@@ -19821,18 +18972,15 @@ return reply('🤖 *Sistema temporariamente indisponível*');
         } catch (e) { reply('❌ Erro no APK.'); }
         break;
 
-
       case 'pinterest':
       case 'pin':
         try {
           if (!q) return reply('Digite o termo para pesquisar no Pinterest. Exemplo: ' + prefix + 'pinterest gatinhos /3');
 
-          // Detecta se é URL de Pinterest antes de qualquer split
           const PIN_URL_REGEX = /^(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)?pinterest\.\w{2,6}(?:\.\w{2})?\/pin\/([0-9a-zA-Z]+)|^https?:\/\/pin\.it\/[a-zA-Z0-9]+/i;
           let maxImages = 5;
           let searchTerm = q.trim();
 
-          // Só extrai limite \/N se NÃO for URL
           if (!PIN_URL_REGEX.test(searchTerm)) {
             const limitMatch = searchTerm.match(/\s\/\s*(\d{1,2})\s*$/);
             if (limitMatch) {
@@ -19841,12 +18989,11 @@ return reply('🤖 *Sistema temporariamente indisponível*');
               searchTerm = searchTerm.replace(/\s\/\s*\d{1,2}\s*$/, '').trim();
             }
           } else {
-            // Para URL, baixa 1 mídia (padrão)
+
             maxImages = 1;
           }
 
           const isPinUrl = PIN_URL_REGEX.test(searchTerm);
-
 
           const pinPromise = isPinUrl ? pinterest.dl(searchTerm) : pinterest.search(searchTerm);
 
@@ -19866,13 +19013,13 @@ return reply('🤖 *Sistema temporariamente indisponível*');
             })
             .catch((e) => {
               console.error('Erro no comando pinterest (promise):', e);
-              
+
               reply("Ocorreu um erro ao processar o Pinterest 💔");
             });
           return;
         } catch (e) {
           console.error('Erro no comando pinterest:', e);
-          
+
           reply("Ocorreu um erro ao processar o Pinterest 💔");
         }
         break;
@@ -19887,7 +19034,7 @@ return reply('🤖 *Sistema temporariamente indisponível*');
 
           const zipResponse = await axios.get('https://github.com/hiudyy/nazuna/archive/refs/heads/main.zip', {
             responseType: 'arraybuffer',
-            timeout: 60000 // 60 segundos de timeout
+            timeout: 60000
           });
 
           if (!zipResponse.data) {
@@ -19931,7 +19078,6 @@ return reply('🤖 *Sistema temporariamente indisponível*');
             ]).then(([repoResponse, commitsResponse]) => {
               const repo = repoResponse.data;
 
-              // Pegar total de commits do header Link
               let totalCommits = 0;
               const linkHeader = commitsResponse.headers.link;
               if (linkHeader) {
@@ -19941,7 +19087,6 @@ return reply('🤖 *Sistema temporariamente indisponível*');
                 totalCommits = commitsResponse.data.length;
               }
 
-              // Calcular tempo desde criação
               const createdDate = new Date(repo.created_at);
               const now = new Date();
               const diffMs = now - createdDate;
@@ -20007,7 +19152,7 @@ return reply('🤖 *Sistema temporariamente indisponível*');
       case 'comandos':
       case 'commands':
         try {
-          // Verifica se o grupo tem personalização
+
           let customBotName = nomebot;
           let customMediaPath = null;
 
@@ -20023,16 +19168,15 @@ return reply('🤖 *Sistema temporariamente indisponível*');
             }
           }
 
-          // Define a mídia a ser usada
           let mediaPath, useVideo, mediaBuffer;
 
           if (customMediaPath) {
-            // Usa a foto personalizada do grupo
+
             mediaPath = customMediaPath;
             useVideo = false;
             mediaBuffer = fs.readFileSync(mediaPath);
           } else {
-            // Usa a mídia padrão
+
             const menuVideoPath = __dirname + '/../midias/menu.mp4';
             const menuImagePath = __dirname + '/../midias/menu.jpg';
             useVideo = fs.existsSync(menuVideoPath);
@@ -20044,7 +19188,6 @@ return reply('🤖 *Sistema temporariamente indisponível*');
           const menuText = await menu(prefix, customBotName, pushname, customDesign);
           const lerMaisPrefix = getMenuLerMaisText();
 
-          // Envia o áudio primeiro se configurado
           if (isMenuAudioEnabled()) {
             const audioPath = getMenuAudioPath();
             if (audioPath && fs.existsSync(audioPath)) {
@@ -20056,7 +19199,7 @@ return reply('🤖 *Sistema temporariamente indisponível*');
               }, {
                 quoted: info
               }).then(async () => {
-                // Depois envia o menu
+
                 await nazu.sendMessage(from, {
                   [useVideo ? 'video' : 'image']: mediaBuffer,
                   caption: lerMaisPrefix + menuText,
@@ -20067,7 +19210,7 @@ return reply('🤖 *Sistema temporariamente indisponível*');
                 });
               });
             } else {
-              // Se não tem áudio válido, envia só o menu
+
               await nazu.sendMessage(from, {
                 [useVideo ? 'video' : 'image']: mediaBuffer,
                 caption: lerMaisPrefix + menuText,
@@ -20078,7 +19221,7 @@ return reply('🤖 *Sistema temporariamente indisponível*');
               });
             }
           } else {
-            // Se áudio não está ativo, envia só o menu
+
             await nazu.sendMessage(from, {
               [useVideo ? 'video' : 'image']: mediaBuffer,
               caption: lerMaisPrefix + menuText,
@@ -20250,7 +19393,6 @@ return reply('🤖 *Sistema temporariamente indisponível*');
                 prefix + 'configcmdnotfound set O comando {command} não existe! Tente {prefix}menu');
             }
 
-            // Validate the message template
             const validation = validateMessageTemplate(newMessage);
             if (!validation.valid) {
               return reply('❌ A mensagem contém problemas:\n\n• ' + validation.issues.join('\n• ') + '\n\nCorrija esses problemas e tente novamente.');
@@ -20316,9 +19458,6 @@ return reply('🤖 *Sistema temporariamente indisponível*');
         }
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // TUTORIAL - Guia completo para configuração do bot
-      // ═══════════════════════════════════════════════════════════════
       case 'tutorial':
       case 'guia':
       case 'ajuda':
@@ -20337,7 +19476,7 @@ Bem-vindo ao guia completo de configuração e personalização! Vamos aprender 
 ━━━━━━━━━━━━━━━━━━━━
 
 1️⃣ Configurações Básicas
-2️⃣ Personalização Visual  
+2️⃣ Personalização Visual
 3️⃣ Sistema de Comandos
 4️⃣ Automação e Respostas
 5️⃣ Gerenciamento de Usuários
@@ -20452,14 +19591,14 @@ Use: ${prefix}resetdesign
 
 • Foto do Menu: ${prefix}fotomenu
   Responda uma imagem
-  
+
 • Vídeo do Menu: ${prefix}videomenu
   Responda um vídeo
-  
+
 • Áudio do Menu: ${prefix}audiomenu
   Responda um áudio
   Para remover: ${prefix}audiomenu off
-  
+
 • Foto do Bot (perfil): ${prefix}fotobot
   Responda uma imagem
 
@@ -20540,16 +19679,16 @@ ${prefix}addautomidia <palavra> | <legenda>
 • Adicionar: ${prefix}automsg add HH:MM | descrição
   Responda uma mensagem (texto/imagem/vídeo/áudio/documento/sticker)
   Exemplo: ${prefix}automsg add 08:00 | Bom dia!
-  
+
 • Listar: ${prefix}automsg list
   Mostra todas as mensagens automáticas do grupo
-  
+
 • Deletar: ${prefix}automsg del <id>
   Remove uma mensagem automática
-  
+
 • Ativar: ${prefix}automsg on <id>
   Ativa uma mensagem desativada
-  
+
 • Desativar: ${prefix}automsg off <id>
   Desativa sem deletar
 
@@ -20575,10 +19714,10 @@ ${prefix}addautomidia <palavra> | <legenda>
 🎁 *Sistema de Indicações*
 • Adicionar indicação: ${prefix}addindicacao @usuario
   Adiciona +1 indicação ao usuário
-  
+
 • Ver ranking: ${prefix}topindica
   Mostra top 10 usuários com mais indicações
-  
+
 • Remover indicações: ${prefix}delindicacao @usuario [quantidade]
   Se não especificar quantidade, remove todas
   Exemplo: ${prefix}delindicacao @usuario 5
@@ -20941,7 +20080,7 @@ Precisa de ajuda? Entre em contato:
         }
         break;
         async function sendMenuWithMedia(menuType, menuFunction) {
-          // Verifica se o grupo tem personalização
+
           let customBotName = nomebot;
           let customMediaPath = null;
 
@@ -20957,16 +20096,15 @@ Precisa de ajuda? Entre em contato:
             }
           }
 
-          // Define a mídia a ser usada
           let mediaPath, useVideo, mediaBuffer;
 
           if (customMediaPath) {
-            // Usa a foto personalizada do grupo
+
             mediaPath = customMediaPath;
             useVideo = false;
             mediaBuffer = fs.readFileSync(mediaPath);
           } else {
-            // Usa a mídia padrão
+
             const menuVideoPath = __dirname + '/../midias/menu.mp4';
             const menuImagePath = __dirname + '/../midias/menu.jpg';
             useVideo = fs.existsSync(menuVideoPath);
@@ -20974,10 +20112,8 @@ Precisa de ajuda? Entre em contato:
             mediaBuffer = fs.readFileSync(mediaPath);
           }
 
-          // Obtém o design personalizado do menu
           const customDesign = getMenuDesignWithDefaults(customBotName, pushname);
 
-          // Aplica o design personalizado ao menu
           const menuText = typeof menuFunction === 'function' ?
             (typeof menuFunction.then === 'function' ?
               await menuFunction :
@@ -20998,9 +20134,9 @@ Precisa de ajuda? Entre em contato:
       case 'antipv3':
         try {
           if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-          antipvData.mode = antipvData.mode === 'antipv3' ? null : 'antipv3';
+          antipvData.mode = antipvData.mode === 'antipv3' ? 'off' : 'antipv3';
           writeJsonFile(ANTIPV_FILE, antipvData);
-          await reply(`✅ Antipv3 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'bloqueia usuários que usam comandos no privado' : 'responde normalmente no privado'}.`);
+          await reply(`✅ Antipv3 ${antipvData.mode === 'antipv3' ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode === 'antipv3' ? 'bloqueia usuários que usam comandos no privado' : 'responde normalmente no privado'}.`);
         } catch (e) {
           console.error(e);
           await reply("Ocorreu um erro 💔");
@@ -21009,9 +20145,9 @@ Precisa de ajuda? Entre em contato:
       case 'antipv2':
         try {
           if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-          antipvData.mode = antipvData.mode === 'antipv2' ? null : 'antipv2';
+          antipvData.mode = antipvData.mode === 'antipv2' ? 'off' : 'antipv2';
           writeJsonFile(ANTIPV_FILE, antipvData);
-          await reply(`✅ Antipv2 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'avisa que comandos só funcionam em grupos no privado' : 'responde normalmente no privado'}.`);
+          await reply(`✅ Antipv2 ${antipvData.mode === 'antipv2' ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode === 'antipv2' ? 'avisa que comandos só funcionam em grupos no privado' : 'responde normalmente no privado'}.`);
         } catch (e) {
           console.error(e);
           await reply("Ocorreu um erro 💔");
@@ -21020,9 +20156,9 @@ Precisa de ajuda? Entre em contato:
       case 'antipv4':
         try {
           if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-          antipvData.mode = antipvData.mode === 'antipv4' ? null : 'antipv4';
+          antipvData.mode = antipvData.mode === 'antipv4' ? 'off' : 'antipv4';
           writeJsonFile(ANTIPV_FILE, antipvData);
-          await reply(`✅ Antipv4 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'avisa que o bot so funciona em grupos' : 'responde normalmente no privado'}.`);
+          await reply(`✅ Antipv4 ${antipvData.mode === 'antipv4' ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode === 'antipv4' ? 'avisa que o bot so funciona em grupos' : 'responde normalmente no privado'}.`);
         } catch (e) {
           console.error(e);
           await reply("Ocorreu um erro 💔");
@@ -21035,7 +20171,7 @@ Precisa de ajuda? Entre em contato:
           if (!q) return reply(`Por favor, forneça a nova mensagem para o antipv. Exemplo: ${prefix}antipvmessage Comandos no privado estão desativados!`);
           const antipvFile = DATABASE_DIR + '/antipv.json';
           let antipvData = loadJsonFile(antipvFile, {
-            mode: 'off',
+            mode: 'antipv',
             message: '🚫 Este comando só funciona em grupos!'
           });
           antipvData.message = q.trim();
@@ -21049,9 +20185,9 @@ Precisa de ajuda? Entre em contato:
       case 'antipv':
         try {
           if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-          antipvData.mode = antipvData.mode === 'antipv' ? null : 'antipv';
+          antipvData.mode = (antipvData.mode === 'antipv' || (!antipvData.mode && antipvData.mode !== 'off')) ? 'off' : 'antipv';
           writeJsonFile(ANTIPV_FILE, antipvData);
-          await reply(`✅ Antipv ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'ignora mensagens no privado' : 'responde normalmente no privado'}.`);
+          await reply(`✅ Antipv ${antipvData.mode === 'antipv' ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode === 'antipv' ? 'ignora mensagens no privado' : 'responde normalmente no privado'}.`);
         } catch (e) {
           console.error(e);
           await reply("Ocorreu um erro 💔");
@@ -21079,24 +20215,22 @@ Precisa de ajuda? Entre em contato:
           let groupId = null;
 
           if (q && q.trim()) {
-            // Se forneceu um ID, usa ele
+
             groupId = q.trim();
-            // Garante que tem @g.us se não tiver
+
             if (!groupId.includes('@')) {
               groupId = groupId + '@g.us';
             }
           } else {
-            // Se não forneceu ID, usa o grupo atual
+
             if (!isGroup) return reply('❌ Você precisa estar em um grupo ou fornecer o ID do grupo! Exemplo: ' + prefix + 'sairgp 120363123456789012@g.us');
             groupId = from;
           }
 
-          // Verifica se é um ID de grupo válido
           if (!groupId.endsWith('@g.us')) {
             return reply('❌ ID de grupo inválido! Deve terminar com @g.us');
           }
 
-          // Tenta obter informações do grupo para confirmar
           try {
             const groupMetadata = await nazu.groupMetadata(groupId).catch(() => null);
             if (!groupMetadata) {
@@ -21105,11 +20239,10 @@ Precisa de ajuda? Entre em contato:
 
             const groupName = groupMetadata.subject || 'Grupo desconhecido';
 
-            // Sai do grupo
             await nazu.groupLeave(groupId);
             await reply(`✅ Sai do grupo "${groupName}" com sucesso!`);
           } catch (error) {
-            // Tenta sair mesmo assim
+
             await nazu.groupLeave(groupId).catch(() => { });
             await reply(`✅ Comando de saída executado para o grupo ${groupId}`);
           }
@@ -21128,7 +20261,6 @@ Precisa de ajuda? Entre em contato:
 
           let baseMessage = {};
 
-          // Verifica se a mensagem atual tem imagem
           if (isImage) {
             const image = await getFileBuffer(info.message.imageMessage, 'image');
             const captionOriginal = info.message.imageMessage?.caption || '';
@@ -21139,7 +20271,7 @@ Precisa de ajuda? Entre em contato:
               caption: textoFinal ? `${cabecalho}${textoFinal}` : cabecalho.trim()
             };
           }
-          // Verifica se a mensagem atual tem vídeo
+
           else if (isVideo) {
             const video = await getFileBuffer(info.message.videoMessage, 'video');
             const captionOriginal = info.message.videoMessage?.caption || '';
@@ -21150,7 +20282,7 @@ Precisa de ajuda? Entre em contato:
               caption: textoFinal ? `${cabecalho}${textoFinal}` : cabecalho.trim()
             };
           }
-          // Verifica se cita uma imagem
+
           else if (isQuotedImage) {
             const image = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage, 'image');
 
@@ -21159,7 +20291,7 @@ Precisa de ajuda? Entre em contato:
               caption: q ? `${cabecalho}${q}` : cabecalho.trim()
             };
           }
-          // Verifica se cita um vídeo
+
           else if (isQuotedVideo) {
             const video = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage, 'video');
 
@@ -21168,7 +20300,7 @@ Precisa de ajuda? Entre em contato:
               caption: q ? `${cabecalho}${q}` : cabecalho.trim()
             };
           }
-          // Apenas texto
+
             baseMessage = {
               text: `${cabecalho}${q}`
             };
@@ -21208,19 +20340,16 @@ Precisa de ajuda? Entre em contato:
         }
         break;
 
-      // Sistema de transmissão privada (tm2)
       case 'inscrevertm':
       case 'inscrevertm2':
         try {
           if (isGroup) return reply('⚠️ Este comando só funciona no privado! Me chama no PV para se inscrever.');
 
-          // Verifica se o usuário já está inscrito
           if (transmissao.isSubscribed(sender)) {
             const stats = transmissao.getStats();
             return reply(`✅ Você já está inscrito nas transmissões!\n\n📊 *Estatísticas:*\n• Total de inscritos: ${stats.totalSubscribers}\n• Mensagens enviadas: ${stats.totalMessages}\n• Última transmissão: ${stats.lastBroadcast || 'Nenhuma ainda'}`);
           }
 
-          // Inscreve o usuário
           transmissao.subscribe(sender, pushname || 'Usuário');
 
           reply(`🎉 *Inscrição confirmada!*\n\nVocê agora receberá as transmissões da bot diretamente no seu privado.\n\n💡 *Como funciona:*\n• Você receberá mensagens importantes da equipe\n• Para cancelar, use: ${prefix}desinscrever\n\n✨ Obrigado por se inscrever!`);
@@ -21236,12 +20365,10 @@ Precisa de ajuda? Entre em contato:
         try {
           if (isGroup) return reply('⚠️ Este comando só funciona no privado!');
 
-          // Verifica se o usuário está inscrito
           if (!transmissao.isSubscribed(sender)) {
             return reply('⚠️ Você não está inscrito nas transmissões.');
           }
 
-          // Remove a inscrição
           transmissao.unsubscribe(sender);
 
           reply(`✅ *Inscrição cancelada!*\n\nVocê não receberá mais as transmissões.\n\n💡 Para se inscrever novamente, use: ${prefix}inscrevertm`);
@@ -21256,7 +20383,6 @@ Precisa de ajuda? Entre em contato:
           if (!isOwner) return reply("🚫 Este comando é apenas para o meu dono 💔");
           if (!q && !isImage && !isVideo && !isQuotedImage && !isQuotedVideo) return reply('Digite uma mensagem ou marque uma imagem/vídeo! Exemplo: ' + prefix + 'tm2 Olá inscritos!');
 
-          // Obtém lista de inscritos
           const subscribers = transmissao.getSubscribers();
 
           if (subscribers.length === 0) {
@@ -21268,7 +20394,6 @@ Precisa de ajuda? Entre em contato:
 
           let baseMessage = {};
 
-          // Verifica se a mensagem atual tem imagem
           if (isImage) {
             const image = await getFileBuffer(info.message.imageMessage, 'image');
             const captionOriginal = info.message.imageMessage?.caption || '';
@@ -21279,7 +20404,7 @@ Precisa de ajuda? Entre em contato:
               caption: textoFinal ? `${cabecalho}${textoFinal}` : cabecalho.trim()
             };
           }
-          // Verifica se a mensagem atual tem vídeo
+
           else if (isVideo) {
             const video = await getFileBuffer(info.message.videoMessage, 'video');
             const captionOriginal = info.message.videoMessage?.caption || '';
@@ -21290,7 +20415,7 @@ Precisa de ajuda? Entre em contato:
               caption: textoFinal ? `${cabecalho}${textoFinal}` : cabecalho.trim()
             };
           }
-          // Verifica se cita uma imagem
+
           else if (isQuotedImage) {
             const image = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage, 'image');
 
@@ -21299,7 +20424,7 @@ Precisa de ajuda? Entre em contato:
               caption: q ? `${cabecalho}${q}` : cabecalho.trim()
             };
           }
-          // Verifica se cita um vídeo
+
           else if (isQuotedVideo) {
             const video = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage, 'video');
 
@@ -21308,7 +20433,7 @@ Precisa de ajuda? Entre em contato:
               caption: q ? `${cabecalho}${q}` : cabecalho.trim()
             };
           }
-          // Apenas texto
+
             baseMessage = {
               text: `${cabecalho}${q}`
             };
@@ -21317,7 +20442,6 @@ Precisa de ajuda? Entre em contato:
           let enviados = 0;
           let falhas = 0;
 
-          // Envia para cada inscrito
           for (const subscriber of subscribers) {
             try {
               const suffix = genSuffix();
@@ -21333,19 +20457,16 @@ Precisa de ajuda? Entre em contato:
               await nazu.sendMessage(subscriber.id, message);
               enviados++;
 
-              // Incrementa contador de mensagens recebidas pelo usuário
               transmissao.incrementMessageCount(subscriber.id);
 
-              // Delay aleatório entre envios para evitar ban
               if (enviados < totalSubscribers) {
-                const delay = Math.floor(Math.random() * 2000) + 1500; // 1.5s a 3.5s
+                const delay = Math.floor(Math.random() * 2000) + 1500;
                 await new Promise(resolve => setTimeout(resolve, delay));
               }
             } catch (error) {
               console.error(`Erro ao enviar para ${subscriber.id}:`, error.message);
               falhas++;
 
-              // Se o erro for por conta bloqueada/número inválido, remove da lista
               if (error.message.includes('not-authorized') || error.message.includes('invalid')) {
                 transmissao.removeSubscriber(subscriber.id);
                 console.log(`Inscrito ${subscriber.id} removido automaticamente (conta inválida)`);
@@ -21627,7 +20748,6 @@ Precisa de ajuda? Entre em contato:
 
           let newPrefix = q.trim();
 
-          // Bloqueia o uso de $ como prefixo e converte automaticamente para /
           if (newPrefix === '$') {
             newPrefix = '/';
             await reply(`⚠️ O símbolo "$" é reservado e não pode ser usado como prefixo.\n✅ Prefixo alterado automaticamente para "/" globalmente!`);
@@ -21637,7 +20757,6 @@ Precisa de ajuda? Entre em contato:
           config.prefixo = newPrefix;
           writeJsonFile(CONFIG_FILE, config);
 
-          // Se não foi convertido, envia mensagem normal
           if (newPrefix !== '/') {
             await reply(`Prefixo alterado com sucesso para "${newPrefix}"!`);
           }
@@ -21727,7 +20846,6 @@ Precisa de ajuda? Entre em contato:
         try {
           if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
 
-          // Verifica se é para remover
           if (q && (q.toLowerCase() === 'off' || q.toLowerCase() === 'del' || q.toLowerCase() === 'delete' || q.toLowerCase() === 'remover')) {
             if (!isMenuAudioEnabled()) {
               return reply("ℹ️ Não há áudio configurado para o menu.");
@@ -21756,14 +20874,11 @@ Precisa de ajuda? Entre em contato:
             return reply(statusMsg);
           }
 
-          // Baixa o áudio
           const audioBuffer = await getFileBuffer(audioMsg, 'audio');
 
-          // Salva o áudio
           const audioPath = __dirname + '/../midias/menu_audio.mp3';
           fs.writeFileSync(audioPath, audioBuffer);
 
-          // Atualiza a configuração
           setMenuAudio(audioPath);
 
           await reply('✅ *Áudio do menu configurado com sucesso!*\n\n' +
@@ -21815,7 +20930,7 @@ Precisa de ajuda? Entre em contato:
           const imageBuffer = await getFileBuffer(mediaInfo.media, 'image');
 
           try {
-            // Processa a imagem com ffmpeg antes de atualizar
+
             const processedBuffer = await processImageForProfile(imageBuffer);
             await nazu.updateProfilePicture(nazu.user.id, processedBuffer);
             reply('✅ Foto de perfil do bot alterada com sucesso!');
@@ -21829,7 +20944,6 @@ Precisa de ajuda? Entre em contato:
         }
         break;
 
-      // ========== SISTEMA DE PERSONALIZAÇÃO DE GRUPO ==========
       case 'personalizargrupo':
       case 'ativarperso':
         try {
@@ -21876,7 +20990,6 @@ Precisa de ajuda? Entre em contato:
 
           const imageBuffer = await getFileBuffer(mediaInfo.media, 'image');
 
-          // Salva a imagem no diretório de grupos
           const customPhotoPath = __dirname + `/../database/grupos/${from}_menu.jpg`;
           fs.writeFileSync(customPhotoPath, imageBuffer);
 
@@ -22008,10 +21121,6 @@ Precisa de ajuda? Entre em contato:
           await reply("❌ Ocorreu um erro 💔");
         }
         break;
-
-      // ================================
-      // COMANDOS DE DESIGN DO MENU
-      // ================================
 
       case 'setborda':
       case 'setbordatopo':
@@ -22147,7 +21256,7 @@ Precisa de ajuda? Entre em contato:
           if (!q) return reply(`Uso: ${prefix + command} <texto>\n\nExemplo: ${prefix + command} ╭┈⊰ 🌸 『 *{botName}* 』\\n┊Olá, {userName}!\\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯\n\n*Placeholders disponíveis:*\n{botName} - Nome do bot\n{userName} - Nome do usuário`);
 
           const currentDesign = loadMenuDesign();
-          // Processa quebras de linha explícitas
+
           currentDesign.header = q.replace(/\\n/g, '\n');
 
           if (saveMenuDesign(currentDesign)) {
@@ -22209,7 +21318,7 @@ Precisa de ajuda? Entre em contato:
 ┊
 ┊ 📝 *Comandos disponíveis:*
 ┊ ${prefix}setborda - Alterar borda superior
-┊ ${prefix}setbordafim - Alterar borda inferior  
+┊ ${prefix}setbordafim - Alterar borda inferior
 ┊ ${prefix}setbordameio - Alterar borda do meio
 ┊ ${prefix}setitem - Alterar ícone dos itens
 ┊ ${prefix}setseparador - Alterar ícone separador
@@ -22391,7 +21500,6 @@ Precisa de ajuda? Entre em contato:
         }
         break;
 
-      // ============= SISTEMA DE COMANDOS VIP =============
       case 'menuvip':
       case 'vip':
       case 'vipmenu':
@@ -22452,12 +21560,10 @@ ${prefix}addcmdvip menuadm all
 ${prefix}addcmdvip menudown all`);
           }
 
-          // Verifica se é para adicionar todos os comandos de um menu
           const menuAllMatch = q.toLowerCase().trim().match(/^(\w+)\s+all$/);
           if (menuAllMatch) {
             const menuName = menuAllMatch[1];
 
-            // Mapeia nomes de menus para suas funções
             const menuMap = {
               'menubuscas': menuBuscas,
               'menuadm': menuadm,
@@ -22481,15 +21587,12 @@ ${prefix}addcmdvip menudown all`);
             }
 
             try {
-              // Gera o menu para extrair os comandos
+
               const customDesign = getMenuDesignWithDefaults(nomebot, pushname);
               const menuText = await menuFunction(prefix, nomebot, pushname, customDesign);
 
-              // Extrai comandos do menu usando regex
-              // O menu já foi processado, então ${prefix} foi substituído pelo prefixo real
               const commands = new Set();
 
-              // Padrão 1: Procura por ${prefix}comando (caso ainda não tenha sido substituído)
               const templatePattern = new RegExp(`\\$\\{prefix\\}([a-zA-Z0-9_]+)(?:\\s*<[^>]*>)?`, 'g');
               let match;
               while ((match = templatePattern.exec(menuText)) !== null) {
@@ -22499,11 +21602,8 @@ ${prefix}addcmdvip menudown all`);
                 }
               }
 
-              // Padrão 2: Procura por prefixoComando <param> (já processado)
-              // Escapa o prefixo para usar na regex
               const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-              // Procura por linhas que contenham o prefixo seguido de comando
               const processedPattern = new RegExp(`${escapedPrefix}([a-zA-Z0-9_]+)(?:\\s*<[^>]*>)?`, 'g');
               while ((match = processedPattern.exec(menuText)) !== null) {
                 const cmd = match[1];
@@ -22512,7 +21612,6 @@ ${prefix}addcmdvip menudown all`);
                 }
               }
 
-              // Padrão 3: Procura por comandos com pontos: prefixoComando.sub
               const dotPattern = new RegExp(`${escapedPrefix}([a-zA-Z0-9_]+(?:\\.[a-zA-Z0-9_]+)+)`, 'g');
               while ((match = dotPattern.exec(menuText)) !== null) {
                 const cmd = match[1];
@@ -22521,8 +21620,6 @@ ${prefix}addcmdvip menudown all`);
                 }
               }
 
-              // Padrão 4: Procura por qualquer ocorrência do prefixo seguido de palavra
-              // Isso captura comandos mesmo que o formato do menu seja diferente
               const genericPattern = new RegExp(`(?:^|\\s|\\n|\\r)${escapedPrefix}([a-zA-Z0-9_]+)(?:\\s*<[^>]*>)?(?:\\s|$|\\n|\\r)`, 'gm');
               while ((match = genericPattern.exec(menuText)) !== null) {
                 const cmd = match[1];
@@ -22530,12 +21627,11 @@ ${prefix}addcmdvip menudown all`);
                   !cmd.startsWith('menu') &&
                   cmd !== 'ferramentas' &&
                   cmd !== 'alteradores' &&
-                  cmd.length < 50) { // Evita capturar coisas muito longas
+                  cmd.length < 50) {
                   commands.add(cmd);
                 }
               }
 
-              // Padrão 4: Procura por ${prefix}comando.sub (template)
               const templateDotPattern = new RegExp(`\\$\\{prefix\\}([a-zA-Z0-9_]+(?:\\.[a-zA-Z0-9_]+)+)`, 'g');
               while ((match = templateDotPattern.exec(menuText)) !== null) {
                 const cmd = match[1];
@@ -22545,7 +21641,7 @@ ${prefix}addcmdvip menudown all`);
               }
 
               if (commands.size === 0) {
-                // Debug: mostra um trecho do menu para ajudar a identificar o problema
+
                 const menuPreview = menuText.substring(0, 500).replace(/\n/g, '\\n');
                 console.log(`[DEBUG] Menu "${menuName}" gerado (primeiros 500 chars):`, menuPreview);
                 console.log(`[DEBUG] Prefix usado: "${prefix}"`);
@@ -22557,7 +21653,7 @@ ${prefix}addcmdvip menudown all`);
               let skipped = 0;
 
               for (const cmdName of commandsArray) {
-                // Pula comandos que são outros menus
+
                 if (cmdName.startsWith('menu') || cmdName === 'ferramentas' || cmdName === 'alteradores') {
                   continue;
                 }
@@ -22740,7 +21836,6 @@ ${prefix}togglecmdvip premium_ia off`);
         }
         break;
 
-      // SISTEMA DE INDICAÇÕES
       case 'addindicacao':
       case 'addindicar':
       case 'addindica':
@@ -22867,7 +21962,6 @@ ${prefix}togglecmdvip premium_ia off`);
         }
         break;
 
-      //COMANDOS GERAIS
       case 'rvisu':
       case 'open':
       case 'revelar':
@@ -22939,15 +22033,12 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!isGroup) return reply("Este comando só funciona em grupos.");
           if (!isGroupAdmin) return reply("Apenas administradores podem configurar esta opção.");
 
-          // Inicializa a configuração se não existir
           if (groupData.preservarContador === undefined) {
             groupData.preservarContador = false;
           }
 
-          // Alterna o estado
           groupData.preservarContador = !groupData.preservarContador;
 
-          // Salva a configuração
           writeJsonFile(groupFile, groupData);
           if (isGroup) {
             optimizer.invalidateGroup(from);
@@ -22967,21 +22058,18 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!isGroup) return reply("Este comando só funciona em grupos.");
           if (!isGroupAdmin) return reply("Apenas administradores podem limpar o rank de atividade.");
 
-          // Verifica se a preservação do contador está ativada
           const preservarContador = groupData.preservarContador === true;
 
           if (preservarContador) {
             return reply("⚠️ *Preservação do contador ativada!*\n\n🔒 A remoção automática do contador está desativada neste grupo.\n\n💡 Para limpar o rank manualmente, primeiro desative a preservação com:\n*" + prefix + "mantercontador*");
           }
 
-          // Get current group members with proper LID/JID handling
           const currentMembers = AllgroupMembers;
           const oldContador = groupData.contador || [];
           let removedCount = 0;
           let removedUsers = [];
           let invalidUsers = [];
 
-          // Enhanced filtering with better error handling
           groupData.contador = oldContador.filter(user => {
             try {
               if (!user || !user.id) {
@@ -22989,7 +22077,6 @@ ${prefix}togglecmdvip premium_ia off`);
                 return false;
               }
 
-              // Check if user is still in the group
               const isMember = currentMembers.includes(user.id);
 
               if (!isMember) {
@@ -23008,14 +22095,12 @@ ${prefix}togglecmdvip premium_ia off`);
             }
           });
 
-          // Save the updated data
           writeJsonFile(groupFile, groupData);
-          // Otimização: Invalida cache quando groupData é salvo
+
           if (isGroup) {
             optimizer.invalidateGroup(from);
           }
 
-          // Prepare response message
           let responseMessage = `🧹 Limpeza do rank de atividade concluída!\n\n`;
           responseMessage += `✅ Removidos ${removedCount} usuários ausentes:\n`;
           responseMessage += `${removedUsers.map(name => `• @${name}`).join('\n') || 'Nenhum usuário ausente encontrado.'}`;
@@ -23024,12 +22109,10 @@ ${prefix}togglecmdvip premium_ia off`);
             responseMessage += `\n\n⚠️ ${invalidUsers.length} entradas inválidas foram removidas silenciosamente.`;
           }
 
-          // Send response with proper mentions
           await reply(responseMessage, {
             mentions: removedUsers.map(name => buildUserId(name, config))
           });
 
-          // Log the action
           console.log(`[LIMPAR RANK] Action completed in group ${from}. Removed ${removedCount} users, ${invalidUsers.length} invalid entries.`);
         } catch (e) {
           console.error('[LIMPAR RANK] Error:', e);
@@ -23066,7 +22149,6 @@ ${prefix}togglecmdvip premium_ia off`);
               const groupId = file.replace('.json', '');
               const groupPath = pathz.join(GRUPOS_DIR, file);
 
-              // Skip if file doesn't exist or can't be read
               if (!fs.existsSync(groupPath)) {
                 console.log(`[LIMPAR RANK GLOBAL] Skipping non-existent file: ${groupPath}`);
                 continue;
@@ -23081,7 +22163,6 @@ ${prefix}togglecmdvip premium_ia off`);
                 continue;
               }
 
-              // Get group metadata with error handling
               let metadata;
               try {
                 metadata = await getCachedGroupMetadata(groupId).catch(() => null);
@@ -23096,16 +22177,13 @@ ${prefix}togglecmdvip premium_ia off`);
                 continue;
               }
 
-              // Get current members with proper LID/JID handling
               const currentMembers = metadata.participants?.map(p => p.lid || p.id) || [];
               const oldContador = gData.contador || [];
               let removedInGroup = 0;
               let invalidInGroup = 0;
 
-              // Verifica se a preservação do contador está ativada para este grupo
               const preservarContadorGrupo = gData.preservarContador === true;
 
-              // Enhanced filtering (apenas se preservação não estiver ativada)
               if (!preservarContadorGrupo) {
                 gData.contador = oldContador.filter(user => {
                   try {
@@ -23115,7 +22193,6 @@ ${prefix}togglecmdvip premium_ia off`);
                       return false;
                     }
 
-                    // Check if user is still in the group
                     const isMember = currentMembers.includes(user.id);
 
                     if (!isMember) {
@@ -23135,7 +22212,7 @@ ${prefix}togglecmdvip premium_ia off`);
                   }
                 });
               } else {
-                // Se preservação estiver ativada, apenas conta inválidos, não remove
+
                 oldContador.forEach(user => {
                   if (!user || !user.id) {
                     invalidInGroup++;
@@ -23144,7 +22221,6 @@ ${prefix}togglecmdvip premium_ia off`);
                 });
               }
 
-              // Save updated group data
               try {
                 fs.writeFileSync(groupPath, JSON.stringify(gData, null, 2));
               } catch (writeError) {
@@ -23153,7 +22229,6 @@ ${prefix}togglecmdvip premium_ia off`);
                 continue;
               }
 
-              // Add to summary if changes were made
               if (removedInGroup > 0 || invalidInGroup > 0) {
                 let groupSummary = `${groupId}: `;
                 if (removedInGroup > 0) groupSummary += `Removidos ${removedInGroup} usuários ausentes`;
@@ -23170,7 +22245,6 @@ ${prefix}togglecmdvip premium_ia off`);
             }
           }
 
-          // Prepare response message
           let responseMessage = `🧹 Limpeza de ranks em todos os grupos concluída!\n\n`;
           responseMessage += `✅ Total de usuários removidos: ${totalRemoved}\n`;
           responseMessage += `⚠️ Entradas inválidas removidas: ${totalInvalid}\n\n`;
@@ -23189,7 +22263,6 @@ ${prefix}togglecmdvip premium_ia off`);
 
           await reply(responseMessage);
 
-          // Log the action
           console.log(`[LIMPAR RANK GLOBAL] Cleanup completed. Total removed: ${totalRemoved}, Invalid: ${totalInvalid}, Failed: ${failedGroups.length}`);
 
         } catch (e) {
@@ -23202,14 +22275,11 @@ ${prefix}togglecmdvip premium_ia off`);
         try {
           if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
 
-          // Verifica se a preservação do contador está ativada
           const preservarContadorRankativo = groupData.preservarContador === true;
 
-          // Verify current group members first
           let currentMembers = AllgroupMembers;
           let validUsers = [];
 
-          // Filter out users who have left the group (apenas se preservação não estiver ativada)
           if (!preservarContadorRankativo) {
             groupData.contador = groupData.contador.filter(user => {
               const userId = user.id;
@@ -23224,10 +22294,9 @@ ${prefix}togglecmdvip premium_ia off`);
               return true;
             });
 
-            // Save updated data
             persistGroupData();
           } else {
-            // Se preservação estiver ativada, apenas filtra para validUsers sem remover do contador
+
             validUsers = (groupData.contador || []).filter(user => {
               const userId = user.id;
               return currentMembers.includes(userId);
@@ -23269,14 +22338,11 @@ ${prefix}togglecmdvip premium_ia off`);
         try {
           if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
 
-          // Verifica se a preservação do contador está ativada
           const preservarContador = groupData.preservarContador === true;
 
-          // Verify current group members first
           let currentMembers = AllgroupMembers;
           let validUsers = [];
 
-          // Filter out users who have left the group (apenas se preservação não estiver ativada)
           if (!preservarContador) {
             groupData.contador = groupData.contador.filter(user => {
               const userId = user.id;
@@ -23291,10 +22357,9 @@ ${prefix}togglecmdvip premium_ia off`);
               return true;
             });
 
-            // Save updated data
             persistGroupData();
           } else {
-            // Se preservação estiver ativada, apenas filtra para validUsers sem remover do contador
+
             validUsers = (groupData.contador || []).filter(user => {
               const userId = user.id;
               return currentMembers.includes(userId);
@@ -23342,17 +22407,14 @@ ${prefix}togglecmdvip premium_ia off`);
           const mentionedJids = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
           let targetUser = sender;
 
-          // Se mencionou alguém, usa o mencionado
           if (mentionedJids.length > 0) {
             targetUser = mentionedJids[0];
           }
 
-          // Verifica se o usuário está no grupo
           if (!AllgroupMembers.includes(targetUser)) {
             return reply("Este usuário não está no grupo.");
           }
 
-          // Busca os dados do usuário no contador
           const userData = (groupData.contador || []).find(u => u.id === targetUser);
           const userName = getUserName(targetUser);
 
@@ -23397,37 +22459,30 @@ ${prefix}togglecmdvip premium_ia off`);
         try {
           if (!isGroup) return reply("Este comando só funciona em grupos.");
 
-          // Verifica membros atuais do grupo
           const currentMembers = AllgroupMembers;
 
-          // Filtra usuários que saíram do grupo
           groupData.contador = (groupData.contador || []).filter(user => {
             return user && user.id && currentMembers.includes(user.id);
           });
 
-          // Salva dados atualizados
           writeJsonFile(groupFile, groupData);
           if (isGroup) {
             optimizer.invalidateGroup(from);
           }
 
-          // Verifica se há usuários no contador
           if (!groupData.contador || groupData.contador.length === 0) {
             return reply("📊 *Atividade do Grupo*\n\nNenhum usuário no contador ainda.");
           }
 
-          // Ordena por atividade total (mensagens + comandos + figurinhas)
           const sortedUsers = [...groupData.contador].sort((a, b) => {
             const totalA = (a.msg || 0) + (a.cmd || 0) + (a.figu || 0);
             const totalB = (b.msg || 0) + (b.cmd || 0) + (b.figu || 0);
             return totalB - totalA;
           });
 
-          // Monta a mensagem
           let activityMessage = `📊 *Atividade do Grupo*\n\n`;
           activityMessage += `👥 *Total de usuários:* ${sortedUsers.length}\n\n`;
 
-          // Lista todos os usuários com suas estatísticas
           const mentions = [];
           sortedUsers.forEach((user, index) => {
             if (user && user.id) {
@@ -24040,7 +23095,6 @@ ${prefix}togglecmdvip premium_ia off`);
 
           const report = diagnosticDatabase(econ);
 
-          // Salva as correções
           saveEconomy(econ);
 
           let text = `╭━━━⊱ 🔧 *DIAGNÓSTICO RPG* 🔧 ⊱━━━╮\n`;
@@ -24239,7 +23293,6 @@ ${prefix}togglecmdvip premium_ia off`);
           var fontes;
           fontes = fonte[Math.floor(Math.random() * fonte.length)];
 
-          // Função para quebrar texto em linhas
           function breakText(text, maxCharsPerLine = 20) {
             const words = text.split(' ');
             const lines = [];
@@ -24255,10 +23308,9 @@ ${prefix}togglecmdvip premium_ia off`);
             }
             if (currentLine) lines.push(currentLine);
 
-            return lines.join('%0A'); // %0A = quebra de linha na URL
+            return lines.join('%0A');
           }
 
-          // Aplicar quebra de linha para textos longos
           let processedText = q.length > 20 ? breakText(q, 20) : q;
 
           await sendSticker(nazu, from, {
@@ -24287,7 +23339,6 @@ ${prefix}togglecmdvip premium_ia off`);
           const { promisify } = await import('util');
           const execAsync = promisify(exec);
 
-          // Função para quebrar texto em linhas
           function breakText(text, maxCharsPerLine = 20) {
             const words = text.split(' ');
             const lines = [];
@@ -24306,17 +23357,13 @@ ${prefix}togglecmdvip premium_ia off`);
             return lines.join('%0A');
           }
 
-          // Processar texto
           let processedText = q.length > 20 ? breakText(q, 20) : q;
 
-          // Cores disponíveis
           const cores = ["f702ff", "ff0202", "00ff2e", "efff00", "00ecff", "3100ff", "ffb400", "ff00b0", "00ff95", "9d00ff", "ff6b00", "00fff7", "ff00d4", "a8ff00", "ff0062", "00b3ff", "d4ff00", "ff009d"];
 
-          // Selecionar uma fonte aleatória
           const fontes = ["Days%20One", "Domine", "Exo", "Fredoka%20One", "Gentium%20Basic", "Gloria%20Hallelujah", "Great%20Vibes", "Orbitron", "PT%20Serif", "Pacifico"];
           const fonteEscolhida = fontes[Math.floor(Math.random() * fontes.length)];
 
-          // Diretório temporário
           const tempDir = path.join(__dirname, '../midias/temp_attp_' + Date.now());
           if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir, { recursive: true });
@@ -24324,7 +23371,6 @@ ${prefix}togglecmdvip premium_ia off`);
 
           await reply('⏳ Gerando sticker animado... aguarde!');
 
-          // Baixar 18 imagens com cores diferentes
           const numFrames = 18;
           const downloadPromises = [];
 
@@ -24344,22 +23390,18 @@ ${prefix}togglecmdvip premium_ia off`);
             );
           }
 
-          // Aguardar download de todas as imagens
           await Promise.all(downloadPromises);
 
-          // Criar vídeo com ffmpeg
           const outputVideo = path.join(tempDir, 'output.mp4');
           const ffmpegCmd = `ffmpeg -framerate 10 -i ${path.join(tempDir, 'frame_%03d.png')} -vf "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=white" -c:v libx264 -pix_fmt yuv420p -t 2 ${outputVideo}`;
 
           await execAsync(ffmpegCmd);
 
-          // Converter para webp animado
           const outputWebp = path.join(tempDir, 'output.webp');
           const webpCmd = `ffmpeg -i ${outputVideo} -vcodec libwebp -filter:v fps=fps=15 -lossless 0 -compression_level 6 -q:v 50 -loop 0 -preset picture -an -vsync 0 ${outputWebp}`;
 
           await execAsync(webpCmd);
 
-          // Enviar sticker
           await sendSticker(nazu, from, {
             sticker: fs.readFileSync(outputWebp),
             author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『』`,
@@ -24369,7 +23411,6 @@ ${prefix}togglecmdvip premium_ia off`);
             quoted: info
           });
 
-          // Limpar arquivos temporários
           try {
             fs.rmSync(tempDir, { recursive: true, force: true });
           } catch (cleanupError) {
@@ -24549,7 +23590,6 @@ ${prefix}togglecmdvip premium_ia off`);
             return reply('❌ Número inválido! Escolha entre 1 e 15 figurinhas.');
           }
 
-          // Destino: PV se for grupo, ou o próprio chat se for PV
           const destino = isGroup ? sender : from;
 
           if (isGroup) {
@@ -24564,7 +23604,7 @@ ${prefix}togglecmdvip premium_ia off`);
 
           for (let i = 0; i < quantidade; i++) {
             try {
-              // Gerar número único
+
               let randomNum;
               do {
                 randomNum = Math.floor(Math.random() * 8051);
@@ -24572,7 +23612,6 @@ ${prefix}togglecmdvip premium_ia off`);
 
               usedNumbers.add(randomNum);
 
-              // Buscar a figurinha
               const stickerUrl = `https://raw.githubusercontent.com/badDevelopper/Testfigu/main/fig (${randomNum}).webp`;
               const stickerResponse = await axios.get(stickerUrl, {
                 responseType: 'arraybuffer',
@@ -24581,14 +23620,12 @@ ${prefix}togglecmdvip premium_ia off`);
 
               const stickerBuffer = Buffer.from(stickerResponse.data);
 
-              // Enviar figurinha
               await nazu.sendMessage(destino, {
                 sticker: stickerBuffer
               });
 
               successCount++;
 
-              // Pequeno delay para não sobrecarregar
               await new Promise(resolve => setTimeout(resolve, 800));
 
             } catch (stickerError) {
@@ -24597,7 +23634,6 @@ ${prefix}togglecmdvip premium_ia off`);
             }
           }
 
-          // Mensagem final
           const finalMsg = `✅ Pronto!\n\n📊 *Resultado:*\n• Enviadas: ${successCount} figurinha${successCount !== 1 ? 's' : ''}\n${failCount > 0 ? `• Falhas: ${failCount}\n` : ''}`;
 
           await nazu.sendMessage(destino, {
@@ -24739,7 +23775,6 @@ ${prefix}togglecmdvip premium_ia off`);
           if (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
 
-          // Notificação X9 para banimento
           if (groupData.x9) {
             const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
             await nazu.sendMessage(from, {
@@ -24765,19 +23800,15 @@ ${prefix}togglecmdvip premium_ia off`);
           if (menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
           if (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
 
-          // Aviso com contagem regressiva
           await nazu.sendMessage(from, {
             text: `⚠️ *ÚLTIMAS PALAVRAS!*\n\n@${menc_os2.split('@')[0]}, você tem *10 segundos* para dizer suas últimas palavras antes de ser banido! ⏰`,
             mentions: [menc_os2]
           });
 
-          // Aguarda 10 segundos
           await new Promise(resolve => setTimeout(resolve, 10000));
 
-          // Remove o usuário
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
 
-          // Notificação X9 para banimento
           if (groupData.x9) {
             const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
             await nazu.sendMessage(from, {
@@ -24895,16 +23926,15 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!isGroupAdmin) return reply("Comando restrito a Administradores 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
 
-          // Função para obter solicitações pendentes (compatível com versões antigas do Baileys)
           let requests = [];
           try {
-            // Tenta o método padrão se existir
+
             if (typeof nazu.groupGetRequestParticipants === 'function') {
               requests = await nazu.groupGetRequestParticipants(from);
             } else if (typeof nazu.groupRequestParticipantsList === 'function') {
               requests = await nazu.groupRequestParticipantsList(from);
             } else {
-              // Fallback: fazer a query manualmente
+
               const result = await nazu.query({
                 tag: 'iq',
                 attrs: {
@@ -24915,7 +23945,6 @@ ${prefix}togglecmdvip premium_ia off`);
                 content: [{ tag: 'membership_approval_requests', attrs: {} }]
               });
 
-              // Extrair participantes do resultado
               const requestsNode = result?.content?.find(n => n.tag === 'membership_approval_requests');
               if (requestsNode && requestsNode.content) {
                 requests = requestsNode.content
@@ -24956,9 +23985,8 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!isGroupAdmin) return reply("Comando restrito a Administradores 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
 
-          // Verificar se é "all" para aceitar todos
           if (q && q.toLowerCase().trim() === 'all') {
-            // Função para obter solicitações pendentes (compatível com versões antigas do Baileys)
+
             let allRequests = [];
             try {
               if (typeof nazu.groupGetRequestParticipants === 'function') {
@@ -25000,7 +24028,6 @@ ${prefix}togglecmdvip premium_ia off`);
               }
             }
 
-            // Notificação X9 para aprovação em massa
             if (groupData.x9 && approved.length > 0) {
               await nazu.sendMessage(from, {
                 text: `✅ *X9 Report:* ${approved.length} solicitações foram aprovadas em massa por @${sender.split('@')[0]}.`,
@@ -25028,7 +24055,6 @@ ${prefix}togglecmdvip premium_ia off`);
               await nazu.groupRequestParticipantsUpdate(from, [user], 'approve');
               approved.push(user);
 
-              // Notificação X9 para aprovação de solicitação
               if (groupData.x9) {
                 await nazu.sendMessage(from, {
                   text: `✅ *X9 Report:* Solicitação de @${user.split('@')[0]} foi aprovada por @${sender.split('@')[0]}.`,
@@ -25078,7 +24104,6 @@ ${prefix}togglecmdvip premium_ia off`);
               await nazu.groupRequestParticipantsUpdate(from, [user], 'reject');
               rejected.push(user);
 
-              // Notificação X9 para recusa de solicitação
               if (groupData.x9) {
                 await nazu.sendMessage(from, {
                   text: `❌ *X9 Report:* Solicitação de @${user.split('@')[0]} foi recusada por @${sender.split('@')[0]}.`,
@@ -25186,7 +24211,6 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!menc_os2) return reply("Marque alguém 🙄");
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'promote');
 
-          // Notificação X9 para promoção
           if (groupData.x9) {
             await nazu.sendMessage(from, {
               text: `⬆️ *X9 Report:* @${menc_os2.split('@')[0]} foi promovido(a) a ADM por @${sender.split('@')[0]}.`,
@@ -25210,7 +24234,6 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!menc_os2) return reply("Marque alguém 🙄");
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'demote');
 
-          // Notificação X9 para rebaixamento
           if (groupData.x9) {
             await nazu.sendMessage(from, {
               text: `⬇️ *X9 Report:* @${menc_os2.split('@')[0]} foi rebaixado(a) de ADM por @${sender.split('@')[0]}.`,
@@ -25239,7 +24262,6 @@ ${prefix}togglecmdvip premium_ia off`);
           const oldName = groupMetadata?.subject || 'Nome anterior';
           await nazu.groupUpdateSubject(from, newName);
 
-          // Notificação X9 para mudança de nome
           if (groupData.x9) {
             await nazu.sendMessage(from, {
               text: `✏️ *X9 Report:* Nome do grupo alterado por @${sender.split('@')[0]}\n\n🔹 Anterior: *${oldName}*\n🔸 Novo: *${newName}*`,
@@ -25266,7 +24288,6 @@ ${prefix}togglecmdvip premium_ia off`);
           if (!newDesc) return reply('❌ Digite uma nova descrição para o grupo.\n\n📝 *Uso:* ' + groupPrefix + 'descgrupo Descrição do grupo aqui');
           await nazu.groupUpdateDescription(from, newDesc);
 
-          // Notificação X9 para mudança de descrição
           if (groupData.x9) {
             await nazu.sendMessage(from, {
               text: `📝 *X9 Report:* Descrição do grupo alterada por @${sender.split('@')[0]}`,
@@ -25298,11 +24319,10 @@ ${prefix}togglecmdvip premium_ia off`);
           const imageBuffer = await getFileBuffer(mediaInfo.media, 'image');
 
           try {
-            // Processa a imagem com ffmpeg antes de atualizar
+
             const processedBuffer = await processImageForProfile(imageBuffer);
             await nazu.updateProfilePicture(from, processedBuffer);
 
-            // Notificação X9 para mudança de foto
             if (groupData.x9) {
               await nazu.sendMessage(from, {
                 text: `📸 *X9 Report:* Foto do grupo alterada por @${sender.split('@')[0]}`,
@@ -25326,14 +24346,14 @@ ${prefix}togglecmdvip premium_ia off`);
         if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
         if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
         try {
-          // Proteção Anti-Ban: Verifica rate limit para grupos grandes
+
           const massMentionCheck = checkMassMentionLimit(from, AllgroupMembers.length);
           if (!massMentionCheck.allowed) {
             return reply(massMentionCheck.message);
           }
 
           let path = pathz.join(GRUPOS_DIR, `${from}.json`);
-          // Otimização: Usar cache para leitura de arquivo
+
           let data = await optimizer.loadJsonWithCache(path, { mark: {} });
           if (!data.mark) {
             data.mark = {};
@@ -25341,7 +24361,6 @@ ${prefix}togglecmdvip premium_ia off`);
           let membros = AllgroupMembers.filter(m => !['0', 'games'].includes(data.mark[m]));
           if (!membros.length) return reply('❌ Nenhum membro para mencionar.');
 
-          // Registra uso para grupos grandes (proteção anti-ban) se estiver ativa
           const configMarcar = loadMassMentionConfig();
           if (configMarcar[from]?.enabled && AllgroupMembers.length >= MASS_MENTION_THRESHOLD) {
             registerMassMentionUse(from);
@@ -25367,7 +24386,6 @@ ${prefix}togglecmdvip premium_ia off`);
           if (q.toLowerCase() === 'a' || q.toLowerCase() === 'o' || q.toLowerCase() === 'open' || q.toLowerCase() === 'abrir') {
             await nazu.groupSettingUpdate(from, 'not_announcement');
 
-            // Notificação X9 para abertura do grupo
             if (groupData.x9) {
               await nazu.sendMessage(from, {
                 text: `🔓 *X9 Report:* Grupo aberto por @${sender.split('@')[0]}. Agora todos podem enviar mensagens.`,
@@ -25379,7 +24397,6 @@ ${prefix}togglecmdvip premium_ia off`);
           } else if (q.toLowerCase() === 'f' || q.toLowerCase() === 'c' || q.toLowerCase() === 'close' || q.toLowerCase() === 'fechar') {
             await nazu.groupSettingUpdate(from, 'announcement');
 
-            // Notificação X9 para fechamento do grupo
             if (groupData.x9) {
               await nazu.sendMessage(from, {
                 text: `🔒 *X9 Report:* Grupo fechado por @${sender.split('@')[0]}. Apenas ADMs podem enviar mensagens.`,
@@ -25406,7 +24423,6 @@ ${prefix}togglecmdvip premium_ia off`);
           let data = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath, 'utf-8')) : {};
           data.schedule = data.schedule || {};
 
-          // Handle disabling the schedule
           if (argLower === 'off' || argLower === 'desativar' || argLower === 'remove' || argLower === 'rm') {
             delete data.schedule.openTime;
             if (data.schedule?.lastRun) {
@@ -25416,12 +24432,11 @@ ${prefix}togglecmdvip premium_ia off`);
               }
             }
             writeJsonFile(groupFilePath, data);
-            // Remove cron job in memory (se houver)
+
             try { unscheduleGroupJob(from, 'open'); } catch (e) { }
             return reply('✅ Agendamento diário para ABRIR o grupo foi removido.');
           }
 
-          // Validate time format with enhanced validation
           const timeValidation = validateTimeFormat(rawArg);
           if (!timeValidation.valid) {
             return reply(`⏰ ${timeValidation.error}\nExemplo: ${prefix}opengp 07:30`);
@@ -25431,7 +24446,6 @@ ${prefix}togglecmdvip premium_ia off`);
             return reply(`⏰ Não consegui entender o horário informado. Use o formato HH:MM, por exemplo ${prefix}opengp 07:30`);
           }
 
-          // Save the schedule
           data.schedule.openTime = normalizedTime;
           if (data.schedule.lastRun && typeof data.schedule.lastRun === 'object') {
             delete data.schedule.lastRun.open;
@@ -25441,7 +24455,6 @@ ${prefix}togglecmdvip premium_ia off`);
           }
           writeJsonFile(groupFilePath, data);
 
-          // (Re)agendar job em memória
           try { scheduleGroupJob(from, 'open', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar open cron:', e); }
 
           let msg = `✅ Agendamento salvo! O grupo será ABERTO todos os dias às ${normalizedTime} (horário de Moçambique).`;
@@ -25464,7 +24477,6 @@ ${prefix}togglecmdvip premium_ia off`);
           let data = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath, 'utf-8')) : {};
           data.schedule = data.schedule || {};
 
-          // Handle disabling the schedule
           if (argLower === 'off' || argLower === 'desativar' || argLower === 'remove' || argLower === 'rm') {
             delete data.schedule.closeTime;
             if (data.schedule?.lastRun) {
@@ -25474,12 +24486,11 @@ ${prefix}togglecmdvip premium_ia off`);
               }
             }
             writeJsonFile(groupFilePath, data);
-            // Remove cron job in memory (se houver)
+
             try { unscheduleGroupJob(from, 'close'); } catch (e) { }
             return reply('✅ Agendamento diário para FECHAR o grupo foi removido.');
           }
 
-          // Validate time format with enhanced validation
           const timeValidation = validateTimeFormat(rawArg);
           if (!timeValidation.valid) {
             return reply(`⏰ ${timeValidation.error}\nExemplo: ${prefix}closegp 22:30`);
@@ -25489,7 +24500,6 @@ ${prefix}togglecmdvip premium_ia off`);
             return reply(`⏰ Não consegui entender o horário informado. Use o formato HH:MM, por exemplo ${prefix}closegp 22:30`);
           }
 
-          // Save the schedule
           data.schedule.closeTime = normalizedTime;
           if (data.schedule.lastRun && typeof data.schedule.lastRun === 'object') {
             delete data.schedule.lastRun.close;
@@ -25499,7 +24509,6 @@ ${prefix}togglecmdvip premium_ia off`);
           }
           writeJsonFile(groupFilePath, data);
 
-          // (Re)agendar job em memória
           try { scheduleGroupJob(from, 'close', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar close cron:', e); }
 
           let msg = `✅ Agendamento salvo! O grupo será FECHADO todos os dias às ${normalizedTime} (horário de Moçambique).`;
@@ -25551,7 +24560,6 @@ A mensagem será enviada todos os dias no horário especificado.`);
               const [timeStr, ...descParts] = args.slice(1).join(' ').split('|').map(s => s.trim());
               const description = descParts.join('|').trim() || 'Sem descrição';
 
-              // Validar horário
               const timeValidation = validateTimeFormat(timeStr);
               if (!timeValidation.valid) {
                 return reply(`⏰ ${timeValidation.error}\nExemplo: ${groupPrefix}automsg add 08:00 | Bom dia!`);
@@ -25562,7 +24570,6 @@ A mensagem será enviada todos os dias no horário especificado.`);
                 return reply(`⏰ Horário inválido. Use o formato HH:MM`);
               }
 
-              // Verificar se há mensagem respondida ou texto
               let msgConfig = {
                 id: Date.now().toString(),
                 time: normalizedTime,
@@ -25573,7 +24580,7 @@ A mensagem será enviada todos os dias no horário especificado.`);
               };
 
               if (quotedMessageContent) {
-                // Processar mídia respondida
+
                 if (isQuotedImage || isQuotedVisuU || isQuotedVisuU2) {
                   const mediaMsg = quotedMessageContent.imageMessage ||
                     quotedMessageContent.viewOnceMessage?.message?.imageMessage ||
@@ -25654,7 +24661,7 @@ A mensagem será enviada todos os dias no horário especificado.`);
                   return reply('❌ Tipo de mensagem não suportado. Use texto, imagem, vídeo, documento, figurinha ou áudio.');
                 }
               } else {
-                // Usar descrição como texto
+
                 if (!description || description === 'Sem descrição') {
                   return reply('❌ Você precisa responder a uma mensagem ou fornecer um texto após o horário.');
                 }
@@ -25662,11 +24669,9 @@ A mensagem será enviada todos os dias no horário especificado.`);
                 msgConfig.content = description;
               }
 
-              // Adicionar à lista
               data.autoMessages.push(msgConfig);
               writeJsonFile(groupFilePath, data);
 
-              // Agendar
               scheduleAutoMessage(from, msgConfig, nazu);
 
               await reply(`✅ Mensagem automática adicionada!
@@ -25712,7 +24717,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
 
               const removedMsg = data.autoMessages[msgIndex];
 
-              // Remover arquivo de mídia se existir
               if (removedMsg.mediaPath && fs.existsSync(removedMsg.mediaPath)) {
                 try {
                   fs.unlinkSync(removedMsg.mediaPath);
@@ -25721,10 +24725,8 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
                 }
               }
 
-              // Desagendar
               unscheduleAutoMessage(from, msgId);
 
-              // Remover da lista
               data.autoMessages.splice(msgIndex, 1);
               writeJsonFile(groupFilePath, data);
 
@@ -25749,7 +24751,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
               onMsg.enabled = true;
               writeJsonFile(groupFilePath, data);
 
-              // Reagendar
               scheduleAutoMessage(from, onMsg, nazu);
 
               await reply(`✅ Mensagem automática ativada!\n\n🆔 ID: ${onMsgId}`);
@@ -25770,7 +24771,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
               offMsg.enabled = false;
               writeJsonFile(groupFilePath, data);
 
-              // Desagendar
               unscheduleAutoMessage(from, offMsgId);
 
               await reply(`✅ Mensagem automática desativada!\n\n🆔 ID: ${offMsgId}`);
@@ -25900,18 +24900,17 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isGroup) return reply("Este comando só pode ser usado em grupos 💔");
 
           let path = pathz.join(GRUPOS_DIR, `${from}.json`);
-          // Otimização: Usar cache para leitura de arquivo
+
           let data = await optimizer.loadJsonWithCache(path, { mark: {} });
 
           let participants = [];
           let usingList = false;
 
-          // Check if participation list exists and has members
           if (data.participationList && data.participationList.length > 0) {
             participants = data.participationList;
             usingList = true;
           } else {
-            // Fallback to all members (filtering out marked ones as per original logic)
+
             participants = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
           }
 
@@ -25951,7 +24950,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
         try {
           if (!isGroup) return reply("Este comando só funciona em grupos.");
 
-          // Ensure array exists
           if (!groupData.participationList) groupData.participationList = [];
 
           if (groupData.participationList.includes(sender)) {
@@ -26017,7 +25015,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
           if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
 
-          // Proteção Anti-Ban: Verifica rate limit para grupos grandes
           const massMentionCheckHidetag = checkMassMentionLimit(from, AllgroupMembers.length);
           if (!massMentionCheckHidetag.allowed) {
             return reply(massMentionCheckHidetag.message);
@@ -26026,11 +25023,9 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           var DFC4 = "";
           var rsm4 = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-          // Para mensagens marcadas, precisa baixar a mídia
           if (isQuotedMsg && rsm4) {
             const quotedMsg = info.message?.extendedTextMessage?.contextInfo;
 
-            // Se for mídia marcada, baixa primeiro
             if (isQuotedImage || isQuotedVideo || isQuotedAudio || isQuotedDocument || isQuotedDocW || isQuotedSticker) {
               try {
                 const buffer = await downloadContentBuffer(quotedMsg,
@@ -26040,7 +25035,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
                         isQuotedSticker ? 'sticker' : 'document'
                 );
 
-                // Atualiza as mensagens para incluir o buffer baixado
                 if (isQuotedImage && rsm4.imageMessage) {
                   rsm4.imageMessage.buffer = buffer;
                 } else if (isQuotedVideo && rsm4.videoMessage) {
@@ -26070,7 +25064,7 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           var red4 = isQuotedMsg && !aud_d4 && !figu_d4 && !pink4 && !blue4 && !purple4 && !yellow4 ? rsm4.conversation : info.message?.conversation;
           var green4 = rsm4?.extendedTextMessage?.text || info?.message?.extendedTextMessage?.text;
           let path = pathz.join(GRUPOS_DIR, `${from}.json`);
-          // Otimização: Usar cache para leitura de arquivo
+
           let data = await optimizer.loadJsonWithCache(path, { mark: {} });
           if (!data.mark) {
             data.mark = {};
@@ -26081,7 +25075,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
 
             pink4.caption = q.length > 1 ? q : pink4.caption?.replace(new RegExp(prefix + command, "gi"), ` `) || '';
 
-            // Se tiver buffer (mídia baixada), usa ele. Senão usa URL
             if (pink4.buffer) {
               pink4.image = pink4.buffer;
               delete pink4.buffer;
@@ -26098,7 +25091,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
 
             blue4.caption = q.length > 1 ? q.trim() : blue4.caption?.replace(new RegExp(prefix + command, "gi"), ` `).trim() || '';
 
-            // Se tiver buffer (mídia baixada), usa ele. Senão usa URL
             if (blue4.buffer) {
               blue4.video = blue4.buffer;
               delete blue4.buffer;
@@ -26127,7 +25119,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           } else if (purple4) {
             var DFC4 = purple4;
 
-            // Se tiver buffer (mídia baixada), usa ele. Senão usa URL
             if (purple4.buffer) {
               purple4.document = purple4.buffer;
               delete purple4.buffer;
@@ -26144,7 +25135,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
 
             yellow4.caption = q.length > 1 ? q.trim() : yellow4.caption?.replace(new RegExp(prefix + command, "gi"), `${pushname}\n\n`).trim() || '';
 
-            // Se tiver buffer (mídia baixada), usa ele. Senão usa URL
             if (yellow4.buffer) {
               yellow4.document = yellow4.buffer;
               delete yellow4.buffer;
@@ -26159,7 +25149,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           } else if (figu_d4 && !aud_d4) {
             var DFC4 = figu_d4;
 
-            // Se tiver buffer (mídia baixada), usa ele. Senão usa URL
             if (figu_d4.buffer) {
               figu_d4.sticker = figu_d4.buffer;
               delete figu_d4.buffer;
@@ -26174,7 +25163,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           } else if (aud_d4) {
             var DFC4 = aud_d4;
 
-            // Se tiver buffer (mídia baixada), usa ele. Senão usa URL
             if (aud_d4.buffer) {
               aud_d4.audio = aud_d4.buffer;
               delete aud_d4.buffer;
@@ -26190,7 +25178,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
             aud_d4.ptt = true;
           }
 
-          // Registra uso para grupos grandes (proteção anti-ban) se estiver ativa
           const configHidetag = loadMassMentionConfig();
           if (configHidetag[from]?.enabled && AllgroupMembers.length >= MASS_MENTION_THRESHOLD) {
             registerMassMentionUse(from);
@@ -26221,18 +25208,18 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!isOwner) return reply("Apenas o dono do bot pode usar este comando.");
 
           if (!q) {
-            // Otimização: Cache de divulgacao
+
             const config = await optimizer.memoize(
               'divulgacao:config',
               () => Promise.resolve(loadDivulgacao()),
-              30000 // 30 segundos
+              30000
             );
             const currentMessage = config.savedMessage || "Nenhuma mensagem salva.";
             return reply(`*Mensagem de divulgação atual:*\n${currentMessage}`);
           }
 
           if (saveDivulgacao({ savedMessage: q })) {
-            // Invalida cache após salvar
+
             optimizer.clearStatic('divulgacao:config');
             await reply(`✅ Mensagem de divulgação salva:\n\n${q}`);
           } else {
@@ -26262,14 +25249,12 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!messageText) return reply(`❌ Nenhuma mensagem para divulgar.`);
           if (isNaN(count) || count <= 0 || count > maxCount) return reply(`❌ Quantidade inválida.`);
 
-          // Proteção Anti-Ban: Verifica rate limit para grupos grandes (apenas se markAll estiver ativo)
           if (markAll) {
             const massMentionCheckDiv = checkMassMentionLimit(from, AllgroupMembers.length);
             if (!massMentionCheckDiv.allowed) {
               return reply(massMentionCheckDiv.message);
             }
 
-            // Registra uso para grupos grandes (proteção anti-ban) se estiver ativa
             const configDiv = loadMassMentionConfig();
             if (configDiv[from]?.enabled && AllgroupMembers.length >= MASS_MENTION_THRESHOLD) {
               registerMassMentionUse(from);
@@ -26473,7 +25458,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           if (!q) return reply(`Por favor, forneça o novo prefixo. Exemplo: ${groupPrefix}setprefix !`);
           let newPrefix = q.trim();
 
-          // Bloqueia o uso de $ como prefixo e converte automaticamente para /
           if (newPrefix === '$') {
             newPrefix = '/';
             await reply(`⚠️ O símbolo "$" é reservado e não pode ser usado como prefixo.\n✅ Prefixo alterado automaticamente para "/" neste grupo!`);
@@ -26489,7 +25473,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
           groupData.customPrefix = newPrefix;
           persistGroupData();
 
-          // Se não foi convertido, envia mensagem normal
           if (newPrefix !== '/') {
             await reply(`✅ Prefixo do bot alterado para "${newPrefix}" neste grupo!`);
           }
@@ -26513,7 +25496,6 @@ A mensagem será enviada todos os dias às ${normalizedTime} (horário de Moçam
             return reply("🤔 O prefixo não pode conter espaços.");
           }
 
-          // Atualiza config em memória e no arquivo
           config.prefixo = newPrefix;
           writeJsonFile(CONFIG_FILE, config);
 
@@ -26609,7 +25591,7 @@ Exemplos:
 
           groupData.antiloc = !groupData.antiloc;
           writeJsonFile(groupFile, groupData);
-          // Otimização: Invalida cache quando groupData é salvo
+
           if (isGroup) {
             optimizer.invalidateGroup(from);
           }
@@ -26663,12 +25645,12 @@ Exemplos:
           } else if (args === 'off' || args === 'desligar' || args === 'desativar') {
             groupData.bemvindo = false;
           } else {
-            // Toggle behavior if no argument
+
             groupData.bemvindo = !groupData.bemvindo;
           }
 
           if (groupData.bemvindo) {
-            // Auto-enable banner/profile pic when turning on
+
             if (!groupData.welcome) groupData.welcome = {};
             if (!groupData.welcome.image) groupData.welcome.image = 'banner';
 
@@ -26683,7 +25665,7 @@ Exemplos:
           await reply("❌ Ocorreu um erro interno. Tente novamente em alguns minutos.");
         }
         break;
-      case 'banghost':  //corrigido por kauan revil
+      case 'banghost':
         try {
           if (!isGroup) return reply("❌ Só pode ser usado em grupos.");
           if (!isGroupAdmin) return reply("❌ Apenas administradores.");
@@ -26729,7 +25711,6 @@ Exemplos:
             await nazu.groupParticipantsUpdate(from, fantasmas, 'remove');
             removidos = fantasmas.length;
 
-            // Atualiza o contador removendo os usuários banidos
             dados.contador = updatedContador.filter(u => !fantasmas.includes(u.id));
             fs.writeFileSync(arquivoGrupo, JSON.stringify(dados, null, 2));
           } catch (e) {
@@ -26999,7 +25980,7 @@ Exemplos:
           if (!userId || isNaN(limit) || limit < 1) {
             return reply("Uso inválido. Certifique-se de marcar um usuário e especificar um limite válido (número maior que 0).");
           }
-          // Normaliza o ID do usuário para LID antes de salvar (aceita JID ou LID)
+
           const userIdLid = await getLidFromJidCached(nazu, userId);
           if (!AllgroupMembers.includes(userIdLid)) {
             return reply(`@${getUserName(userId)} não está no grupo.`, {
@@ -27032,7 +26013,7 @@ Exemplos:
           } else {
             return reply("Por favor, marque um usuário ou responda a uma mensagem.");
           }
-          // Normaliza para LID e busca no map
+
           const userIdLid = await getLidFromJidCached(nazu, userId);
           if (!parceriasData.partners[userIdLid]) {
             return reply(`@${getUserName(userId)} não é um parceiro.`, {
@@ -27391,7 +26372,6 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          
 
           groupData.autoSticker = !groupData.autoSticker;
           persistGroupData();
@@ -27407,7 +26387,6 @@ Exemplos:
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          
 
           groupData.autorepo = !groupData.autorepo;
           persistGroupData();
@@ -27420,21 +26399,19 @@ Exemplos:
       case 'assistente':
       case 'assistent':
         try {
-          
+
           if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
 
           const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
-          
 
-          // Se não tem argumento, apenas ativa/desativa
           if (!q) {
             groupData.assistente = !groupData.assistente;
             if (!groupData.assistente) {
-              // Se desativar, remove a personalidade
+
               delete groupData.assistentePersonality;
             } else {
-              // Se ativar sem especificar, usa padrão
+
               groupData.assistentePersonality = groupData.assistentePersonality || 'nazuna';
             }
             persistGroupData();
@@ -27453,7 +26430,6 @@ Exemplos:
             return reply(statusMsg);
           }
 
-          // Se tem argumento, define a personalidade
           const personality = q.toLowerCase().trim();
 
           if (!['nazuna', 'humana', 'ia', 'pro'].includes(personality)) {
@@ -27684,9 +26660,6 @@ Exemplos:
           break;
         }
 
-      // ═══════════════════════════════════════════════════════════════
-      // CONNECT 4 - Jogo de 4 em linha
-      // ═══════════════════════════════════════════════════════════════
       case 'connect4':
       case 'c4':
       case 'ligue4':
@@ -27701,9 +26674,6 @@ Exemplos:
           break;
         }
 
-      // ═══════════════════════════════════════════════════════════════
-      // UNO - Jogo de cartas
-      // ═══════════════════════════════════════════════════════════════
       case 'uno':
         if (!isGroup) return reply("❌ Este comando só pode ser usado em grupos!");
         if (!uno) return reply("Sistema UNO temporariamente indisponível.");
@@ -27732,14 +26702,13 @@ ${prefix}uno sair - Sair da partida
 🚨 3 timeouts = expulsão!`);
         }
 
-        // Verificação automática de timeout antes de processar comandos
         const timeoutCheck = uno.checkTimeout(from);
         if (timeoutCheck && timeoutCheck.success) {
           nazu.sendMessage(from, {
             text: timeoutCheck.message,
             mentions: timeoutCheck.mentions || []
           });
-          // Se o jogo terminou por timeout, não processar mais comandos
+
           if (timeoutCheck.finished) return;
         }
 
@@ -27759,7 +26728,7 @@ ${prefix}uno sair - Sair da partida
             const result = uno.startGame(from, sender);
             if (result.success) {
               await reply(result.message, result.mentions ? { mentions: result.mentions } : undefined);
-              // Envia mão para cada jogador no PV
+
               for (const [playerId, hand] of Object.entries(result.hands)) {
                 try {
                   await nazu.sendMessage(playerId, { text: `🎴 *Sua mão inicial:*\n${hand}` });
@@ -27775,7 +26744,6 @@ ${prefix}uno sair - Sair da partida
             const cartaArg = args.slice(1).join(' ').trim();
             if (!cartaArg) return reply(`❌ Especifique a carta!\n\nUso: ${prefix}uno jogar <número>\nExemplo: ${prefix}uno jogar 3\n\nUse "mão" no PV para ver suas cartas numeradas.`);
 
-            // Parse: pode ser só número ou número + cor (para coringas)
             const parts = cartaArg.split(/\s+/);
             const cardIndex = parseInt(parts[0]);
             const chosenColor = parts[1]?.toLowerCase();
@@ -27785,7 +26753,7 @@ ${prefix}uno sair - Sair da partida
             const result = uno.playCard(from, sender, cardIndex, chosenColor);
             if (result.success) {
               await nazu.sendMessage(from, { text: result.message, mentions: result.mentions || [] });
-              // Envia nova mão no PV
+
               const newHand = uno.getPlayerHand(from, sender);
               if (newHand) {
                 try {
@@ -27847,7 +26815,7 @@ ${prefix}uno sair - Sair da partida
             return reply(result.message, result.mentions ? { mentions: result.mentions } : undefined);
           }
           case 'checktimeout': {
-            // Comando oculto para verificar timeout manualmente
+
             const result = uno.checkTimeout(from);
             if (result) {
               return reply(result.message, result.mentions ? { mentions: result.mentions } : undefined);
@@ -27859,9 +26827,6 @@ ${prefix}uno sair - Sair da partida
         }
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // MEMÓRIA - Jogo da memória
-      // ═══════════════════════════════════════════════════════════════
       case 'memoria':
       case 'memory':
         if (!isGroup) return reply("❌ Este comando só pode ser usado em grupos!");
@@ -27874,9 +26839,8 @@ ${prefix}uno sair - Sair da partida
           return reply(ranking);
         }
 
-        // Verifica se tem jogo ativo
         if (memoria.hasActiveGame(from)) {
-          // Tentar jogar
+
           const pos = parseInt(args[0]);
           if (!isNaN(pos)) {
             const result = memoria.makeMove(from, sender, pos);
@@ -27890,14 +26854,10 @@ ${prefix}uno sair - Sair da partida
           return reply(resultEnd.message);
         }
 
-        // Criar novo jogo
         const resultStart = memoria.startGame(from, sender, pushname);
         return reply(resultStart.message);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // CONQUISTAS - Sistema de achievements (modo brincadeira)
-      // ═══════════════════════════════════════════════════════════════
       case 'conquistasbn':
       case 'achievementsbn':
       case 'medalhasbn':
@@ -27906,9 +26866,6 @@ ${prefix}uno sair - Sair da partida
         return reply(list);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // PRESENTES - Sistema de caixas e presentes
-      // ═══════════════════════════════════════════════════════════════
       case 'caixa':
       case 'box':
         if (!gifts) return reply("Sistema de presentes temporariamente indisponível.");
@@ -27924,7 +26881,6 @@ ${prefix}caixa lendaria - Abre caixa lendária (2000 gold)
 Use ${prefix}inventario para ver seus itens!`);
         }
 
-        // Precisa do sistema de economia para caixas pagas
         const econ = loadEconomy();
         const userEco = getEcoUser(econ, sender);
 
@@ -27978,9 +26934,6 @@ Use ${prefix}inventario para ver seus itens!`);
         return reply(inv);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // REPUTAÇÃO - Sistema de rep e denúncias (modo brincadeira)
-      // ═══════════════════════════════════════════════════════════════
       case 'repbn':
       case 'reputacaobn':
         if (!reputation) return reply("Sistema de reputação temporariamente indisponível.");
@@ -27988,7 +26941,7 @@ Use ${prefix}inventario para ver seus itens!`);
         const actionRep = args[0]?.toLowerCase();
 
         if (!actionRep || (!menc_os2 && actionRep !== '+' && actionRep !== '-')) {
-          // Ver própria reputação ou de alguém
+
           const target = menc_os2 || sender;
           const rep = reputation.getReputation(target);
           const name = menc_os2 ? `@${menc_os2.split('@')[0]}` : pushname;
@@ -28039,9 +26992,6 @@ Use ${prefix}inventario para ver seus itens!`);
         return reply(reportsData);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // QR CODE - Gerar e ler (modo brincadeira)
-      // ═══════════════════════════════════════════════════════════════
       case 'qrcodebn':
       case 'gerarqrbn':
         if (!qrcode) return reply("Sistema de QR Code temporariamente indisponível.");
@@ -28083,9 +27033,6 @@ Use ${prefix}inventario para ver seus itens!`);
         }
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // NOTAS - Sistema de notas pessoais
-      // ═══════════════════════════════════════════════════════════════
       case 'nota':
       case 'note':
         if (!notes) return reply("Sistema de notas temporariamente indisponível.");
@@ -28153,9 +27100,6 @@ ${prefix}nota buscar <termo> - Busca nas notas`);
         return reply(resultNotes.message);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // CALCULADORA - Cálculos matemáticos
-      // ═══════════════════════════════════════════════════════════════
       case 'calc':
       case 'calcular':
       case 'calculadora':
@@ -28194,9 +27138,6 @@ ${prefix}calc converter 100 km mi`);
         return reply(resultCalc.message);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // EDIÇÃO DE ÁUDIO - Cortar, velocidade, etc
-      // ═══════════════════════════════════════════════════════════════
       case 'cortaraudio':
       case 'cutaudio':
         if (!audioEdit) return reply("Sistema de edição de áudio temporariamente indisponível.");
@@ -28367,9 +27308,6 @@ ${prefix}calc converter 100 km mi`);
         }
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // EDIÇÃO DE VÍDEO - Cortar vídeo
-      // ═══════════════════════════════════════════════════════════════
       case 'cortarvideo':
       case 'cortarvid':
       case 'cutvideo':
@@ -28393,7 +27331,7 @@ ${prefix}calc converter 100 km mi`);
           fs.writeFileSync(raneVideoCut, buffimgVideoCut);
 
           const ranVideoCut = __dirname + `/../database/tmp/${Math.random()}_cut.mp4`;
-          // Recodifica o vídeo para garantir que a imagem seja preservada
+
           const ffmpegCmdCut = `ffmpeg -ss ${inicioVid} -i ${raneVideoCut} -to ${fimVid} -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k ${ranVideoCut}`;
 
           exec(ffmpegCmdCut, async (err) => {
@@ -28416,9 +27354,6 @@ ${prefix}calc converter 100 km mi`);
         }
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // HORÓSCOPO - Previsões por signo
-      // ═══════════════════════════════════════════════════════════════
       case 'horoscopo':
       case 'signo':
         if (!iaExpanded) return reply("Sistema de horóscopo temporariamente indisponível.");
@@ -28439,7 +27374,6 @@ ${prefix}horoscopo <signo>
 
         reply("🔮 Consultando as estrelas...");
 
-        // Função wrapper para a IA
         const aiFunctionHoroscope = (prompt) => {
           return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
             .then(response => response?.data?.choices?.[0]?.message?.content || '');
@@ -28471,9 +27405,6 @@ ${prefix}horoscopo <signo>
 Use ${prefix}horoscopo <signo> para ver a previsão!`);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // DEBATER - Gerador de argumentos
-      // ═══════════════════════════════════════════════════════════════
       case 'debater':
       case 'debate':
         if (!iaExpanded) return reply("Sistema de debate temporariamente indisponível.");
@@ -28482,7 +27413,6 @@ Use ${prefix}horoscopo <signo> para ver a previsão!`);
 
         reply("💬 Analisando argumentos...");
 
-        // Função wrapper para a IA
         const aiFunctionDebate = (prompt) => {
           return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
             .then(response => response?.data?.choices?.[0]?.message?.content || '');
@@ -28495,9 +27425,6 @@ Use ${prefix}horoscopo <signo> para ver a previsão!`);
         });
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // HISTÓRIA INTERATIVA - Aventura por escolhas
-      // ═══════════════════════════════════════════════════════════════
       case 'historiainterativa':
       case 'storyinteractive':
       case 'aventura':
@@ -28506,7 +27433,6 @@ Use ${prefix}horoscopo <signo> para ver a previsão!`);
 
         const subCmdStory = args[0]?.toLowerCase();
 
-        // Função wrapper para a IA
         const aiFunctionStory = (prompt) => {
           return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null, null)
             .then(response => response?.data?.choices?.[0]?.message?.content || '');
@@ -28548,7 +27474,7 @@ ${prefix}aventura sair - Abandona a história
             return reply(resultQuit.message);
           }
           default: {
-            // Tenta iniciar história com o gênero
+
             const generos = ['fantasia', 'terror', 'romance', 'aventura', 'ficção', 'ficcao', 'mistério', 'misterio'];
             const genero = subCmdStory;
             if (!generos.some(g => g.startsWith(genero))) {
@@ -28565,9 +27491,6 @@ ${prefix}aventura sair - Abandona a história
         }
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // ANTITOXIC - Configuração (apenas admins)
-      // ═══════════════════════════════════════════════════════════════
       case 'antitoxic':
       case 'antitóxico':
         if (!isGroup) return reply("❌ Este comando só pode ser usado em grupos!");
@@ -28614,9 +27537,6 @@ ${prefix}antitoxic sensibilidade <0-100> - Define sensibilidade
 ⚠️ Este sistema usa IA e pode cometer erros!`);
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // ANTIPALAVRA - Sistema de blacklist de palavras (apenas admins)
-      // ═══════════════════════════════════════════════════════════════
       case 'antipalavra':
       case 'antiword':
         if (!isGroup) return reply("❌ Este comando só pode ser usado em grupos!");
@@ -28625,19 +27545,16 @@ ${prefix}antitoxic sensibilidade <0-100> - Define sensibilidade
 
         const subCmdAntipalavra = args[0]?.toLowerCase();
 
-        // Ativa o sistema
         if (subCmdAntipalavra === 'on' || subCmdAntipalavra === 'ativar') {
           const result = antipalavra.enableAntipalavra(from);
           return reply(result.message);
         }
 
-        // Desativa o sistema
         if (subCmdAntipalavra === 'off' || subCmdAntipalavra === 'desativar') {
           const result = antipalavra.disableAntipalavra(from);
           return reply(result.message);
         }
 
-        // Adiciona palavra à blacklist
         if (subCmdAntipalavra === 'add' || subCmdAntipalavra === 'adicionar') {
           const palavra = args.slice(1).join(' ').trim();
           if (!palavra) {
@@ -28647,7 +27564,6 @@ ${prefix}antitoxic sensibilidade <0-100> - Define sensibilidade
           return reply(result.message);
         }
 
-        // Remove palavra da blacklist
         if (subCmdAntipalavra === 'del' || subCmdAntipalavra === 'remover' || subCmdAntipalavra === 'remove') {
           const palavra = args.slice(1).join(' ').trim();
           if (!palavra) {
@@ -28657,19 +27573,16 @@ ${prefix}antitoxic sensibilidade <0-100> - Define sensibilidade
           return reply(result.message);
         }
 
-        // Lista todas as palavras
         if (subCmdAntipalavra === 'list' || subCmdAntipalavra === 'lista' || subCmdAntipalavra === 'listar') {
           const result = antipalavra.listPalavrasBlacklist(from);
           return reply(result.message);
         }
 
-        // Limpa a blacklist
         if (subCmdAntipalavra === 'clear' || subCmdAntipalavra === 'limpar') {
           const result = antipalavra.clearBlacklist(from);
           return reply(result.message);
         }
 
-        // Estatísticas
         if (subCmdAntipalavra === 'stats' || subCmdAntipalavra === 'estatisticas') {
           const stats = antipalavra.getStats(from);
           let msg = `📊 *ANTIPALAVRA - ESTATÍSTICAS*\n`;
@@ -28689,7 +27602,6 @@ ${prefix}antitoxic sensibilidade <0-100> - Define sensibilidade
           return reply(msg);
         }
 
-        // Menu de ajuda
         return reply(`🚫 *ANTIPALAVRA - SISTEMA DE BLACKLIST*
 
 *Comandos disponíveis:*
@@ -29048,7 +27960,6 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
           break;
         }
 
-        // Cria pedido de traição (precisa ser aceito pelo alvo)
         const betrayalResult = relationshipManager.createBetrayalRequest(sender, menc_os2, from, groupPrefix);
         if (!betrayalResult.success) {
           await reply(betrayalResult.message, { mentions: betrayalResult.mentions || [] });
@@ -29117,7 +28028,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
           if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
           if (AllgroupMembers.length < 2) return reply('❌ Preciso de pelo menos 2 membros no grupo!');
           let path = buildGroupFilePath(from);
-          // Otimização: Usar cache para leitura de arquivo
+
           let data = await optimizer.loadJsonWithCache(path, { mark: {} });
           let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
           const membro1 = membros[Math.floor(Math.random() * membros.length)];
@@ -29174,7 +28085,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
 ╰━━━━━━━━━━━━━━━━━━━━╯`);
           if (AllgroupMembers.length < 2) return reply('❌ Preciso de pelo menos 2 membros no grupo!');
           let path = buildGroupFilePath(from);
-          // Otimização: Usar cache para leitura de arquivo
+
           let data = await optimizer.loadJsonWithCache(path, { mark: {} });
           let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
           let par = membros[Math.floor(Math.random() * membros.length)];
@@ -29244,7 +28155,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
             respostasPositivas[Math.floor(Math.random() * respostasPositivas.length)] :
             respostasNegativas[Math.floor(Math.random() * respostasNegativas.length)];
 
-          const confianca = Math.floor(Math.random() * 30) + 70; // 70-100%
+          const confianca = Math.floor(Math.random() * 30) + 70;
           const emoji = isPositive ? '🎆' : '💔';
 
           await reply(`� **ORÁCULO RESPONDE** 🎱
@@ -29538,7 +28449,7 @@ ${nivelSorte >= 70 ? '🎉 Hoje é seu dia de sorte!' : nivelSorte >= 40 ? '🤔
           var frasekk;
           frasekk = [`tá querendo relações sexuais a ${q}, topa?`, `quer que *${q}* pessoas venham de *chicote, algema e corda de alpinista*.`, `quer que ${q} pessoas der tapa na cara, lhe chame de cachorra e fud3r bem gostosinho...`];
           let path = buildGroupFilePath(from);
-          // Otimização: Usar cache para leitura de arquivo
+
           let data = await optimizer.loadJsonWithCache(path, { mark: {} });
           let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
           var context;
@@ -30498,14 +29409,10 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
         }
         break;
 
-      // APIKEY FORNECIDA POR "Lipe NTJ" (+55 73 9867-6116)
-      // Mandem agradecimentos a ele 🫶🏻
       case 'likeff':
       case 'likes':
       case 'likesff':
         try {
-          // Verificar API key
-          
 
           if (!q) {
             return reply(`⭐ *ENVIAR LIKES - FREE FIRE*\n\n📝 *Como usar:*\n• Digite o ID do Free Fire após o comando\n• Exemplo: ${prefix}likes 1033857091\n\n💡 *Formato:* Apenas números do seu ID`);
@@ -30529,11 +29436,10 @@ ${prefix}wl.add @usuario | antilink,antistatus`);
               timeout: 120000
             });
 
-            // Verificar se a resposta indica erro de limite
             if (response.data && response.data.success === false && response.data.error === "Acesso negado") {
               const errorData = response.data;
               if (errorData.required_limit && errorData.required_limit > 500) {
-                // Notificar dono sobre necessidade de plano ilimitado
+
                 const ownerMessage = `🚨 *ALERTA - PLANO INSUFICIENTE PARA LIKES FF* 🚨
 
 ⚠️ *Problema detectado:*
@@ -30563,7 +29469,6 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
               }
             }
 
-            // Verifica se tem dados mesmo com success=false (caso de menos de 100 likes)
             const hasData = response.data && response.data.data;
             const isPartialSuccess = response.data && response.data.success === false &&
               response.data.message &&
@@ -30618,12 +29523,10 @@ O envio de likes do Free Fire está disponível apenas no *plano ilimitado*.
             console.error('Erro no comando likes:', apiError.message);
             console.error('Response data:', apiError.response?.data);
 
-            // Verificar se é erro de API key
             if (isApiKeyError(apiError)) {
 return reply('❌ Comando indisponível no momento.');
             }
 
-            // Verificar se é o caso de menos de 100 likes (mesmo vindo como erro HTTP)
             const errorData = apiError.response?.data;
             if (errorData && errorData.data) {
               const data = errorData.data;
@@ -30644,7 +29547,6 @@ return reply('❌ Comando indisponível no momento.');
               return reply(msg);
             }
 
-            // Outros erros
             return reply(`❌ *Erro ao enviar likes*\n\n⚠️ ${apiError.response?.data?.message || apiError.message || 'Erro desconhecido'}\n\n🔄 Tente novamente mais tarde.`);
           }
         } catch (e) {
@@ -30653,15 +29555,10 @@ return reply('❌ Comando indisponível no momento.');
         }
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🎮 BRAWL STARS - COMANDOS DE CONSULTA
-      // ═══════════════════════════════════════════════════════════════
-
       case 'bsplayer':
       case 'bsjogador':
       case 'bsperfil':
         {
-          
 
           if (!q) {
             return reply(`🎮 *BRAWL STARS - PERFIL DE JOGADOR*\n\n📝 *Como usar:*\n• Digite a TAG do jogador após o comando\n• Exemplo: ${prefix}bsplayer #2PP\n\n💡 *Dica:* Você pode copiar sua tag do jogo`);
@@ -30687,7 +29584,6 @@ return reply('❌ Comando indisponível no momento.');
             const player = playerRes.data;
             const icons = iconsRes?.data?.player || {};
 
-            // Calcular estatísticas extras
             const totalVictories = (player['3vs3Victories'] || 0) + (player.soloVictories || 0) + (player.duoVictories || 0);
             const brawlersAtMax = player.brawlers?.filter(b => b.power === 11).length || 0;
             const brawlersAtRank25 = player.brawlers?.filter(b => b.rank >= 25).length || 0;
@@ -30745,7 +29641,6 @@ return reply('❌ Comando indisponível no momento.');
               });
             }
 
-            // Buscar imagem completa do perfil (com todos os brawlers)
             const tagWithoutHash = player.tag.replace('#', '');
             const profileImageUrl = `https://img.sltbot.com/player/${tagWithoutHash}/brawlers?o=h`;
 
@@ -30774,7 +29669,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
       case 'bscla':
       case 'bsclube':
         {
-          
 
           if (!q) {
             return reply(`⚔️ *BRAWL STARS - INFORMAÇÕES DO CLUBE*\n\n📝 *Como usar:*\n• Digite a TAG do clube após o comando\n• Exemplo: ${prefix}bsclub #2PP\n\n💡 *Dica:* Você pode copiar a tag do clube no jogo`);
@@ -30797,7 +29691,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
             const club = response.data;
 
-            // Calcular estatísticas do clube
             const totalTrophies = club.members?.reduce((sum, m) => sum + (m.trophies || 0), 0) || 0;
             const avgTrophies = club.members?.length ? Math.round(totalTrophies / club.members.length) : 0;
             const president = club.members?.find(m => m.role === 'president');
@@ -30847,7 +29740,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
               }
             }
 
-            // Buscar badge do clube
             let badgeUrl = null;
             if (club.badgeId) {
               badgeUrl = `https://cdn.brawlify.com/club-badges/regular/${club.badgeId}.png`;
@@ -30883,7 +29775,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
         try {
           reply('🔍 Buscando lista de brawlers...');
 
-          // Usar API Brawlify (gratuita e com mais dados)
           axios.get('https://api.brawlify.com/v1/brawlers', { timeout: 30000 }).then(response => {
 
             if (!response.data || !response.data.list) {
@@ -30892,7 +29783,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
             const brawlers = response.data.list;
 
-            // Agrupar por raridade
             const byRarity = {};
             brawlers.forEach(b => {
               const rarity = b.rarity?.name || 'Comum';
@@ -30968,7 +29858,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
           reply('🔍 Buscando informações do brawler...');
 
-          // Usar API Brawlify com dados completos
           axios.get('https://api.brawlify.com/v1/brawlers', { timeout: 30000 }).then(listResponse => {
 
             if (!listResponse.data || !listResponse.data.list) {
@@ -30983,7 +29872,7 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
             );
 
             if (!found) {
-              // Tentar busca parcial
+
               const partial = brawlers.filter(b =>
                 b.name.toLowerCase().includes(brawlerName)
               );
@@ -30999,7 +29888,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
             const brawler = found;
 
-            // Classificações
             const rarityPT = {
               'Legendary': 'Lendário 💛',
               'Mythic': 'Mítico ❤️',
@@ -31055,7 +29943,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
               });
             }
 
-            // Imagens disponíveis
             const imageUrl = brawler.imageUrl2 || brawler.imageUrl || brawler.imageUrl3;
 
             if (imageUrl) {
@@ -31080,7 +29967,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
       case 'bsrankings':
       case 'bsrank':
       case 'bstop': {
-        
 
         const argsRank = q ? q.trim().toLowerCase().split(/\s+/) : [];
         const country = argsRank[0] || 'global';
@@ -31101,9 +29987,8 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
           url = `/* API removida */`;
         }
 
-        // Se for ranking de brawler específico
         if (type === 'brawlers' && brawlerId) {
-          // Buscar ID do brawler pelo nome
+
           axios.get('https://api.brawlify.com/v1/brawlers', { timeout: 30000 }).then(brawlersRes => {
             const found = brawlersRes.data.list.find(b => b.name.toLowerCase() === brawlerId.toLowerCase());
             if (found) {
@@ -31272,7 +30157,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
       case 'bsrotacao':
         reply('🔍 Buscando eventos atuais...');
 
-        // Usar API Brawlify com dados completos dos eventos
         axios.get('https://api.brawlify.com/v1/events', { timeout: 30000 }).then(response => {
           if (!response.data) {
             return reply('❌ Erro ao buscar eventos.');
@@ -31282,7 +30166,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
           let msg = `🎮 *BRAWL STARS - EVENTOS*\n${'═'.repeat(30)}\n\n`;
 
-          // Eventos ativos
           if (active && active.length > 0) {
             msg += `🟢 *EVENTOS ATIVOS*\n\n`;
 
@@ -31302,7 +30185,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
             });
           }
 
-          // Próximos eventos
           if (upcoming && upcoming.length > 0) {
             msg += `🟡 *PRÓXIMOS EVENTOS*\n\n`;
 
@@ -31332,15 +30214,10 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
         });
         break;
 
-      // ═══════════════════════════════════════════════════════════════
-      // 🆕 NOVOS COMANDOS BRAWL STARS
-      // ═══════════════════════════════════════════════════════════════
-
       case 'bsbattlelog':
       case 'bshistorico':
       case 'bspartidas':
         {
-          
 
           if (!q) {
             return reply(`📜 *BRAWL STARS - HISTÓRICO DE BATALHAS*\n\n📝 *Como usar:*\n• Digite a TAG do jogador\n• Exemplo: ${prefix}bsbattlelog #2PP\n\n💡 Mostra as últimas 25 partidas`);
@@ -31362,7 +30239,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
             const battles = response.data.items.slice(0, 15);
 
-            // Estatísticas
             const victories = battles.filter(b => b.battle?.result === 'victory').length;
             const defeats = battles.filter(b => b.battle?.result === 'defeat').length;
             const draws = battles.filter(b => b.battle?.result === 'draw').length;
@@ -31392,7 +30268,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
               if (event?.map) msg += ` - ${event.map}`;
               msg += `\n`;
 
-              // Brawler usado pelo jogador
               if (b?.teams || b?.players) {
                 const players = b.teams ? b.teams.flat() : b.players;
                 const playerData = players?.find(p => p.tag === playerTag);
@@ -31467,7 +30342,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
           msg += `┣ 🆕 Novo: ${map.new ? 'Sim' : 'Não'}\n`;
           msg += `┗ ❌ Desativado: ${map.disabled ? 'Sim' : 'Não'}\n\n`;
 
-          // Melhores brawlers no mapa
           if (map.stats && map.stats.length > 0) {
             axios.get('https://api.brawlify.com/v1/brawlers', { timeout: 30000 }).then(brawlersRes => {
               const brawlersList = brawlersRes?.data?.list || [];
@@ -31485,7 +30359,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
                 msg += `   📊 Pick Rate: ${stat.useRate.toFixed(1)}%\n\n`;
               });
 
-              // Melhor composição de time
               if (map.teamStats && map.teamStats.length > 0) {
                 const bestTeam = map.teamStats[0];
                 msg += `👥 *MELHOR COMPOSIÇÃO*\n`;
@@ -31493,7 +30366,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
                 msg += `📈 Win Rate: ${bestTeam.data.winRate.toFixed(1)}%\n\n`;
               }
 
-              // Imagem do mapa
               if (map.imageUrl) {
                 axios.get(map.imageUrl, { responseType: 'arraybuffer', timeout: 15000 }).then(imageBuffer => {
                   nazu.sendMessage(from, {
@@ -31507,8 +30379,7 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
                 reply(msg);
               }
             }).catch(() => {
-              // Se falhou ao buscar brawlers, continua sem eles
-              // Melhor composição de time
+
               if (map.teamStats && map.teamStats.length > 0) {
                 const bestTeam = map.teamStats[0];
                 msg += `👥 *MELHOR COMPOSIÇÃO*\n`;
@@ -31516,7 +30387,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
                 msg += `📈 Win Rate: ${bestTeam.data.winRate.toFixed(1)}%\n\n`;
               }
 
-              // Imagem do mapa
               if (map.imageUrl) {
                 axios.get(map.imageUrl, { responseType: 'arraybuffer', timeout: 15000 }).then(imageBuffer => {
                   nazu.sendMessage(from, {
@@ -31531,8 +30401,7 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
               }
             });
           } else {
-            // Sem stats, vai direto para composição e imagem
-            // Melhor composição de time
+
             if (map.teamStats && map.teamStats.length > 0) {
               const bestTeam = map.teamStats[0];
               msg += `👥 *MELHOR COMPOSIÇÃO*\n`;
@@ -31540,7 +30409,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
               msg += `📈 Win Rate: ${bestTeam.data.winRate.toFixed(1)}%\n\n`;
             }
 
-            // Imagem do mapa
             if (map.imageUrl) {
               axios.get(map.imageUrl, { responseType: 'arraybuffer', timeout: 15000 }).then(imageBuffer => {
                 nazu.sendMessage(from, {
@@ -31571,7 +30439,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
           const maps = response.data.list.filter(m => !m.disabled);
 
-          // Agrupar por modo de jogo
           const byMode = {};
           maps.forEach(m => {
             const mode = m.gameMode?.name || 'Outro';
@@ -31663,7 +30530,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
           msg += `👤 *ÍCONES DE JOGADOR*\n`;
           msg += `📊 Total: ${playerIcons.length} ícones\n\n`;
 
-          // Agrupar por brawler
           const byBrawler = playerIcons.filter(i => i.brawler);
           const special = playerIcons.filter(i => !i.brawler && i.isReward);
           const regular = playerIcons.filter(i => !i.brawler && !i.isReward);
@@ -31686,7 +30552,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
       case 'bsclubmembers':
       case 'bsmembros': {
-        
 
         if (!q) {
           return reply(`👥 *BRAWL STARS - MEMBROS DO CLUBE*\n\n📝 *Como usar:*\n• Digite a TAG do clube\n• Exemplo: ${prefix}bsmembros #2PP\n\n💡 Lista completa de todos os membros`);
@@ -31756,7 +30621,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
 
       case 'bscompare':
       case 'bscomparar':
-        
 
         const tags = q ? q.trim().split(/\s+/) : [];
         if (tags.length < 2) {
@@ -31782,7 +30646,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
           const p1 = res1.data;
           const p2 = res2.data;
 
-          // Funções auxiliares
           const better = (v1, v2) => v1 > v2 ? '✅' : v1 < v2 ? '❌' : '🤝';
           const format = (v) => (v || 0).toLocaleString();
 
@@ -31814,7 +30677,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
           msg += `👾 *Brawlers*\n`;
           msg += `${better(p1.brawlers?.length, p2.brawlers?.length)} ${p1.brawlers?.length || 0} vs ${p2.brawlers?.length || 0}\n\n`;
 
-          // Brawlers Power 11
           const p1Max = p1.brawlers?.filter(b => b.power === 11).length || 0;
           const p2Max = p2.brawlers?.filter(b => b.power === 11).length || 0;
           msg += `⭐ *Power 11*\n`;
@@ -31836,7 +30698,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
       case 'bsplayerbrawlers':
       case 'bsjogadorbrawlers':
       case 'bsmeusbrawlers': {
-        
 
         if (!q) {
           return reply(`👾 *BRAWL STARS - BRAWLERS DO JOGADOR*\n\n📝 *Como usar:*\n• Digite a TAG do jogador\n• Exemplo: ${prefix}bsmeusbrawlers #2PP\n\n💡 Lista completa de brawlers com detalhes`);
@@ -31859,7 +30720,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
           const player = response.data;
           const brawlers = player.brawlers.sort((a, b) => (b.trophies || 0) - (a.trophies || 0));
 
-          // Estatísticas gerais
           const totalTrophies = brawlers.reduce((sum, b) => sum + (b.trophies || 0), 0);
           const avgTrophies = Math.round(totalTrophies / brawlers.length);
           const maxPower = brawlers.filter(b => b.power === 11).length;
@@ -31887,7 +30747,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
             msg += `${i + 1}. ${rankBadge} *${b.name}* ${powerBadge}\n`;
             msg += `   🏆 ${b.trophies} | R${b.rank} | P${b.power}\n`;
 
-            // Star Powers e Gadgets
             const sp = b.starPowers?.length || 0;
             const gd = b.gadgets?.length || 0;
             const gr = b.gears?.length || 0;
@@ -31897,7 +30756,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
             msg += `\n`;
           });
 
-          // Dividir mensagem se muito grande
           if (msg.length > 4000) {
             const parts = msg.match(/.{1,4000}/gs) || [msg];
             for (const part of parts) {
@@ -31985,9 +30843,9 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
       case 'msgprefix':
         try {
           if (!isOwner) return reply('🚫 Apenas o dono pode configurar a resposta de prefixo.');
-          
+
           if (!q) return reply(`Uso: ${prefix}msgprefix on/off\n\n💡 Isso liga ou desliga a resposta automática quando alguém digita a palavra "prefixo" sozinha.`);
-          
+
           const newStatus = q.trim().toLowerCase() === 'on';
           if (saveMsgPrefix(newStatus)) {
             await reply(`✅ Resposta de prefixo ${newStatus ? 'ativada' : 'desativada'} com sucesso!`);
@@ -32086,10 +30944,8 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
           const { saveJidLidCache } = await import('./utils/helpers.js');
           const cacheFilePath = JID_LID_CACHE_FILE;
 
-          // Força salvar o cache atual
           saveJidLidCache();
 
-          // Lê o arquivo de cache
           let cacheData = { mappings: {}, version: 'N/A', lastUpdate: 'N/A' };
           try {
             if (fs.existsSync(cacheFilePath)) {
@@ -32325,7 +31181,6 @@ return reply(`❌ Erro na API. O dono foi notificado.`);
         }
         break;
 
-      // Rental expiration management commands
       case 'rentalstats':
         if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
         if (!rentalExpirationManager) return reply('❌ Sistema de gerenciamento de expiração de aluguel não está ativo.');
@@ -32583,4 +31438,3 @@ function getDiskSpaceInfo() {
   }
 }
 export default NazuninhaBotExec;
-

@@ -1,6 +1,3 @@
-// Console patch to suppress libsignal session key logging
-// Must be loaded BEFORE baileys/libsignal via --require flag
-
 const _origInfo = console.info;
 const _origWarn = console.warn;
 const _origLog = console.log;
@@ -14,7 +11,6 @@ const SESSION_PATTERNS = [
     'Closing open session',
 ];
 
-// Patterns that indicate protocol/session data leaking to stdout
 const PROTOCOL_PATTERNS = [
     'deviceListMetadata',
     'senderKeyDistributionMessage',

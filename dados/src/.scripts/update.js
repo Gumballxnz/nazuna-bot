@@ -129,7 +129,7 @@ async function createBackup() {
   printMessage('📁 Criando backup dos arquivos...');
 
   try {
-    // Validate backup directory path
+
     if (!BACKUP_DIR || BACKUP_DIR.includes('..')) {
       throw new Error('Caminho de backup inválido');
     }
@@ -141,8 +141,7 @@ async function createBackup() {
     const databaseDir = path.join(process.cwd(), 'dados', 'database');
     if (fsSync.existsSync(databaseDir)) {
       printDetail('📂 Copiando diretório de banco de dados...');
-      
-      // Verify database directory is accessible
+
       try {
         await fs.access(databaseDir);
         await fs.cp(databaseDir, path.join(BACKUP_DIR, 'dados', 'database'), { recursive: true });
@@ -176,7 +175,6 @@ async function createBackup() {
       }
     }
 
-    // Verify backup was created successfully
     const backupDatabaseDir = path.join(BACKUP_DIR, 'dados', 'database');
     const backupConfigFile = path.join(BACKUP_DIR, 'dados', 'src', 'config.json');
     const backupMidiasDir = path.join(BACKUP_DIR, 'dados', 'midias');
@@ -203,7 +201,7 @@ async function downloadUpdate() {
   printMessage('📥 Baixando a versão mais recente do Nazuna...');
 
   try {
-    // Validate temp directory path
+
     if (!TEMP_DIR || TEMP_DIR.includes('..')) {
       throw new Error('Caminho de diretório temporário inválido');
     }
@@ -243,27 +241,24 @@ async function downloadUpdate() {
       gitProcess.on('close', async (code) => {
         clearInterval(interval);
         process.stdout.write('\r                 \r');
-        
+
         if (code !== 0) {
           printWarning(`❌ Git falhou com código de saída ${code}`);
           reject(new Error(`Git clone failed with exit code ${code}`));
           return;
         }
 
-        // Verify the clone was successful
         if (!fsSync.existsSync(TEMP_DIR)) {
           reject(new Error('Diretório temporário não foi criado após o clone'));
           return;
         }
 
-        // Check if it's a valid git repository
         const gitDir = path.join(TEMP_DIR, '.git');
         if (!fsSync.existsSync(gitDir)) {
           reject(new Error('Clone do repositório Git inválido'));
           return;
         }
 
-        // Remove README.md as in the original code
         try {
           const readmePath = path.join(TEMP_DIR, 'README.md');
           if (fsSync.existsSync(readmePath)) {
@@ -271,7 +266,7 @@ async function downloadUpdate() {
           }
         } catch (unlinkError) {
           printWarning(`⚠️ Não foi possível remover README.md: ${unlinkError.message}`);
-          // Don't fail the entire process for this
+
         }
 
         printMessage('✅ Download concluído com sucesso.');
@@ -336,13 +331,12 @@ async function cleanOldFiles(options = {}) {
     const dadosDir = path.join(process.cwd(), 'dados');
     if (fsSync.existsSync(dadosDir)) {
       printDetail('📂 Preservando diretório de dados...');
-      
-      // Only remove specific files that need updating, not the entire dados directory
+
       const filesToClean = [
-        'src/config.json',  // This will be restored from backup
-        'src/.scripts',     // Old scripts that will be replaced
+        'src/config.json',
+        'src/.scripts',
       ];
-      
+
       for (const fileToClean of filesToClean) {
         const filePath = path.join(dadosDir, fileToClean);
         if (fsSync.existsSync(filePath)) {
@@ -354,7 +348,7 @@ async function cleanOldFiles(options = {}) {
           }
         }
       }
-      
+
       printDetail('✅ Diretório de dados preservado com sucesso.');
     }
 
@@ -415,7 +409,7 @@ async function restoreBackup() {
 
 async function checkDependencyChanges() {
   printInfo('🔍 Verificando mudanças nas dependências...');
-  
+
   try {
     const currentPackageJsonPath = path.join(process.cwd(), 'package.json');
     const newPackageJsonPath = path.join(TEMP_DIR, 'package.json');
@@ -425,7 +419,7 @@ async function checkDependencyChanges() {
     }
     const currentPackage = JSON.parse(await fs.readFile(currentPackageJsonPath, 'utf8'));
     const newPackage = JSON.parse(await fs.readFile(newPackageJsonPath, 'utf8'));
-    // Checa se o package.json mudou (apenas dependências e scripts)
+
     const relevantKeys = ['dependencies', 'devDependencies', 'optionalDependencies', 'scripts'];
     let changed = false;
     for (const key of relevantKeys) {
@@ -437,13 +431,13 @@ async function checkDependencyChanges() {
       printDetail('📦 Dependências/scripts alterados, reinstalação necessária');
       return 'DEPENDENCIES_CHANGED';
     }
-    // Checa se node_modules existe
+
     const nodeModulesPath = path.join(process.cwd(), 'node_modules');
     if (!fsSync.existsSync(nodeModulesPath)) {
       printDetail('📦 node_modules não encontrado, instalação necessária');
       return 'MISSING_NODE_MODULES';
     }
-    // Checa se todas dependências estão instaladas
+
     const allDeps = Object.keys({
       ...currentPackage.dependencies,
       ...currentPackage.devDependencies,
@@ -464,21 +458,20 @@ async function checkDependencyChanges() {
   }
 }
 
-// Helper function to check Node.js version compatibility
 function satisfiesNodeVersion(currentVersion, requiredVersion) {
-  // Simple version comparison - in a real implementation, you might want to use a proper semver library
+
   const current = currentVersion.replace('v', '').split('.').map(Number);
   const required = requiredVersion.replace('v', '').split('.').map(Number);
-  
+
   for (let i = 0; i < Math.max(current.length, required.length); i++) {
     const currentPart = current[i] || 0;
     const requiredPart = required[i] || 0;
-    
+
     if (currentPart > requiredPart) return true;
     if (currentPart < requiredPart) return false;
   }
-  
-  return true; // Versions are equal or current satisfies requirement
+
+  return true;
 }
 
 async function installDependencies(precomputedResult) {
@@ -540,11 +533,11 @@ async function main() {
   let downloadSuccessful = false;
   let updateApplied = false;
   let dependencyCheckResult = null;
-  
+
   try {
     setupGracefulShutdown();
     await displayHeader();
-    // Ordem corrigida: backup -> download -> limpeza -> update -> restaura backup -> dependências -> cleanup
+
     await checkRequirements();
     await confirmUpdate();
     await createBackup();
@@ -584,8 +577,7 @@ async function main() {
   } catch (error) {
     printSeparator();
     printWarning(`❌ Erro durante a atualização: ${error.message}`);
-    
-    // Enhanced error recovery
+
     if (backupCreated && !updateApplied) {
       try {
         await restoreBackup();
@@ -599,12 +591,11 @@ async function main() {
     } else if (!backupCreated) {
       printWarning('⚠️ Nenhum backup foi criado. Se houve falha, seus dados podem estar corrompidos.');
     }
-    
+
     printWarning(`📂 Backup disponível em: ${BACKUP_DIR || 'Indisponível'}`);
     printInfo('📝 Para restaurar manualmente, copie os arquivos do backup para os diretórios correspondentes.');
     printInfo('📩 Em caso de dúvidas, contate o desenvolvedor.');
-    
-    // Exit with error code
+
     process.exit(1);
   }
 }

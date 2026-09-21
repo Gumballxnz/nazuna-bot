@@ -1,13 +1,6 @@
-/**
- * Sistema de Pesquisa de Plugins Minecraft Otimizado
- * Desenvolvido por Hiudy
- * Versão: 2.0.0
- */
-
 import axios from 'axios';
 import { parseHTML } from 'linkedom';
 
-// Configurações
 const CONFIG = {
   API: {
     BASE_URL: 'https://modrinth.com',
@@ -24,7 +17,7 @@ const CONFIG = {
   },
   CACHE: {
     MAX_SIZE: 100,
-    EXPIRE_TIME: 30 * 60 * 1000 // 30 minutos
+    EXPIRE_TIME: 30 * 60 * 1000
   },
   RETRY: {
     MAX_ATTEMPTS: 3,
@@ -43,7 +36,6 @@ const CONFIG = {
   }
 };
 
-// Cache para resultados
 class PluginCache {
   constructor() {
     this.cache = new Map();
@@ -56,14 +48,14 @@ class PluginCache {
   get(query) {
     const key = this.getKey(query);
     const cached = this.cache.get(key);
-    
+
     if (!cached) return null;
-    
+
     if (Date.now() - cached.timestamp > CONFIG.CACHE.EXPIRE_TIME) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return cached.data;
   }
 
@@ -81,7 +73,6 @@ class PluginCache {
   }
 }
 
-// Parser de Plugins
 class PluginParser {
   constructor(document) {
     this.document = document;
@@ -138,7 +129,6 @@ class PluginParser {
   }
 }
 
-// Cliente Modrinth
 class ModrinthClient {
   constructor() {
     this.axios = axios.create({
@@ -170,30 +160,21 @@ class ModrinthClient {
   }
 }
 
-// Cache e cliente instanciados uma única vez
 const cache = new PluginCache();
 const client = new ModrinthClient();
 
-/**
- * Busca plugins do Minecraft
- * @param {string} nome - Nome do plugin
- * @returns {Promise<Object>} Informações do plugin
- */
 async function buscarPlugin(nome) {
   try {
     if (!nome || typeof nome !== 'string') {
       return { ok: false, msg: 'Nome do plugin inválido' };
     }
 
-    // Verifica cache
     const cached = cache.get(nome);
     if (cached) return cached;
 
-    // Busca plugins
     const document = await client.searchPlugins(nome);
     const parser = new PluginParser(document);
 
-    // Procura primeiro projeto válido
     const projectCard = document.querySelector(CONFIG.SELECTORS.PROJECT_CARD);
     const plugin = parser.parsePlugin(projectCard);
 
@@ -206,7 +187,6 @@ async function buscarPlugin(nome) {
       ...plugin
     };
 
-    // Salva no cache
     cache.set(nome, result);
 
     return result;

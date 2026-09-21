@@ -71,4 +71,3 @@ ${middleBorder}${menuItemIcon}${prefix}titulo <titulo>
 ${bottomBorder}
 `;
 }
-

@@ -3,19 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
-// ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// createRequire is only used for JSON or true CJS modules
 const require = createRequire(import.meta.url);
 
-/**
- * Carrega e faz o parse de um arquivo JSON de forma síncrona.
- * Usamos fs direto para continuar funcionando em ESM sem require() em módulos ESM.
- * @param {string} filePath - O caminho relativo para o arquivo JSON.
- * @returns {any | undefined} O objeto JSON ou undefined se falhar.
- */
 function loadJsonSync(filePath) {
     try {
         const fullPath = path.resolve(__dirname, filePath);
@@ -27,10 +19,6 @@ function loadJsonSync(filePath) {
     }
 }
 
-/**
- * Inicializa e retorna o objeto de módulos agregados.
- * Usa import() dinâmico para módulos ESM e mantém a mesma "shape" pública anterior.
- */
 let modulesPromise;
 
 async function loadModules() {
@@ -39,7 +27,6 @@ async function loadModules() {
     modulesPromise = (async () => {
         const modules = {};
 
-        // --- downloads (ESM via dynamic import) ---
         const [
             youtubeMod,
             tiktokMod,
@@ -76,7 +63,6 @@ async function loadModules() {
             import('./downloads/alldl.js'),
         ]);
 
-        // Download modules with null checking
         modules.youtube = youtubeMod.default ?? youtubeMod;
         if (modules.youtube && typeof modules.youtube.search !== 'function') {
             console.warn('[EXPORTS] YouTube search function not found, adding fallback');
@@ -106,10 +92,9 @@ async function loadModules() {
         modules.streamable = streamableMod.default ?? streamableMod;
         modules.bandcamp = bandcampMod.default ?? bandcampMod;
         modules.alldl = alldlMod.default ?? alldlMod;
-        
-        // Enhanced null checking and error handling for all modules
+
         if (modules.youtube) {
-            // Ensure critical methods exist
+
             const youtubeMethods = ['search', 'mp3', 'mp4'];
             youtubeMethods.forEach(method => {
                 if (typeof modules.youtube[method] !== 'function') {
@@ -123,7 +108,6 @@ async function loadModules() {
             console.warn('[EXPORTS] YouTube module not loaded');
         }
 
-        // --- utils (ESM via dynamic import) ---
         const [
             styleTextMod,
             verifyUpdateMod,
@@ -166,7 +150,6 @@ async function loadModules() {
             import('./utils/transmissao.js'),
         ]);
 
-        // Utils modules with null checking
         modules.styleText = styleTextMod.default ?? styleTextMod;
         modules.VerifyUpdate = verifyUpdateMod.default ?? verifyUpdateMod;
         modules.emojiMix = emojiMixMod.default ?? emojiMixMod;
@@ -175,8 +158,7 @@ async function loadModules() {
         modules.stickerModule = stickerMod.default ?? stickerMod;
         modules.commandStats = commandStatsMod.default ?? commandStatsMod;
         modules.relationshipManager = relationshipsMod.default ?? relationshipsMod;
-        
-        // Novos módulos de jogos e utilidades
+
         modules.connect4 = connect4Mod.default ?? connect4Mod;
         modules.uno = unoMod.default ?? unoMod;
         modules.memoria = memoriaMod.default ?? memoriaMod;
@@ -189,7 +171,6 @@ async function loadModules() {
         modules.audioEdit = audioEditMod.default ?? audioEditMod;
         modules.transmissao = transmissaoMod.default ?? transmissaoMod;
 
-        // expose sendSticker directly (preserving previous API shape) with null check
         if (modules.stickerModule && modules.stickerModule.sendSticker) {
             modules.sendSticker = modules.stickerModule.sendSticker;
         } else {
@@ -197,7 +178,6 @@ async function loadModules() {
             modules.sendSticker = () => { throw new Error('sendSticker not available'); };
         }
 
-        // Add null checks for critical utility functions
         if (modules.upload && typeof modules.upload !== 'function') {
             console.warn('[EXPORTS] Upload function not properly exported');
         }
@@ -208,7 +188,6 @@ async function loadModules() {
             console.warn('[EXPORTS] CommandStats functions not available');
         }
 
-        // --- private (ESM via dynamic import) ---
         const [iaMod, temuScammerMod, antitoxicMod, iaExpandedMod, antipalavra] = await Promise.all([
             import('./private/ia.js'),
             import('./private/temuScammer.js'),
@@ -217,7 +196,6 @@ async function loadModules() {
             import('./private/antipalavra.js'),
         ]);
 
-        // Private modules with null checking
         if (iaMod.default || iaMod) {
             modules.ia = {
                 makeAssistentRequest: iaMod.makeAssistentRequest || iaMod.processUserMessages,
@@ -225,7 +203,7 @@ async function loadModules() {
                 notifyOwnerAboutApiKey: iaMod.notifyOwnerAboutApiKey,
                 ...(iaMod.default || iaMod)
             };
-            // Add null checks for IA functions
+
             if (typeof modules.ia.makeAssistentRequest !== 'function') {
                 console.warn('[EXPORTS] IA makeAssistentRequest not available');
                 modules.ia.makeAssistentRequest = () => { throw new Error('IA makeAssistentRequest not available'); };
@@ -247,7 +225,6 @@ async function loadModules() {
         modules.iaExpanded = iaExpandedMod.default ?? iaExpandedMod;
         modules.antipalavra = antipalavra.default ?? antipalavra;
 
-        // --- JSONs (sync read as before, exposed as functions) ---
         const toolsJsonData = loadJsonSync('json/tools.json');
         const vabJsonData = loadJsonSync('json/vab.json');
 
@@ -260,22 +237,12 @@ async function loadModules() {
     return modulesPromise;
 }
 
-/**
- * Named async accessor for callers that prefer explicit async usage.
- */
 export async function getModules() {
     return await loadModules();
 }
 
-/**
- * Default export resolves the aggregated modules object via top-level await.
- * This keeps existing ESM consumers using:
- *   const modules = (await import('./funcs/exports.js')).default;
- * working as expected.
- */
 const modules = await loadModules();
 
-// Additional safety checks at export level
 const safeModules = new Proxy(modules, {
     get(target, prop) {
         if (!(prop in target)) {
@@ -284,7 +251,7 @@ const safeModules = new Proxy(modules, {
         }
         const value = target[prop];
         if (typeof value === 'object' && value !== null) {
-            // Add property access validation for objects
+
             return new Proxy(value, {
                 get(obj, key) {
                     if (!(key in obj)) {

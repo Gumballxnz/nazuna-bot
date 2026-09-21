@@ -1,4 +1,3 @@
-// --- CONFIGURAÇÃO ---
 const CONFIG = {
     INVITATION_TIMEOUT_MS: 15 * 60 * 1000,
     GAME_TIMEOUT_MS: 30 * 60 * 1000,
@@ -9,7 +8,6 @@ const CONFIG = {
     EMPTY_CELLS: ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'],
 };
 
-// Função helper para extrair nome de usuário
 const getUserName = (userId) => {
   if (!userId || typeof userId !== 'string') return 'unknown';
   if (userId.includes('@lid')) {
@@ -20,7 +18,6 @@ const getUserName = (userId) => {
   return userId.split('@')[0] || userId;
 };
 
-// --- LÓGICA DO JOGO (MOTOR) ---
 class TicTacToe {
     constructor(player1, player2) {
         this.board = [...CONFIG.EMPTY_CELLS];
@@ -77,8 +74,6 @@ class TicTacToe {
     }
 }
 
-
-// --- GERENCIADOR DE JOGOS (CONTROLADOR) ---
 class GameManager {
     constructor() {
         this.activeGames = new Map();
@@ -93,7 +88,7 @@ class GameManager {
         if (this.activeGames.has(groupId) || this.pendingInvitations.has(groupId)) {
             return this._formatResponse(false, '❌ Já existe um jogo ou convite em andamento!');
         }
-        
+
         this.pendingInvitations.set(groupId, { inviter, invitee, timestamp: Date.now() });
         const message = `🎮 *CONVITE JOGO DA VELHA*\n\n` +
                         `@${getUserName(inviter)} convidou @${getUserName(invitee)}!\n\n` +
@@ -112,7 +107,7 @@ class GameManager {
         const normalizedResponse = response.toLowerCase().trim();
         const isAccepted = ['s', 'sim', 'y', 'yes'].includes(normalizedResponse);
         const isRejected = ['n', 'não', 'nao', 'no'].includes(normalizedResponse);
-        
+
         if (!isAccepted && !isRejected) {
             return this._formatResponse(false, '❌ Resposta inválida. Use "sim" ou "não".');
         }
@@ -125,7 +120,7 @@ class GameManager {
 
         const game = new TicTacToe(invitation.inviter, invitation.invitee);
         this.activeGames.set(groupId, game);
-        
+
         const message = `🎮 *JOGO DA VELHA - INICIADO!*\n\n` +
                         `👥 Jogadores:\n` +
                         `➤ ${CONFIG.SYMBOLS.X}: @${getUserName(invitation.inviter)}\n` +
@@ -141,12 +136,11 @@ class GameManager {
             return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
         }
 
-        // Verificação de timeout de inatividade
         if (Date.now() - game.lastMoveTime > CONFIG.MOVE_TIMEOUT_MS) {
             this.activeGames.delete(groupId);
             return this._formatResponse(false, '❌ Jogo encerrado por inatividade (5 minutos sem jogada).', { mentions: Object.values(game.players) });
         }
-        
+
         const result = game.makeMove(player, position);
 
         if (!result.success) {
@@ -191,10 +185,10 @@ class GameManager {
         this.activeGames.delete(groupId);
         return this._formatResponse(true, '🎮 Jogo encerrado manualmente!', { mentions: players });
     }
-    
+
     hasActiveGame = (groupId) => this.activeGames.has(groupId);
     hasPendingInvitation = (groupId) => this.pendingInvitations.has(groupId);
-    
+
     _formatResponse(success, message, extras = {}) {
         return { success, message, ...extras };
     }
@@ -216,7 +210,6 @@ class GameManager {
     }
 }
 
-// --- EXPORTAÇÃO DIRETA DAS FUNÇÕES ---
 const manager = new GameManager();
 
 const invitePlayer = (...args) => manager.invitePlayer(...args);

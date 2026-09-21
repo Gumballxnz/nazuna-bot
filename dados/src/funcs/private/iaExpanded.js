@@ -1,5 +1,3 @@
-// --- COMANDOS DE IA EXPANDIDOS ---
-// Horóscopo, Debate, História Interativa
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,7 +7,6 @@ const __dirname = path.dirname(__filename);
 
 const STORIES_FILE = path.join(__dirname, '../../../database/stories.json');
 
-// Signos do zodíaco
 const SIGNOS = {
     aries: { emoji: '♈', nome: 'Áries', periodo: '21/03 - 19/04', elemento: '🔥 Fogo' },
     touro: { emoji: '♉', nome: 'Touro', periodo: '20/04 - 20/05', elemento: '🌍 Terra' },
@@ -25,7 +22,6 @@ const SIGNOS = {
     peixes: { emoji: '♓', nome: 'Peixes', periodo: '19/02 - 20/03', elemento: '💧 Água' }
 };
 
-// Aliases para signos
 const SIGNO_ALIASES = {
     'áries': 'aries', 'aries': 'aries',
     'touro': 'touro',
@@ -41,12 +37,10 @@ const SIGNO_ALIASES = {
     'peixes': 'peixes'
 };
 
-// --- HORÓSCOPO ---
-
 const getHoroscopePrompt = (signo) => {
     const signoData = SIGNOS[signo];
     const today = new Date().toLocaleDateString('pt-BR');
-    
+
     return `Você é um astrólogo místico e carismático. Gere um horóscopo diário para o signo de ${signoData.nome} (${signoData.emoji}) para o dia ${today}.
 
 O horóscopo deve incluir:
@@ -82,7 +76,7 @@ Formato esperado (mantenha os emojis):
 
 const generateHoroscope = async (signoInput, aiFunction, prefix = '/') => {
     const signoKey = SIGNO_ALIASES[signoInput.toLowerCase()];
-    
+
     if (!signoKey) {
         const listaSignos = Object.values(SIGNOS).map(s => `${s.emoji} ${s.nome}`).join('\n');
         return {
@@ -90,25 +84,25 @@ const generateHoroscope = async (signoInput, aiFunction, prefix = '/') => {
             message: `❌ Signo inválido!\n\n🔮 *SIGNOS DISPONÍVEIS:*\n${listaSignos}\n\n💡 Uso: ${prefix}horoscopo <signo>`
         };
     }
-    
+
     const signo = SIGNOS[signoKey];
-    
+
     if (!aiFunction) {
         return {
             success: false,
             message: '❌ Função de IA não disponível!'
         };
     }
-    
+
     try {
         const prompt = getHoroscopePrompt(signoKey);
         const response = await aiFunction(prompt);
-        
+
         const today = new Date().toLocaleDateString('pt-BR');
         const header = `${signo.emoji} *HORÓSCOPO DE ${signo.nome.toUpperCase()}*\n` +
                        `📅 ${today} | ${signo.elemento}\n` +
                        `━━━━━━━━━━━━━━━━━━\n\n`;
-        
+
         return {
             success: true,
             message: header + response
@@ -121,8 +115,6 @@ const generateHoroscope = async (signoInput, aiFunction, prefix = '/') => {
         };
     }
 };
-
-// --- DEBATE ---
 
 const getDebatePrompt = (tema) => {
     return `Você é um debatedor intelectual imparcial. Apresente um debate completo sobre o tema: "${tema}"
@@ -162,18 +154,18 @@ const generateDebate = async (tema, aiFunction, prefix = '/') => {
             message: `❌ Por favor, forneça um tema para o debate!\n\n💡 Uso: ${prefix}debater <tema>\n📌 Exemplo: ${prefix}debater redes sociais`
         };
     }
-    
+
     if (!aiFunction) {
         return {
             success: false,
             message: '❌ Função de IA não disponível!'
         };
     }
-    
+
     try {
         const prompt = getDebatePrompt(tema);
         const response = await aiFunction(prompt);
-        
+
         return {
             success: true,
             message: response
@@ -186,8 +178,6 @@ const generateDebate = async (tema, aiFunction, prefix = '/') => {
         };
     }
 };
-
-// --- HISTÓRIA INTERATIVA ---
 
 const loadStories = () => {
     try {
@@ -224,7 +214,7 @@ const STORY_GENRES = {
 const getStoryPrompt = (genre, previousChoices = [], currentChapter = 1) => {
     const genreData = STORY_GENRES[genre];
     const isFirst = previousChoices.length === 0;
-    
+
     if (isFirst) {
         return `Você é um mestre contador de histórias. Crie o INÍCIO de uma história interativa do gênero ${genreData.name} (${genreData.desc}).
 
@@ -248,9 +238,9 @@ Formato:
 
 _Responda com o número da sua escolha!_`;
     }
-    
+
     const choicesText = previousChoices.map((c, i) => `Capítulo ${i + 1}: Escolha ${c}`).join('\n');
-    
+
     return `Você é um mestre contador de histórias continuando uma história interativa do gênero ${genreData.name}.
 
 Escolhas anteriores do leitor:
@@ -278,7 +268,7 @@ _Responda com o número da sua escolha!_`}`;
 
 const startStory = async (groupId, genre, aiFunction, prefix = '/') => {
     const genreKey = genre.toLowerCase();
-    
+
     if (!STORY_GENRES[genreKey]) {
         const genres = Object.entries(STORY_GENRES)
             .map(([key, g]) => `${g.emoji} *${g.name}* - ${g.desc}`)
@@ -288,24 +278,24 @@ const startStory = async (groupId, genre, aiFunction, prefix = '/') => {
             message: `📚 *HISTÓRIA INTERATIVA*\n\n❌ Gênero inválido!\n\n🎭 *Gêneros disponíveis:*\n${genres}\n\n💡 Uso: ${prefix}historia <gênero>`
         };
     }
-    
+
     const data = loadStories();
-    
+
     if (data.active[groupId]) {
         return {
             success: false,
             message: `📚 *HISTÓRIA INTERATIVA*\n\n⚠️ Já existe uma história em andamento!\n\n💡 Use /historia escolher <1-3> para continuar\n💡 Use /historia cancelar para encerrar`
         };
     }
-    
+
     if (!aiFunction) {
         return { success: false, message: '❌ Função de IA não disponível!' };
     }
-    
+
     try {
         const prompt = getStoryPrompt(genreKey);
         const response = await aiFunction(prompt);
-        
+
         data.active[groupId] = {
             genre: genreKey,
             chapter: 1,
@@ -314,10 +304,10 @@ const startStory = async (groupId, genre, aiFunction, prefix = '/') => {
             lastUpdate: Date.now()
         };
         saveStories(data);
-        
+
         const genreData = STORY_GENRES[genreKey];
         const header = `${genreData.emoji} *HISTÓRIA INTERATIVA - ${genreData.name.toUpperCase()}*\n\n`;
-        
+
         return {
             success: true,
             message: header + response
@@ -331,14 +321,14 @@ const startStory = async (groupId, genre, aiFunction, prefix = '/') => {
 const continueStory = async (groupId, choice, aiFunction) => {
     const data = loadStories();
     const story = data.active[groupId];
-    
+
     if (!story) {
         return {
             success: false,
             message: `📚 *HISTÓRIA INTERATIVA*\n\n❌ Nenhuma história em andamento!\n\n💡 Use /historia <gênero> para começar`
         };
     }
-    
+
     const choiceNum = parseInt(choice);
     if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > 3) {
         return {
@@ -346,20 +336,19 @@ const continueStory = async (groupId, choice, aiFunction) => {
             message: '❌ Escolha inválida! Use 1, 2 ou 3.'
         };
     }
-    
+
     if (!aiFunction) {
         return { success: false, message: '❌ Função de IA não disponível!' };
     }
-    
+
     try {
         story.choices.push(choiceNum);
         story.chapter++;
         story.lastUpdate = Date.now();
-        
+
         const prompt = getStoryPrompt(story.genre, story.choices, story.chapter);
         const response = await aiFunction(prompt);
-        
-        // Verificar se é o fim
+
         if (story.chapter >= 5) {
             data.completed.push({
                 ...story,
@@ -367,12 +356,12 @@ const continueStory = async (groupId, choice, aiFunction) => {
             });
             delete data.active[groupId];
         }
-        
+
         saveStories(data);
-        
+
         const genreData = STORY_GENRES[story.genre];
         const header = `${genreData.emoji} *HISTÓRIA INTERATIVA - ${genreData.name.toUpperCase()}*\n\n`;
-        
+
         return {
             success: true,
             message: header + response,
@@ -386,17 +375,17 @@ const continueStory = async (groupId, choice, aiFunction) => {
 
 const cancelStory = (groupId) => {
     const data = loadStories();
-    
+
     if (!data.active[groupId]) {
         return {
             success: false,
             message: '❌ Nenhuma história em andamento!'
         };
     }
-    
+
     delete data.active[groupId];
     saveStories(data);
-    
+
     return {
         success: true,
         message: '📚 História cancelada!'
@@ -406,7 +395,7 @@ const cancelStory = (groupId) => {
 const getStoryStatus = (groupId) => {
     const data = loadStories();
     const story = data.active[groupId];
-    
+
     if (!story) {
         const genres = Object.entries(STORY_GENRES)
             .map(([key, g]) => `${g.emoji} ${g.name}`)
@@ -417,7 +406,7 @@ const getStoryStatus = (groupId) => {
             message: `📚 *HISTÓRIA INTERATIVA*\n\n❌ Nenhuma história ativa.\n\n🎭 Gêneros: ${genres}\n\n💡 Use /historia <gênero> para começar!`
         };
     }
-    
+
     const genreData = STORY_GENRES[story.genre];
     return {
         success: true,

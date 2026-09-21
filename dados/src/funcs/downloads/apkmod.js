@@ -1,14 +1,6 @@
-/**
- * Sistema de Download de APK Mod Otimizado
- * Desenvolvido por Hiudy
- * Versão: 2.0.0
- * Otimizado com HTTP connection pooling
- */
-
 import { scrapingClient } from '../../utils/httpClient.js';
 import { DOMParser } from 'linkedom';
 
-// Configurações
 const CONFIG = {
   API: {
     BASE_URL: 'https://apkmodct.com',
@@ -21,7 +13,7 @@ const CONFIG = {
   },
   CACHE: {
     MAX_SIZE: 100,
-    EXPIRE_TIME: 30 * 60 * 1000 // 30 minutos
+    EXPIRE_TIME: 30 * 60 * 1000
   },
   RETRY: {
     MAX_ATTEMPTS: 3,
@@ -43,7 +35,6 @@ const CONFIG = {
   }
 };
 
-// Cache para resultados
 class APKCache {
   constructor() {
     this.cache = new Map();
@@ -56,14 +47,14 @@ class APKCache {
   get(query) {
     const key = this.getKey(query);
     const cached = this.cache.get(key);
-    
+
     if (!cached) return null;
-    
+
     if (Date.now() - cached.timestamp > CONFIG.CACHE.EXPIRE_TIME) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return cached.data;
   }
 
@@ -81,7 +72,6 @@ class APKCache {
   }
 }
 
-// Parser de APK
 class APKParser {
   constructor() {
     this.parser = new DOMParser();
@@ -135,7 +125,6 @@ class APKParser {
   }
 }
 
-// Cliente APK
 class APKClient {
   constructor() {
     this.parser = new APKParser();
@@ -190,32 +179,22 @@ class APKClient {
   }
 }
 
-// Cache e cliente instanciados uma única vez
 const cache = new APKCache();
 const client = new APKClient();
 
-/**
- * Busca e obtém informações de APK mod
- * @param {string} searchText - Termo de busca
- * @returns {Promise<Object>} Informações do APK
- */
 async function apkMod(searchText) {
   try {
     if (!searchText || typeof searchText !== 'string') {
       return { error: 'Termo de busca inválido' };
     }
 
-    // Verifica cache
     const cached = cache.get(searchText);
     if (cached) return cached;
 
-    // Busca resultados
     const searchResult = await client.search(searchText);
-    
-    // Obtém detalhes do post
+
     const { description, details, mainPicUrl } = await client.getPostDetails(searchResult.url);
-    
-    // Obtém link de download
+
     const downloadUrl = await client.getDownloadLink(mainPicUrl);
 
     const result = {
@@ -226,7 +205,6 @@ async function apkMod(searchText) {
       download: downloadUrl
     };
 
-    // Salva no cache
     cache.set(searchText, result);
 
     return result;

@@ -1,4 +1,3 @@
-// --- JOGO CONNECT 4 ---
 const CONFIG = {
     INVITATION_TIMEOUT_MS: 15 * 60 * 1000,
     GAME_TIMEOUT_MS: 30 * 60 * 1000,
@@ -12,13 +11,11 @@ const CONFIG = {
     NUMBERS: ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣']
 };
 
-// Helper para extrair nome de usuário
 const getUserName = (userId) => {
     if (!userId || typeof userId !== 'string') return 'unknown';
     return userId.split('@')[0] || userId;
 };
 
-// --- MOTOR DO JOGO ---
 class Connect4Engine {
     constructor(player1, player2) {
         this.board = Array(CONFIG.ROWS).fill(null).map(() => Array(CONFIG.COLS).fill(0));
@@ -41,7 +38,6 @@ class Connect4Engine {
             return { success: false, reason: 'invalid_column' };
         }
 
-        // Encontrar a linha mais baixa disponível
         let row = -1;
         for (let r = CONFIG.ROWS - 1; r >= 0; r--) {
             if (this.board[r][col] === 0) {
@@ -58,29 +54,24 @@ class Connect4Engine {
         this.moves++;
         this.lastMoveTime = Date.now();
 
-        // Verificar vitória
         if (this._checkWin(row, col)) {
             this.winner = this.players[this.currentTurn];
             return { success: true, status: 'win', winner: this.winner };
         }
 
-        // Verificar empate
         if (this.moves === CONFIG.ROWS * CONFIG.COLS) {
             return { success: true, status: 'draw' };
         }
 
-        // Próximo jogador
         this.currentTurn = this.currentTurn === 1 ? 2 : 1;
         return { success: true, status: 'continue', nextPlayer: this.players[this.currentTurn] };
     }
 
     renderBoard() {
         let board = '';
-        
-        // Número das colunas
+
         board += CONFIG.NUMBERS.join('') + '\n';
-        
-        // Tabuleiro
+
         for (let r = 0; r < CONFIG.ROWS; r++) {
             for (let c = 0; c < CONFIG.COLS; c++) {
                 const cell = this.board[r][c];
@@ -98,10 +89,10 @@ class Connect4Engine {
 
     _checkWin(row, col) {
         const directions = [
-            [0, 1],   // Horizontal
-            [1, 0],   // Vertical
-            [1, 1],   // Diagonal \
-            [1, -1]   // Diagonal /
+            [0, 1],
+            [1, 0],
+            [1, 1],
+            [1, -1]
         ];
 
         const player = this.board[row][col];
@@ -110,7 +101,6 @@ class Connect4Engine {
             let count = 1;
             const cells = [[row, col]];
 
-            // Verificar em uma direção
             let r = row + dr;
             let c = col + dc;
             while (r >= 0 && r < CONFIG.ROWS && c >= 0 && c < CONFIG.COLS && this.board[r][c] === player) {
@@ -120,7 +110,6 @@ class Connect4Engine {
                 c += dc;
             }
 
-            // Verificar na direção oposta
             r = row - dr;
             c = col - dc;
             while (r >= 0 && r < CONFIG.ROWS && c >= 0 && c < CONFIG.COLS && this.board[r][c] === player) {
@@ -140,7 +129,6 @@ class Connect4Engine {
     }
 }
 
-// --- GERENCIADOR DE JOGOS ---
 class Connect4Manager {
     constructor() {
         this.activeGames = new Map();
@@ -204,7 +192,6 @@ class Connect4Manager {
             return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
         }
 
-        // Verificação de timeout
         if (Date.now() - game.lastMoveTime > CONFIG.MOVE_TIMEOUT_MS) {
             this.activeGames.delete(groupId);
             return this._formatResponse(false, '❌ Jogo encerrado por inatividade (5 minutos sem jogada).', { mentions: Object.values(game.players) });
@@ -267,14 +254,12 @@ class Connect4Manager {
     _cleanup() {
         const now = Date.now();
 
-        // Limpar convites expirados
         for (const [groupId, invitation] of this.pendingInvitations) {
             if (now - invitation.timestamp > CONFIG.INVITATION_TIMEOUT_MS) {
                 this.pendingInvitations.delete(groupId);
             }
         }
 
-        // Limpar jogos inativos
         for (const [groupId, game] of this.activeGames) {
             if (now - game.lastMoveTime > CONFIG.GAME_TIMEOUT_MS) {
                 this.activeGames.delete(groupId);
@@ -283,10 +268,8 @@ class Connect4Manager {
     }
 }
 
-// Singleton
 const manager = new Connect4Manager();
 
-// Exportar funções do manager
 const invitePlayer = (groupId, inviter, invitee) => manager.invitePlayer(groupId, inviter, invitee);
 const processInvitationResponse = (groupId, invitee, response) => manager.processInvitationResponse(groupId, invitee, response);
 const makeMove = (groupId, player, column) => manager.makeMove(groupId, player, column);

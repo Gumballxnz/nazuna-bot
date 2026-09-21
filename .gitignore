@@ -31,5 +31,5 @@ debugnazuna.md
 remove_schedules.js
 
 # Documentação local e backups que não devem ir ao GitHub
-memoria_projeto.md
+memoria_projeto*.md
 dados/src/index.backup.js

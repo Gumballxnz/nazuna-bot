@@ -1,20 +1,10 @@
-/**
- * Download Dailymotion - 100% Gratuito 
- * Motor: Siputzx + Ryzendesu
- */
-
 import axios from 'axios';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-/**
- * Baixa vídeo do Dailymotion
- * @param {string} url - URL do vídeo do Dailymotion
- * @returns {Promise<Object>} Objeto com sucesso, buffer e informações do vídeo
- */
 export async function download(url) {
   try {
-    // Motor 1: Siputzx
+
     try {
       const res = await axios.get(`https://api.siputzx.my.id/api/d/dailymotion?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
@@ -39,7 +29,6 @@ export async function download(url) {
       console.error('[Dailymotion] Motor 1 falhou:', e.message);
     }
 
-    // Motor 2: Ryzumi
     try {
       const res = await axios.get(`https://api.ryzumi.net/api/downloader/dailymotion?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },

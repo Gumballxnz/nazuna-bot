@@ -7,7 +7,7 @@ export default async function menudown(prefix, botName = "MeuBot", userName = "U
     separatorIcon = "❁",
     middleBorder = "┊",
     searchMenuTitle = "🔍 PESQUISAS & CONSULTAS",
-    audioMenuTitle = "🎵 MÚSICA & ÁUDIO", 
+    audioMenuTitle = "🎵 MÚSICA & ÁUDIO",
     videoMenuTitle = "🎬 VÍDEOS & STREAMING",
     downloadMenuTitle = "📥 DOWNLOADS",
     mediaMenuTitle = "📱 MÍDIAS SOCIAIS",

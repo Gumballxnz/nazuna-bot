@@ -1,11 +1,5 @@
-/**
- * Download e Pesquisa YouTube - 100% Gratuito 
- * Motor: fg-senna + Ryzendesu + Siputzx + yt-dlp (via ytHelper.js)
- */
-
 import { downloadYT, getYTInfo } from '../../utils/ytHelper.js';
 
-// Buscar vídeos no YouTube usando yt-search
 async function search(query) {
   try {
     const yts = await import('yt-search');
@@ -34,7 +28,6 @@ async function search(query) {
   }
 }
 
-// Baixar áudio (MP3) via ytHelper
 async function mp3(url, quality = 128) {
   try {
     const result = await downloadYT(url, 'audio');
@@ -54,7 +47,6 @@ async function mp3(url, quality = 128) {
   }
 }
 
-// Baixar vídeo (MP4) via ytHelper
 async function mp4(url, quality = 360) {
   try {
     const result = await downloadYT(url, 'video');

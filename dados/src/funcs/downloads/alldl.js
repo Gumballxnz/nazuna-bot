@@ -1,22 +1,10 @@
-/**
- * Download Universal (AllDL) - 100% Gratuito 
- * Motor: Siputzx + Ryzendesu
- * 
- * Suporta múltiplas plataformas de vídeo e áudio automaticamente
- */
-
 import axios from 'axios';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-/**
- * Extrai todos os formatos de mídia disponíveis de uma URL
- * @param {string} url - URL de qualquer plataforma suportada
- * @returns {Promise<Object>} Objeto com metadata e todos os formatos disponíveis
- */
 export async function getAllMedia(url) {
   try {
-    // Motor 1: Siputzx (alldl genérico)
+
     try {
       const res = await axios.get(`https://api.siputzx.my.id/api/d/alldl?url=${encodeURIComponent(url)}`, {
         headers: { 'User-Agent': UA },
@@ -58,12 +46,6 @@ export async function getAllMedia(url) {
   }
 }
 
-/**
- * Baixa um formato específico de mídia
- * @param {string} mediaUrl - URL direta da mídia
- * @param {string} type - Tipo de mídia (video, audio, image)
- * @returns {Promise<Object>} Buffer do arquivo baixado
- */
 export async function downloadMedia(mediaUrl, type = 'video') {
   try {
     const response = await axios.get(mediaUrl, {

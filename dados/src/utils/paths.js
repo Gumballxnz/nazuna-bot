@@ -8,7 +8,6 @@ const __dirname = dirname(__filename);
 const SRC_DIR = path.join(__dirname, '..');
 const ROOT_DIR = path.join(SRC_DIR, '..');
 
-// Detecta se é sub-bot e ajusta os caminhos de database
 const BASE_DATABASE_DIR = process.env.DATABASE_PATH || path.join(ROOT_DIR, 'database');
 const DATABASE_DIR = BASE_DATABASE_DIR;
 const GRUPOS_DIR = path.join(DATABASE_DIR, 'grupos');
@@ -53,13 +52,12 @@ const MENU_AUDIO_FILE = path.join(DONO_DIR, 'menuAudio.json');
 const MENU_LERMAIS_FILE = path.join(DONO_DIR, 'menuLerMais.json');
 const ANTIPALAVRA_UNBANS_FILE = path.join(DATABASE_DIR, 'antipalavraUnbans.json');
 
-// Detecta se é sub-bot e ajusta o caminho do config
 const CONFIG_FILE = process.env.CONFIG_PATH || path.join(SRC_DIR, 'config.json');
 
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, '..', 'package.json');
 
 export {
-  ROOT_DIR, 
+  ROOT_DIR,
   SRC_DIR,
   DATABASE_DIR,
   GRUPOS_DIR,

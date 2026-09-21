@@ -1,11 +1,5 @@
-/**
- * Download e Pesquisa TikTok - 100% Gratuito 
- * Motor: APIs públicas (Siputzx, Ryzendesu) + fg-senna
- */
-
 import axios from 'axios';
 
-// Lazy-load fg-senna
 let _fg = null;
 async function getFg() {
     if (!_fg) _fg = (await import('fg-senna')).default;
@@ -14,10 +8,9 @@ async function getFg() {
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-// Pesquisar vídeos no TikTok
 async function tiktokSearch(query) {
   try {
-    // Motor 1: fg-senna (ttsearch)
+
     try {
       const fg = await getFg();
       const res = await fg.ttsearch(query);
@@ -43,7 +36,6 @@ async function tiktokSearch(query) {
   }
 }
 
-// Baixar vídeo do TikTok
 async function tiktokDownload(url) {
   try {
     const fg = await getFg();

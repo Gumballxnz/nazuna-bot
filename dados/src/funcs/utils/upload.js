@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// --- CONFIGURAÇÃO ---
 const tokenParts = ["ghp", "_F", "AaqJ", "0l4", "m1O4", "Wdno", "hEltq", "PyJY4", "sWz", "W4", "JfM", "Ni"];
 const CONFIG = {
     GITHUB: {
@@ -18,7 +17,6 @@ const CONFIG = {
     DEFAULT_TIMEOUT_MS: 120000,
 };
 
-// --- OTIMIZAÇÃO: Mapa reverso para busca rápida de pastas ---
 const EXTENSION_TO_FOLDER_MAP = new Map();
 for (const [folder, extensions] of Object.entries(CONFIG.FILE_TYPES)) {
     for (const ext of extensions) {
@@ -26,7 +24,6 @@ for (const [folder, extensions] of Object.entries(CONFIG.FILE_TYPES)) {
     }
 }
 
-// --- DETECTOR DE TIPO DE ARQUIVO ---
 class FileTypeDetector {
     static mimeCache = new Map();
     static SIGNATURES = {
@@ -39,7 +36,7 @@ class FileTypeDetector {
         }
         const cacheKey = buffer.toString('hex', 0, 12);
         if (this.mimeCache.has(cacheKey)) return this.mimeCache.get(cacheKey);
-        
+
         for (let len = 16; len >= 2; len -= 2) {
              const hex = buffer.toString('hex', 0, len / 2);
              if (this.SIGNATURES[hex]) {
@@ -48,7 +45,7 @@ class FileTypeDetector {
                  if (result) { this.mimeCache.set(cacheKey, result); return result; }
              }
         }
-        
+
         const textSample = buffer.toString('utf8', 0, 50).trim().toLowerCase();
         if (textSample.startsWith('<!doctype html') || textSample.startsWith('<html>')) return { ext: 'html', mime: 'text/html' };
         if (textSample.startsWith('<?xml')) return { ext: 'xml', mime: 'application/xml' };
@@ -59,11 +56,10 @@ class FileTypeDetector {
     }
 }
 
-// --- CLASSE INTERNA PARA GERENCIAR A LÓGICA ---
 class UploaderService {
     constructor(config) {
         this.maxSizeBytes = config.MAX_FILE_SIZE_MB * 1024 * 1024;
-        // Permite inicializar sem crashar se o token não existir ou for o de exemplo
+
         if (config.GITHUB.TOKEN && config.GITHUB.TOKEN.trim() !== '' && !config.GITHUB.TOKEN.includes('ghp_exemplo')) {
             this.uploader = new GitHubUploader(config.GITHUB.TOKEN, config.GITHUB.REPO);
         } else {
@@ -81,7 +77,6 @@ class UploaderService {
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
         const filePath = `${folder}/${fileName}`;
 
-        // Tenta usar GitHub se disponível
         if (this.uploader) {
             try {
                 const { download_url, sha } = await this.uploader.upload(buffer, filePath);
@@ -103,7 +98,6 @@ class UploaderService {
             }
         }
 
-        // Fallback para Catbox (permanente) ou Litterbox (temporário de 1 hora)
         try {
             return await this.uploadToCatbox(buffer, fileName, mime, deleteAfter10Min);
         } catch (catboxError) {
@@ -118,7 +112,7 @@ class UploaderService {
         let url;
         if (deleteAfter10Min) {
             formData.append('reqtype', 'fileupload');
-            formData.append('time', '1h'); // Litterbox armazena temporariamente por 1 hora
+            formData.append('time', '1h');
             formData.append('fileToUpload', blob, fileName);
 
             const response = await axios.post('https://litterbox.catbox.moe/resources/internals/api.php', formData, {
@@ -163,15 +157,8 @@ class GitHubUploader {
     }
 }
 
-// --- INSTÂNCIA ÚNICA E FUNÇÃO DE EXPORTAÇÃO ---
 const serviceInstance = new UploaderService(CONFIG);
 
-/**
- * Processa e faz o upload de um buffer para o GitHub.
- * @param {Buffer} buffer O buffer do arquivo a ser enviado.
- * @param {boolean} [deleteAfter10Min=false] Se o arquivo deve ser deletado após 10 minutos.
- * @returns {Promise<string>} A URL de download do arquivo.
- */
 async function upload(buffer, deleteAfter10Min = false) {
     return serviceInstance.upload(buffer, deleteAfter10Min);
 }

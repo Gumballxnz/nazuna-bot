@@ -38,7 +38,7 @@ class MessageQueue {
             batchesProcessed: 0,
             avgBatchTime: 0
         };
-        this.idCounter = 0; // Contador simples ao invés de crypto.randomUUID()
+        this.idCounter = 0;
     }
 
     setErrorHandler(handler) {
@@ -68,7 +68,7 @@ class MessageQueue {
         if (this.isProcessing) return;
 
         this.isProcessing = true;
-        // Usa processo recursivo em vez de setInterval para melhor performance
+
         this.processQueue();
     }
 
@@ -84,9 +84,9 @@ class MessageQueue {
     }
 
     async processQueue() {
-        // Processa mensagens em lotes paralelos
+
         while (this.isProcessing && this.queue.length > 0) {
-            // Calcula quantos lotes podemos processar
+
             const availableBatches = Math.min(
                 this.batchSize,
                 Math.ceil(this.queue.length / this.messagesPerBatch)
@@ -94,7 +94,6 @@ class MessageQueue {
 
             if (availableBatches === 0) break;
 
-            // Cria array de lotes
             const batches = [];
             for (let i = 0; i < availableBatches && this.queue.length > 0; i++) {
                 const batchItems = [];
@@ -109,7 +108,6 @@ class MessageQueue {
 
             this.stats.currentQueueLength = this.queue.length;
 
-            // Processa todos os lotes em paralelo
             const batchStartTime = Date.now();
             await Promise.allSettled(
                 batches.map(batch => this.processBatch(batch))
@@ -128,12 +126,11 @@ class MessageQueue {
     }
 
     async processBatch(batchItems) {
-        // Processa todas as mensagens do lote em paralelo
+
         const batchPromises = batchItems.map(item => this.processItem(item));
 
         const results = await Promise.allSettled(batchPromises);
 
-        // Contabiliza resultados
         results.forEach((result, index) => {
             if (result.status === 'fulfilled') {
                 this.stats.totalProcessed++;
@@ -211,7 +208,7 @@ class MessageQueue {
     }
 
     clear() {
-        // Rejeita todas as mensagens pendentes antes de limpar
+
         this.queue.forEach(item => {
             if (item.reject) {
                 item.reject(new Error('Queue cleared'));
@@ -226,7 +223,6 @@ class MessageQueue {
         console.log('🛑 Finalizando MessageQueue...');
         this.stopProcessing();
 
-        // Aguarda workers ativos terminarem (timeout de 10s)
         const shutdownTimeout = 10000;
         const startTime = Date.now();
 
@@ -243,23 +239,20 @@ class MessageQueue {
     }
 }
 
-const messageQueue = new MessageQueue(1, 1, 1); // 1 worker, 1 lote, 1 msg (Sequencial estrito como o Senna)
+const messageQueue = new MessageQueue(1, 1, 1);
 
-const configPath = path.join(__dirname, "config.json");
+const configPath = process.env.CONFIG_PATH || path.join(__dirname, "config.json");
 let config;
-let DEBUG_MODE = false; // Modo debug para logs detalhados
+let DEBUG_MODE = false;
 
-// Validação de configuração
 try {
     const configContent = readFileSync(configPath, "utf8");
     config = JSON.parse(configContent);
 
-    // Valida campos obrigatórios
     if (!config.prefixo || !config.nomebot || !config.numerodono) {
         throw new Error('Configuração inválida: campos obrigatórios ausentes (prefixo, nomebot, numerodono)');
     }
 
-    // Ativa modo debug se configurado
     DEBUG_MODE = config.debug === true || process.env.NAZUNA_DEBUG === '1';
     if (DEBUG_MODE) {
         console.log('🐛 Modo DEBUG ativado - Logs detalhados habilitados');
@@ -296,9 +289,9 @@ const logger = pino({
     level: 'silent'
 });
 
-const AUTH_DIR = path.join(__dirname, '..', 'database', 'qr-code');
-const DATABASE_DIR = path.join(__dirname, '..', 'database');
-const GLOBAL_BLACKLIST_PATH = path.join(__dirname, '..', 'database', 'dono', 'globalBlacklist.json');
+const DATABASE_DIR = process.env.DATABASE_PATH || path.join(__dirname, '..', 'database');
+const AUTH_DIR = process.env.AUTH_PATH || path.join(DATABASE_DIR, 'qr-code');
+const GLOBAL_BLACKLIST_PATH = path.join(DATABASE_DIR, 'dono', 'globalBlacklist.json');
 
 let msgRetryCounterCache;
 let messagesCache;
@@ -307,7 +300,6 @@ async function initializeOptimizedCaches() {
     try {
         await performanceOptimizer.initialize();
 
-        // Inicializa índice de captcha para busca rápida
         await initCaptchaIndex();
 
         msgRetryCounterCache = {
@@ -330,10 +322,9 @@ async function initializeOptimizedCaches() {
     }
 }
 let codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE === '1';
-// Suporte a --phone=NUMERO para evitar readline interativo (ex: node connect.js --code --phone=258858148698)
+
 const phoneArg = (process.argv.find(a => a.startsWith('--phone=')) || '').replace('--phone=', '').replace(/\D/g, '');
 
-// Cleanup otimizado do cache de mensagens
 let cacheCleanupInterval = null;
 const setupMessagesCacheCleanup = () => {
     if (cacheCleanupInterval) clearInterval(cacheCleanupInterval);
@@ -341,17 +332,15 @@ const setupMessagesCacheCleanup = () => {
     cacheCleanupInterval = setInterval(() => {
         if (!messagesCache) return;
 
-        // Limite duro: se passar de 300, limpa imediatamente
         if (messagesCache.size > 300) {
-            const keysToDelete = messagesCache.size - 200; // Mantém apenas 200
+            const keysToDelete = messagesCache.size - 200;
             const keys = Array.from(messagesCache.keys()).slice(0, keysToDelete);
             keys.forEach(key => messagesCache.delete(key));
             console.log(`🧹 Cache limpo: ${keysToDelete} mensagens removidas (total: ${messagesCache.size})`);
         }
-    }, 120000); // A cada 2 minutos (era 5)
+    }, 120000);
 };
 
-// Inicia cleanup quando o bot conectar
 const startCacheCleanup = () => {
     setupMessagesCacheCleanup();
 };
@@ -466,21 +455,19 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
             return;
         }
 
-        // Valida se são participantes válidos
         if (!inf.participants || !Array.isArray(inf.participants) || inf.participants.length === 0) {
             console.warn('⚠️ Evento de participantes sem lista válida');
             return;
         }
 
-        // Ignora eventos do próprio bot
         const botId = NazunaSock.user.id.split(':')[0];
 
         inf.participants = inf.participants.map(isValidParticipant).filter(Boolean);
 
         if (inf.participants.some(p => p && typeof p === 'string' && p.startsWith(botId))) {
-            // Se o bot foi adicionado, verifica se o modo de aluguel está ativo e se o grupo é autorizado
+
             if (isRentalModeActive()) {
-                const configPath = path.join(__dirname, '..', 'config.json');
+                const configPath = process.env.CONFIG_PATH || path.join(__dirname, 'config.json');
                 const config = JSON.parse(readFileSync(configPath, 'utf8'));
                 const rentalStatus = getGroupRentalStatus(from);
                 if (!rentalStatus.active) {
@@ -489,18 +476,18 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                     const isOwnerAdder = inf.author === ownerJid || (config.lidowner && inf.author === config.lidowner);
 
                     if (isOwnerAdder) {
-                        // Se o dono adicionou, autoriza permanentemente o grupo automaticamente
+
                         setGroupRental(from, 'permanent');
-                        await NazunaSock.sendMessage(from, { 
+                        await NazunaSock.sendMessage(from, {
                             text: "👑 *DONO DETECTADO*\n\nIdentifiquei que o meu dono me adicionou a este grupo. O aluguel foi ativado automaticamente como *PERMANENTE*. Divirtam-se! ✨"
                         }).catch(() => {});
                         return;
                     }
 
-                    await NazunaSock.sendMessage(from, { 
+                    await NazunaSock.sendMessage(from, {
                         text: `⏳ *ESTE GRUPO NÃO ESTÁ AUTORIZADO*\n\nO modo de aluguel global está ATIVADO. Tens *24 horas* para enviar um código de ativação válido ou solicitar a autorização ao meu dono, caso contrário sairei automaticamente para poupar recursos.\n\n📱 *Contato do Dono:* wa.me/${ownerNumber}\n\nContate para ativar.`
                     }).catch(() => {});
-                    
+
                     setTimeout(async () => {
                         try {
                             const finalStatus = getGroupRentalStatus(from);
@@ -511,7 +498,7 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                         } catch (err) {
                             console.error(`[AUTO-LEAVE] Erro ao sair do grupo ${from}:`, err.message);
                         }
-                    }, 86400000); // 24 horas
+                    }, 86400000);
                 }
             }
             return;
@@ -584,7 +571,7 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
             }
             case 'promote':
             case 'demote': {
-                // Ação sem notificação
+
                 break;
             }
         }
@@ -593,8 +580,6 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
     }
 }
 
-// Handler para solicitações de entrada em grupos
-// Evento 'group.join-request' emitido pelo Baileys
 async function handleGroupJoinRequest(NazunaSock, inf) {
     try {
         const from = inf.id;
@@ -623,20 +608,17 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
             console.log('  - x9:', groupSettings.x9);
         }
 
-        // O participante pode vir como LID ou phone number
         const participantJid = inf.participantPn || inf.participant;
         const participantDisplay = participantJid ? participantJid.split('@')[0] : 'Desconhecido';
 
-        // Auto-aceitar se configurado e for uma nova solicitação
         if (groupSettings.autoAcceptRequests && inf.action === 'created' && participantJid) {
             try {
-                // Se captcha estiver ativado
+
                 if (groupSettings.captchaEnabled) {
                     const num1 = Math.floor(Math.random() * 10) + 1;
                     const num2 = Math.floor(Math.random() * 10) + 1;
                     const answer = num1 + num2;
 
-                    // Salvar captcha pendente
                     if (!groupSettings.pendingCaptchas) groupSettings.pendingCaptchas = {};
                     groupSettings.pendingCaptchas[participantJid] = {
                         answer,
@@ -645,12 +627,10 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
                     };
                     await saveGroupSettings(from, groupSettings);
 
-                    // Enviar captcha no PV
                     await NazunaSock.sendMessage(participantJid, {
                         text: `🔐 *Verificação de Segurança*\n\nVocê solicitou entrar no grupo. Para ser aprovado, resolva esta conta:\n\n❓ Quanto é *${num1} + ${num2}*?\n\n⏱️ Você tem 5 minutos para responder.\n\n💡 Responda apenas com o número.`
                     }).catch(err => console.error(`❌ Erro ao enviar captcha: ${err.message}`));
 
-                    // Auto-rejeitar após 5 minutos se não responder
                     setTimeout(async () => {
                         const currentSettings = await loadGroupSettings(from);
                         if (currentSettings.pendingCaptchas?.[participantJid]) {
@@ -660,7 +640,7 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
                         }
                     }, 5 * 60 * 1000);
                 } else {
-                    // Auto-aceitar direto sem captcha
+
                     await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
                 }
             } catch (err) {
@@ -676,19 +656,13 @@ const isValidJid = (str) => /^\d+@s\.whatsapp\.net$/.test(str);
 const isValidLid = (str) => /^[a-zA-Z0-9_]+@lid$/.test(str);
 const isValidUserId = (str) => isValidJid(str) || isValidLid(str);
 
-/**
- * Validates if a participant object has a valid ID and extracts the ID
- * @param {object|string} participant - The participant object or string to validate
- * @returns {string|boolean} - The participant ID if valid, false otherwise
- */
 function isValidParticipant(participant) {
-    // If participant is already a string, validate it directly
+
     if (typeof participant === 'string') {
         if (participant.trim().length === 0) return false;
         return participant;
     }
 
-    // If participant is an object with id property
     if (participant && typeof participant === 'object' && participant.hasOwnProperty('id')) {
         const id = participant.id;
         if (id === null || id === undefined || id === '') return false;
@@ -800,7 +774,7 @@ async function scanForJids(directory) {
             for (const entry of entries) {
                 const fullPath = join(dirPath, entry.name);
                 if (entry.isDirectory()) {
-                    // Ignora a pasta de sessão do Baileys para evitar spam e erros de ENOENT
+
                     if (entry.name === 'qr-code' || entry.name === 'session') continue;
                     await scanDir(fullPath);
                 } else if (entry.name.endsWith('.json')) {
@@ -1029,20 +1003,16 @@ async function performMigration(NazunaSock) {
 
 }
 
-// Variáveis de controle de reconexão (declaradas aqui para evitar temporal dead zone)
 let reconnectAttempts = 0;
-let isReconnecting = false; // Flag para evitar múltiplas reconexões simultâneas
-let reconnectTimer = null; // Timer de reconexão para poder cancelar
-let forbidden403Attempts = 0; // Contador específico para erro 403
-let consecutive428Count = 0; // Contador de 428 consecutivos para detectar loop
+let isReconnecting = false;
+let reconnectTimer = null;
+let forbidden403Attempts = 0;
+let consecutive428Count = 0;
 const MAX_RECONNECT_ATTEMPTS = 15;
-const MAX_403_ATTEMPTS = 3; // Máximo de 3 tentativas para erro 403
-const MAX_428_CONSECUTIVE = 5; // Máximo de 428 consecutivos antes de parar
-const RECONNECT_DELAY_BASE = 5000; // 5 segundos base
-const MAX_RECONNECT_DELAY = 120000; // Máximo 2 minutos de delay
-
-
-
+const MAX_403_ATTEMPTS = 3;
+const MAX_428_CONSECUTIVE = 5;
+const RECONNECT_DELAY_BASE = 5000;
+const MAX_RECONNECT_DELAY = 120000;
 
 async function createBotSocket(authDir) {
     try {
@@ -1054,7 +1024,6 @@ async function createBotSocket(authDir) {
             signalRepository
         } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
 
-        // Busca a versão mais recente do Baileys e simula browser macOS nativo
         const { version } = await fetchLatestBaileysVersion();
         console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
 
@@ -1069,16 +1038,14 @@ async function createBotSocket(authDir) {
             connectTimeoutMs: 180000,
             retryRequestDelayMs: 10000,
             qrTimeout: 180000,
-            keepAliveIntervalMs: 30_000, // 30s para detectar morte de conexão mais rápido
-            defaultQueryTimeoutMs: 60_000, // Timeout de 60s para queries (evita travamento infinito)
+            keepAliveIntervalMs: 30_000,
+            defaultQueryTimeoutMs: 60_000,
             msgRetryCounterCache,
             auth: state,
             signalRepository,
             logger
         });
 
-        // Registra os listeners ANTES de pedir o pairing code
-        // para que creds.update salve as credenciais corretamente
         NazunaSock.ev.on('creds.update', saveCreds);
 
         if (codeMode && !NazunaSock.authState.creds.registered) {
@@ -1095,7 +1062,7 @@ async function createBotSocket(authDir) {
                     process.exit(1);
                 }
             }
-            // Espera 5s para o WebSocket estabilizar antes de pedir o código
+
             console.log('⏳ Aguardando estabilização da conexão (5s)...');
             await new Promise(r => setTimeout(r, 5000));
             const code = await NazunaSock.requestPairingCode(phoneNumber.replaceAll('+', '').replaceAll(' ', '').replaceAll('-', ''));
@@ -1103,8 +1070,6 @@ async function createBotSocket(authDir) {
             console.log('📲 Envie este código no WhatsApp para autenticar o bot.');
             console.log('⏳ Aguardando autenticação... Não feche o terminal.');
         }
-
-
 
         NazunaSock.ev.on('groups.update', async (updates) => {
             if (!Array.isArray(updates) || updates.length === 0) return;
@@ -1120,14 +1085,13 @@ async function createBotSocket(authDir) {
                 console.log('🐛 ====================================\n');
             }
 
-            // Processa atualizações em lote para melhor performance
             const updatePromises = updates.map(async ([ev]) => {
                 if (!ev || !ev.id) return;
 
                 try {
                     const meta = await NazunaSock.groupMetadata(ev.id).catch(() => null);
                     if (meta) {
-                        // Metadados atualizados, pode ser usado para cache futuro
+
                         if (DEBUG_MODE) {
                             console.log('🐛 Metadata fetched for group:', ev.id);
                         }
@@ -1154,7 +1118,6 @@ async function createBotSocket(authDir) {
             await handleGroupParticipantsUpdate(NazunaSock, inf);
         });
 
-        // Listener para solicitações de entrada em grupos (join requests)
         NazunaSock.ev.on('group.join-request', async (inf) => {
             if (DEBUG_MODE) {
                 console.log('\n🐛 ========== GROUP JOIN REQUEST ==========');
@@ -1198,12 +1161,11 @@ async function createBotSocket(authDir) {
         messageQueue.setErrorHandler(queueErrorHandler);
 
         const processMessage = async (info) => {
-            // Verifica se é uma solicitação de entrada (messageStubType no info, não em message)
-            const isJoinRequest = info?.messageStubType === 172; // GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST_NON_ADMIN_ADD
 
-            // Solicitações de entrada não têm message, apenas messageStubType
+            const isJoinRequest = info?.messageStubType === 172;
+
             if (isJoinRequest) {
-                // Cria um objeto message fake para o index.js processar
+
                 info.message = {
                     messageStubType: info.messageStubType,
                     messageStubParameters: info.messageStubParameters
@@ -1214,16 +1176,14 @@ async function createBotSocket(authDir) {
                 return;
             }
 
-            // Cache da mensagem para uso posterior no processamento (anti-delete, resumirchat, etc)
             if (messagesCache && info.key?.id && info.key?.remoteJid) {
-                // Limite duro: não adicionar se cache já está cheio
+
                 if (messagesCache.size < 400) {
                     const cacheKey = `${info.key.remoteJid}_${info.key.id}`;
                     messagesCache.set(cacheKey, info);
                 }
             }
 
-            // Processa mensagem
             if (typeof indexModule === 'function') {
                 await indexModule(NazunaSock, info, null, messagesCache, rentalExpirationManager);
             } else {
@@ -1237,22 +1197,20 @@ async function createBotSocket(authDir) {
 
             NazunaSock.ev.on('messages.upsert', async (m) => {
                 if (!m.messages || !Array.isArray(m.messages)) return;
-                
+
                 if (DEBUG_MODE) console.log(`[MSG-DEBUG] Upsert received: type=${m.type}, msgCount=${m.messages.length}`);
 
-                // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
                 if (m.type === 'append') {
                     const isJoinRequest = m.messages.some(info => info?.messageStubType === 172);
                     if (!isJoinRequest) return;
                 }
 
-                // Processa 'notify' (mensagens normais) e 'append' (apenas solicitações de entrada)
                 if (m.type !== 'notify' && m.type !== 'append') return;
 
                 try {
 
                     const messageProcessingPromises = m.messages.map(info => {
-                        // Watchdog removido
+
                         return messageQueue.add(info, processMessage).catch(err => {
                             console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
                         });
@@ -1284,7 +1242,6 @@ async function createBotSocket(authDir) {
             if (qr && !NazunaSock.authState.creds.registered && !codeMode) {
                 console.log('🔗 QR Code gerado para autenticação:');
 
-                // Gerar arquivo HTML com o QR Code
                 const htmlContent = `
                     <html>
                         <head>
@@ -1333,7 +1290,7 @@ async function createBotSocket(authDir) {
             }
             if (connection === 'open') {
                 console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
-                // Força presença online
+
                 try {
                     NazunaSock.sendPresenceUpdate('available');
                     console.log('🟢 Presença definida como ONLINE');
@@ -1341,14 +1298,11 @@ async function createBotSocket(authDir) {
                     console.error('⚠️ Falha ao definir presença:', presenceErr.message);
                 }
 
-                // Reset de flags apenas quando conexão REALMENTE abre
-                codeMode = false; // Desativa o modo de pareamento permanentemente após o sucesso
+                codeMode = false;
                 isReconnecting = false;
                 reconnectAttempts = 0;
                 forbidden403Attempts = 0;
-                // NÃO resetar consecutive428Count aqui!
-                // O 428 chega logo após o open, criando loop infinito se resetar.
-                // Em vez disso, reseta após 60s de conexão estável.
+
                 if (global._428ResetTimer) clearTimeout(global._428ResetTimer);
                 global._428ResetTimer = setTimeout(() => {
                     if (consecutive428Count > 0) {
@@ -1361,7 +1315,7 @@ async function createBotSocket(authDir) {
                 global.nazuWatchdog = setInterval(async () => {
                     if (!NazunaSock || !NazunaSock.user?.id) return;
                     try {
-                        // Faz um ping inofensivo para garantir que o socket responde
+
                         await NazunaSock.presenceSubscribe(NazunaSock.user.id).catch(() => {});
                     } catch (e) {
                         const errStr = String(e);
@@ -1377,7 +1331,7 @@ async function createBotSocket(authDir) {
                             }, 3000);
                         }
                     }
-                }, 45000); // Checa a cada 45 segundos
+                }, 45000);
 
                 await initializeOptimizedCaches();
 
@@ -1388,14 +1342,13 @@ async function createBotSocket(authDir) {
                 await rentalExpirationManager.initialize();
 
                 attachMessagesListener();
-                startCacheCleanup(); // Inicia o sistema de limpeza de cache
+                startCacheCleanup();
 
-                // Envia mensagem de boas-vindas para o dono (apenas uma vez por inicialização do processo)
                 try {
                     const msgBotOnConfig = loadMsgBotOn();
 
                     if (msgBotOnConfig.enabled && !global.hasSentWelcomeMessage) {
-                        // Aguarda 3 segundos para garantir que o bot está totalmente conectado
+
                         setTimeout(async () => {
                             try {
                                 const ownerJid = buildUserId(numerodono, config);
@@ -1417,12 +1370,11 @@ async function createBotSocket(authDir) {
                     console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
                 }
 
-                // Inicializa sub-bots automaticamente
                 try {
                     if (typeof indexModule === 'function') {
                         await indexModule(NazunaSock, { isStartup: true, key: { remoteJid: 'status@broadcast', id: 'fake_123' }, message: { conversation: 'fake_startup_event' } }, null, messagesCache, rentalExpirationManager);
                     }
-                    
+
                     const subBotManagerModule = await import('./utils/subBotManager.js');
                     const subBotManager = subBotManagerModule.default ?? subBotManagerModule;
                     console.log('🤖 Verificando sub-bots cadastrados...');
@@ -1456,7 +1408,6 @@ async function createBotSocket(authDir) {
 
                 console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage} | Tentativa: ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
 
-                // Limpeza de ouvintes e conexão antiga para prevenir vazamento de memória e sockets zumbis
                 try {
                     NazunaSock.ev.removeAllListeners();
                 } catch {}
@@ -1464,32 +1415,24 @@ async function createBotSocket(authDir) {
                     NazunaSock.ws?.close();
                 } catch {}
 
-                // Cancela o watchdog ao fechar a conexão para evitar falsos restarts no watchdog
                 if (global.nazuWatchdog) {
                     clearInterval(global.nazuWatchdog);
                     global.nazuWatchdog = null;
                 }
 
-                // Limpa recursos antes de reconectar
                 if (cacheCleanupInterval) {
                     clearInterval(cacheCleanupInterval);
                     cacheCleanupInterval = null;
                 }
 
-                // Tratamento especial para erro 428 (Connection Closed / rate limit)
-                // O 428 é o erro mais perigoso porque cria loops infinitos:
-                // O bot conecta (open), recebe 428 logo depois, reconnectAttempts reseta no open,
-                // e o ciclo se repete INFINITAMENTE sem nunca atingir o limite de 15.
                 if (reason === 428) {
                     consecutive428Count++;
                     console.log(`⚠️ Erro 428 consecutivo #${consecutive428Count}/${MAX_428_CONSECUTIVE}`);
 
-                    // Em codeMode: para imediatamente no 1º 428 — o código já foi exibido,
-                    // se reconectar gera outro código invalidando o anterior.
                     if (codeMode) {
                         console.log('⏸️ Rate limit do WhatsApp (428) em modo pareamento. O código acima ainda é válido por ~3 min.');
                         console.log('📲 Insira o código no WhatsApp AGORA. O bot aguarda a conexão.');
-                        // Espera em silêncio a conexão ser feita — não reconecta!
+
                         return;
                     }
 
@@ -1497,19 +1440,18 @@ async function createBotSocket(authDir) {
                         console.log('🛑 Loop de 428 detectado! O WhatsApp está recusando esta sessão repetidamente.');
                         console.log('🛑 Parando o bot DEFINITIVAMENTE para evitar ban.');
                         console.log('🛑 Será necessário re-parear o bot manualmente.');
-                        // Cria lock file para impedir PM2 de reiniciar em loop
+
                         try {
                             const lockPath = path.join(DATABASE_DIR, '428_LOCK');
                             await fs.writeFile(lockPath, `Loop 428 detectado em ${new Date().toISOString()}. Re-pareamento necessário.`);
-                            // Para o PM2 definitivamente em vez de process.exit que reinicia
+
                             execSync('pm2 stop nazuna', { timeout: 5000 });
                         } catch (e) {
-                            process.exit(0); // exit 0 = PM2 não reinicia se configurado com --stop-exit-codes 0
+                            process.exit(0);
                         }
                         return;
                     }
 
-                    // Delay progressivo para 428: 10s, 20s, 40s, 60s, 120s
                     const delay428 = Math.min(10000 * Math.pow(2, consecutive428Count - 1), MAX_RECONNECT_DELAY);
                     console.log(`🔄 Aguardando ${Math.round(delay428 / 1000)}s antes de reconectar (anti-loop 428)...`);
                     if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -1519,10 +1461,8 @@ async function createBotSocket(authDir) {
                     return;
                 }
 
-                // Reset do contador 428 se for outro tipo de erro
                 consecutive428Count = 0;
 
-                // Tratamento especial para erro 403 (Forbidden)
                 if (reason === 403) {
                     forbidden403Attempts++;
                     console.log(`⚠️ Erro 403 detectado. Tentativa ${forbidden403Attempts}/${MAX_403_ATTEMPTS}`);
@@ -1534,7 +1474,6 @@ async function createBotSocket(authDir) {
                         process.exit(1);
                     }
 
-                    // Aguarda antes de tentar reconectar
                     console.log('🔄 Tentando reconectar em 5 segundos...');
                     if (reconnectTimer) {
                         clearTimeout(reconnectTimer);
@@ -1545,10 +1484,8 @@ async function createBotSocket(authDir) {
                     return;
                 }
 
-                // Reset do contador 403 se for outro tipo de erro
                 forbidden403Attempts = 0;
 
-                // APENAS loggedOut real apaga a sessão (NÃO 401/badSession)
                 if (reason === DisconnectReason.loggedOut) {
                     await clearAuthDir();
                     console.log('🔄 Sessão foi deslogada pelo WhatsApp. Nova autenticação necessária.');
@@ -1587,7 +1524,6 @@ async function createBotSocket(authDir) {
                     process.exit(1);
                 }
 
-                // Todos os erros temporários de rede (503, 408, 500, 502, 504, 1006, etc.) reconectam internamente
                 const delayTime = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.4, Math.max(0, reconnectAttempts - 1)), MAX_RECONNECT_DELAY);
                 console.log(`🔄 Desconexão temporária (${reasonMessage}). Tentando reconectar internamente em ${Math.round(delayTime / 1000)}s (Tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
                 if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -1614,7 +1550,6 @@ async function startNazu() {
     }
     isReconnecting = true;
 
-    // Verifica lock de loop 428
     try {
         const lockPath = path.join(DATABASE_DIR, '428_LOCK');
         await fs.access(lockPath);
@@ -1622,7 +1557,7 @@ async function startNazu() {
         console.log('🛑 Para reconectar: delete o arquivo dados/database/428_LOCK e re-pareie.');
         process.exit(0);
     } catch {
-        // Prossegue
+
     }
 
     try {
@@ -1640,14 +1575,10 @@ async function startNazu() {
     }
 }
 
-/**
- * Função unificada para desligamento gracioso
- */
 async function gracefulShutdown(signal) {
     const signalName = signal === 'SIGTERM' ? 'SIGTERM' : 'SIGINT';
     console.log(`📡 ${signalName} recebido, parando bot graciosamente...`);
 
-    // Cancela qualquer timer de reconexão pendente
     if (reconnectTimer) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
@@ -1656,14 +1587,13 @@ async function gracefulShutdown(signal) {
 
     let shutdownTimeout;
 
-    // Timeout de segurança para forçar saída após 15 segundos
     shutdownTimeout = setTimeout(() => {
         console.error('⚠️ Timeout de shutdown, forçando saída...');
         process.exit(1);
     }, 15000);
 
     try {
-        // Desconecta sub-bots
+
         try {
             const subBotManagerModule = await import('./utils/subBotManager.js');
             const subBotManager = subBotManagerModule.default ?? subBotManagerModule;
@@ -1673,17 +1603,14 @@ async function gracefulShutdown(signal) {
             console.error('❌ Erro ao desconectar sub-bots:', error.message);
         }
 
-        // Limpa recursos
         if (cacheCleanupInterval) {
             clearInterval(cacheCleanupInterval);
             cacheCleanupInterval = null;
         }
 
-        // Finaliza fila de mensagens
         await messageQueue.shutdown();
         console.log('✅ MessageQueue finalizado');
 
-        // Finaliza otimizador
         await performanceOptimizer.shutdown();
         console.log('✅ Performance optimizer finalizado');
 

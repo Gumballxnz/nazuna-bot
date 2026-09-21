@@ -1,20 +1,10 @@
-/**
- * Download Reddit - 100% Gratuito 
- * Motor: Scraping JSON nativo do Reddit (sem API paga)
- */
-
 import axios from 'axios';
 
 const UA = 'Mozilla/5.0 (bot)';
 
-/**
- * Baixa vídeo/mídia de um post do Reddit
- * @param {string} url - URL do post do Reddit
- * @returns {Promise<Object>} Objeto com sucesso, buffer e informações do post
- */
 export async function download(url) {
   try {
-    // Converter URL para JSON endpoint do Reddit
+
     const jsonUrl = url.replace(/\/$/, '') + '.json';
 
     const { data } = await axios.get(jsonUrl, {
@@ -27,7 +17,6 @@ export async function download(url) {
       return { ok: false, message: 'Post não encontrado.' };
     }
 
-    // Vídeo do Reddit
     if (post.is_video && post.media?.reddit_video?.fallback_url) {
       const videoUrl = post.media.reddit_video.fallback_url;
       const fileResponse = await axios.get(videoUrl, {
@@ -49,7 +38,6 @@ export async function download(url) {
       };
     }
 
-    // Imagem
     if (post.url_overridden_by_dest && /\.(jpg|png|gif|webp)/i.test(post.url_overridden_by_dest)) {
       const fileResponse = await axios.get(post.url_overridden_by_dest, {
         responseType: 'arraybuffer',

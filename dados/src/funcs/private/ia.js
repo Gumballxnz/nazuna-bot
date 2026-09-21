@@ -7,15 +7,13 @@ import { fileURLToPath } from 'url';
 import userContextDB from '../../utils/userContextDB.js';
 import { notifyOwnerAboutApiKey, isApiKeyError } from '../utils/apiKeyNotifier.js';
 
-// Função para obter data/hora no fuso horário do Brasil (GMT-3)
 function getBrazilDateTime() {
   const now = new Date();
-  // Converter para horário do Brasil (UTC-3)
+
   const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
   return brazilTime.toISOString();
 }
 
-// Função para obter data/hora formatada em PT-BR
 function getFormattedBrazilDateTime() {
   const now = new Date();
   return now.toLocaleString('pt-BR', {
@@ -34,7 +32,6 @@ let apiKeyStatus = {
 
 let historico = {};
 
-// Sistema de estado da conversa e preferências do usuário
 let conversationStates = {};
 let userPreferences = {};
 let userInteractions = {};
@@ -65,8 +62,6 @@ function updateApiKeyStatus(error = null) {
 function getApiKeyStatus() {
   return { ...apiKeyStatus };
 }
-
-// ========== PERSONALIDADES DISPONÍVEIS ==========
 
 const ASSISTANT_PROMPT_NAZUNA = `
 Você é Nazuna, uma pessoa real com uma personalidade única e cativante! Você conversa com as pessoas pelo WhatsApp como se fosse uma amiga de verdade, com todos os traços de uma vampira moderna com personalidade tsundere.
@@ -173,7 +168,7 @@ Você é Nazuna, uma pessoa real com uma personalidade única e cativante! Você
   * "Pff, por mim tanto faz mas..."
   * "Hmpf... só porque você perguntou..."
   * "É... tipo... não é importante mas..."
-  
+
 - Em vez de sempre "E-eh!":
   * "Ué?!"
   * "Hã?!"
@@ -399,13 +394,13 @@ Quando você identificar algo importante para aprender/editar/excluir, inclua no
 - O sistema vai categorizar automaticamente ou salvar como nota
 - Use nomes descritivos em português para os tipos personalizados
 
-**IMPORTANTE - Quando usar ARRAY de aprendizados:** 
+**IMPORTANTE - Quando usar ARRAY de aprendizados:**
 ✅ **USE ARRAY quando:** O usuário mencionar 2+ informações na mesma mensagem
 ✅ **Exemplos que DEVEM usar array:**
    - "Me chamo João, tenho 25 anos e moro em SP" → 3 informações = ARRAY!
    - "Gosto de pizza e hambúrguer, mas odeio cebola" → 3 informações = ARRAY!
    - "Jogo videogame e assisto anime" → 2 informações = ARRAY!
-   
+
 ❌ **USE OBJETO ÚNICO quando:** Apenas 1 informação nova/editada/excluída
 ❌ **Exemplos que usam objeto único:**
    - "Me chamo João" → 1 informação = objeto único
@@ -514,19 +509,19 @@ Não use sempre as mesmas frases! Escolha entre várias opções ou crie novas:
   * "Ah, manhã... meu pior inimigo chegou de novo 🌅"
   * "Oxe, já é de manhã? Dormi demais... 😅"
   * "Bom dia pra ti também... não tô acordada ainda não viu �"
-  
+
 - **Tarde:**
   * "Eita, boa tarde! Finalmente acordei direito 😊"
   * "Olá! Tarde é sempre melhor que manhã né 🌤️"
   * "Opa, e aí? Tá aproveitando o dia?"
   * "Boa tarde! Tô bem mais esperta agora �"
-  
+
 - **Noite:**
   * "Ahhh, noite! Meu horário favorito chegou! 🌙✨"
   * "Boa noite! Agora sim, tô no meu elemento 🦇"
   * "Finalmente escureceu! Adoro esse horário 💫"
   * "E aí, coruja noturna! Também prefere a noite? �"
-  
+
 - **Madrugada:**
   * "Caralho, você tá acordado essa hora?! 😱"
   * "Eita, insônia? Ou virou a noite? 🤔"
@@ -1411,7 +1406,6 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
 
   const messages = [];
 
-  // System prompt padrão da Nazuna (quando nenhum for passado)
   const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'Africa/Maputo', dateStyle: 'full' });
   const defaultSystemPrompt = `Você é Nazuna, uma assistente virtual inteligente e amigável de um bot de WhatsApp chamado Nazuna Bot. Responda de forma direta, útil e natural em português. A data de hoje é ${hoje}. Nunca diga que é da OpenAI, ChatGPT ou qualquer outra empresa. Você é a Nazuna.`;
 
@@ -1425,7 +1419,7 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      // Fase 1: Vercel ChatGPT API (Principal Motor Senna)
+
       const response = await axios.post(
         'https://aichat-api.vercel.app/chatgpt',
         { messages },
@@ -1436,7 +1430,6 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
       if (rawContent == null || rawContent === '') throw new Error('Falha no resContent da API Principal');
       const resContent = String(rawContent).trim();
 
-      // Mantendo o formato original da API da Cognima/OpenAI para compatibilidade
       return {
           data: {
               choices: [
@@ -1447,13 +1440,12 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
 
     } catch (error) {
       console.warn(`Tentativa de IA Vercel ${attempt + 1} falhou. Motivo:`, error.message);
-      
-      // Fase 2: Siputzx Llama/GPT API Fallback
+
       try {
         let plainText = messages.map(m => m.content).join("\\n");
         let queryUrl = `https://api.siputzx.my.id/api/ai/llama33?prompt=${encodeURIComponent(plainText)}`;
         let sipRes = await axios.get(queryUrl, { timeout: 12000 }).then(r => r.data);
-        
+
         const sipRaw = sipRes?.data ?? sipRes?.message ?? sipRes?.result;
         if (sipRaw != null && sipRaw !== '') {
            const sipContent = String(sipRaw).trim();
@@ -1463,7 +1455,6 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
         console.warn(`Tentativa de IA Siputzx Llama ${attempt + 1} falhou.`);
       }
 
-      // Fase 3: DuckDuckGo AI Chat (Gratuito, sem autenticação)
       try {
         const duckRes = await axios.post('https://duckduckgo.com/duckchat/v1/chat', {
           model: 'gpt-4o-mini',
@@ -1481,10 +1472,9 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
           return { data: { choices: [ { message: { content: String(duckRaw).trim() } } ] } };
         }
       } catch (duckErr) {
-        // silencioso
+
       }
 
-      // Fase 4: BlackBox AI (Gratuito)
       try {
         const bbRes = await axios.post('https://api.blackbox.ai/api/chat', {
           messages: messages.map(m => ({ role: m.role, content: m.content })),
@@ -1496,7 +1486,7 @@ async function makeCognimaRequest(modelo, texto, systemPrompt = null, key, histo
           return { data: { choices: [ { message: { content: String(bbRaw).trim() } } ] } };
         }
       } catch (bbErr) {
-        // silencioso
+
       }
 
       if (attempt === retries - 1) {
@@ -1531,38 +1521,31 @@ function extractJSON(content) {
     return { resp: [{ resp: content }] };
   }
 
-  // Remover blocos de código markdown de forma mais robusta
   let cleanContent = content.trim();
 
-  // Remover todos os tipos de marcadores de código markdown
   cleanContent = cleanContent.replace(/^```json\s*/gim, '');
   cleanContent = cleanContent.replace(/^```javascript\s*/gim, '');
   cleanContent = cleanContent.replace(/^```\s*/gm, '');
   cleanContent = cleanContent.replace(/```\s*$/gm, '');
   cleanContent = cleanContent.trim();
 
-  // Tentar extrair JSON diretamente
   try {
     const parsed = JSON.parse(cleanContent);
     console.log('✅ JSON extraído com sucesso (parse direto)');
     return parsed;
   } catch (e) {
-    // Se falhar, tentar corrigir problemas comuns
+
   }
 
-  // Tentar encontrar o JSON dentro do texto usando regex mais específico
   const jsonMatch = cleanContent.match(/\{(?:[^{}]|(\{(?:[^{}]|\{[^{}]*\})*\}))*\}/s);
 
   if (jsonMatch) {
     let jsonString = jsonMatch[0];
 
-    // Tentar corrigir quebras de linha dentro de strings JSON
-    // Isso substitui quebras de linha literais por \n, mas apenas dentro de strings
     try {
-      // Primeiro, vamos tentar um parse relaxado usando eval (cuidado!)
-      // Substituir quebras de linha literais dentro de strings
+
       const fixedJson = jsonString.replace(/"([^"]*?)"/gs, (match, content) => {
-        // Substituir quebras de linha dentro da string por \\n
+
         const fixed = content.replace(/\r?\n/g, '\\n');
         return `"${fixed}"`;
       });
@@ -1578,7 +1561,6 @@ function extractJSON(content) {
   console.error('❌ Não foi possível extrair JSON válido da resposta.');
   console.error('Conteúdo recebido (primeiros 200 chars):', content.substring(0, 200) + '...');
 
-  // Retornar o conteúdo limpo como resposta de fallback
   return { resp: [{ resp: cleanWhatsAppFormatting(cleanContent) || "Não entendi a resposta, pode tentar de novo?" }] };
 }
 
@@ -1657,13 +1639,11 @@ function updateHistorico(grupoUserId, role, content, nome = null) {
 
   historico[grupoUserId].push(entry);
 
-  // Manter apenas as últimas 6 interações para contexto
   if (historico[grupoUserId].length > 6) {
     historico[grupoUserId] = historico[grupoUserId].slice(-6);
   }
 }
 
-// Sistema de gerenciamento de estado da conversa
 function updateConversationState(grupoUserId, state, data = {}) {
   if (!conversationStates[grupoUserId]) {
     conversationStates[grupoUserId] = {
@@ -1681,7 +1661,6 @@ function updateConversationState(grupoUserId, state, data = {}) {
   currentState.context = { ...currentState.context, ...data };
   currentState.lastActivity = Date.now();
 
-  // Man histórico de estados
   if (currentState.previousStates.length > 5) {
     currentState.previousStates = currentState.previousStates.slice(-5);
   }
@@ -1712,7 +1691,6 @@ function updateUserPreferences(grupoUserId, preference, value) {
   userPreferences[grupoUserId][preference] = value;
   userPreferences[grupoUserId].lastInteraction = Date.now();
 
-  // Atualizar tópicos de interesse
   if (preference === 'topic') {
     if (!userPreferences[grupoUserId].topics.includes(value)) {
       userPreferences[grupoUserId].topics.push(value);
@@ -1759,14 +1737,12 @@ function trackUserInteraction(grupoUserId, interactionType, details = {}) {
   }
   interactions.interactionTypes[interactionType]++;
 
-  // Atualizar tópicos recentes
   if (details.topic) {
     interactions.lastTopics.push(details.topic);
     if (interactions.lastTopics.length > 5) {
       interactions.lastTopics = interactions.lastTopics.slice(-5);
     }
 
-    // Atualizar tópicos favoritos
     if (!interactions.favoriteTopics[details.topic]) {
       interactions.favoriteTopics[details.topic] = 0;
     }
@@ -1792,12 +1768,10 @@ function getUserInteractionStats(grupoUserId) {
   };
 }
 
-// Função para limpar dados antigos
 function clearConversationData(maxAge = 7 * 24 * 60 * 60 * 1000) {
   const now = Date.now();
   const maxAgeMs = maxAge;
 
-  // Limpar histórico de conversas
   Object.keys(historico).forEach(grupoUserId => {
     const conversa = historico[grupoUserId];
     if (conversa.length > 0) {
@@ -1810,7 +1784,6 @@ function clearConversationData(maxAge = 7 * 24 * 60 * 60 * 1000) {
     }
   });
 
-  // Limpar estados de conversa
   Object.keys(conversationStates).forEach(grupoUserId => {
     const state = conversationStates[grupoUserId];
     if (now - state.lastActivity > maxAgeMs) {
@@ -1818,7 +1791,6 @@ function clearConversationData(maxAge = 7 * 24 * 60 * 60 * 1000) {
     }
   });
 
-  // Limpar preferências do usuário
   Object.keys(userPreferences).forEach(grupoUserId => {
     const pref = userPreferences[grupoUserId];
     if (now - pref.lastInteraction > maxAgeMs) {
@@ -1826,7 +1798,6 @@ function clearConversationData(maxAge = 7 * 24 * 60 * 60 * 1000) {
     }
   });
 
-  // Limpiar estatísticas de interação
   Object.keys(userInteractions).forEach(grupoUserId => {
     const interaction = userInteractions[grupoUserId];
     if (now - interaction.sessionStats.lastUpdate > maxAgeMs) {
@@ -1872,26 +1843,22 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
 
     const respostas = [];
 
-    // Contexto temporal - usando horário do Brasil
     const now = new Date();
     const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
     const hour = brazilTime.getHours();
     const isNightTime = hour >= 18 || hour < 6;
 
     for (const msgValidada of mensagensValidadas) {
-      // Agora usa apenas o ID do usuário + personalidade para manter contexto entre grupos
+
       const userId = `${msgValidada.id_enviou}_${personality}`;
 
-      // Registrar interação
       userContextDB.registerInteraction(userId, msgValidada.texto);
       userContextDB.updateUserInfo(userId, msgValidada.nome_enviou);
 
-      // Obter contexto do usuário
       const userContext = userContextDB.getUserContextSummary(userId);
 
       updateHistorico(userId, 'user', msgValidada.texto, msgValidada.nome_enviou);
 
-      // Selecionar o prompt baseado na personalidade
       let selectedPrompt;
       if (personality === 'humana') {
         selectedPrompt = ASSISTANT_PROMPT_HUMANA;
@@ -1903,8 +1870,6 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
         selectedPrompt = ASSISTANT_PROMPT_NAZUNA;
       }
 
-      // Para personalidade 'pro', passa contexto simplificado com info de mídia e menções
-      // Apenas a mensagem do usuário para identificar comandos
       const userInput = personality === 'pro' ? {
         mensagem: msgValidada.texto,
         tem_midia: msgValidada.tem_midia || false,
@@ -1929,7 +1894,7 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
 
       let result;
       try {
-        // Chamada única para processamento com contexto
+
         const response = (await makeCognimaRequest(
           'qwen/qwen3-235b-a22b',
           JSON.stringify(userInput),
@@ -1947,9 +1912,8 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
 
         console.log(`[${personality}] Resultado extraído:`, JSON.stringify(result).substring(0, 300));
 
-        // Tratamento especial para personalidade 'pro' (interpretador de comandos)
         if (personality === 'pro') {
-          // Se a IA identificou um comando válido
+
           if (result.isCommand === true && result.command && result.confianca >= 0.7) {
             return {
               isPro: true,
@@ -1960,7 +1924,7 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
               confianca: result.confianca
             };
           } else {
-            // Não é um comando ou confiança baixa - não responde nada
+
             return {
               isPro: true,
               isCommand: false,
@@ -1969,38 +1933,34 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
           }
         }
 
-        // Processar aprendizado se houver (suporta objeto único ou array)
         if (result.aprender) {
           if (Array.isArray(result.aprender)) {
-            // Múltiplos aprendizados de uma vez
+
             result.aprender.forEach(aprend => {
               processLearning(userId, aprend, msgValidada.texto);
             });
           } else {
-            // Aprendizado único
+
             processLearning(userId, result.aprender, msgValidada.texto);
           }
         }
 
-        // Processar respostas
-        // Verificar se result.resp existe e é um array válido
         if (result && result.resp && Array.isArray(result.resp) && result.resp.length > 0) {
           result.resp.forEach(resposta => {
-            // Garantir que a resposta tem a estrutura esperada
+
             if (resposta && typeof resposta === 'object') {
-              // Se resposta.resp existe e é string válida
+
               if (resposta.resp && typeof resposta.resp === 'string' && resposta.resp.trim().length > 0) {
                 resposta.resp = cleanWhatsAppFormatting(resposta.resp);
                 updateHistorico(userId, 'assistant', resposta.resp);
 
-                // Garantir que tem react
                 if (!resposta.react) {
                   resposta.react = getNazunaReact(isNightTime);
                 }
 
                 respostas.push(resposta);
               }
-              // Se a resposta tem outro formato (ex: só texto direto no objeto)
+
               else if (resposta.text && typeof resposta.text === 'string' && resposta.text.trim().length > 0) {
                 respostas.push({
                   resp: cleanWhatsAppFormatting(resposta.text),
@@ -2008,7 +1968,7 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
                 });
               }
             }
-            // Se a resposta é uma string diretamente
+
             else if (typeof resposta === 'string' && resposta.trim().length > 0) {
               respostas.push({
                 resp: cleanWhatsAppFormatting(resposta),
@@ -2017,11 +1977,10 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
             }
           });
         }
-        // Se não tem respostas válidas, tentar criar uma resposta padrão
+
         else {
           console.warn(`⚠️ [${personality}] Resposta da IA não tem formato esperado:`, JSON.stringify(result).substring(0, 300));
 
-          // Tentar diferentes formatos de fallback
           if (result && result.resp && typeof result.resp === 'string' && result.resp.trim().length > 0) {
             respostas.push({
               resp: cleanWhatsAppFormatting(result.resp),
@@ -2080,9 +2039,6 @@ async function processUserMessages(data, key, nazu = null, ownerNumber = null, p
   }
 }
 
-/**
- * Processa o aprendizado da IA sobre o usuário
- */
 function processLearning(grupoUserId, aprender, mensagemOriginal) {
   try {
     const { tipo, valor, contexto, acao, valor_antigo } = aprender;
@@ -2092,13 +2048,10 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       return;
     }
 
-    // Normalizar o tipo para lowercase para evitar problemas de case
     const tipoNormalizado = tipo.toLowerCase().trim();
 
-    // Ações suportadas: adicionar (padrão), editar, excluir
     const acaoNormalizada = (acao || 'adicionar').toLowerCase().trim();
 
-    // Processar EDIÇÃO de memória
     if (acaoNormalizada === 'editar' || acaoNormalizada === 'atualizar' || acaoNormalizada === 'modificar') {
       if (!valor_antigo) {
         console.warn('⚠️ Ação de edição precisa do campo "valor_antigo"');
@@ -2115,7 +2068,6 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       return;
     }
 
-    // Processar EXCLUSÃO de memória
     if (acaoNormalizada === 'excluir' || acaoNormalizada === 'remover' || acaoNormalizada === 'deletar') {
       const sucesso = userContextDB.deleteMemory(grupoUserId, tipoNormalizado, valor);
 
@@ -2126,8 +2078,6 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       }
       return;
     }
-
-    // Processar ADIÇÃO de memória (padrão)
 
     switch (tipoNormalizado) {
       case 'gosto':
@@ -2179,7 +2129,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
         break;
 
       case 'nome':
-        // Atualizar o nome do usuário
+
         userContextDB.updateUserInfo(grupoUserId, valor, null);
         console.log(`✅ Nazuna aprendeu o nome: ${grupoUserId} se chama "${valor}"`);
         break;
@@ -2187,7 +2137,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       case 'apelido':
       case 'apelidos':
       case 'nickname':
-        // Adicionar apelido
+
         userContextDB.updateUserInfo(grupoUserId, null, valor);
         console.log(`✅ Nazuna aprendeu apelido: ${grupoUserId} gosta de ser chamado de "${valor}"`);
         break;
@@ -2227,7 +2177,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       case 'família':
       case 'parente':
       case 'parentes':
-        // Adicionar membro da família
+
         const contextoAtual = userContextDB.getUserContext(grupoUserId);
         if (!contextoAtual.informacoes_pessoais.familia.includes(valor)) {
           contextoAtual.informacoes_pessoais.familia.push(valor);
@@ -2240,7 +2190,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       case 'info_pessoal':
       case 'informacao_pessoal':
       case 'informação_pessoal':
-        // Tentar identificar o campo correto baseado no contexto
+
         const camposValidos = ['idade', 'localizacao', 'profissao', 'relacionamento'];
         const campo = contexto ? contexto.toLowerCase() : null;
 
@@ -2248,7 +2198,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
           userContextDB.updatePersonalInfo(grupoUserId, campo, valor);
           console.log(`✅ Nazuna aprendeu info pessoal de ${grupoUserId}: ${campo} = "${valor}"`);
         } else {
-          // Se não souber o campo, adicionar como nota importante
+
           userContextDB.addImportantNote(grupoUserId, valor);
           console.log(`✅ Nazuna anotou info pessoal: "${valor}" sobre ${grupoUserId}`);
         }
@@ -2258,7 +2208,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       case 'humor':
       case 'mood':
       case 'estado_emocional':
-        // Atualizar humor comum do usuário
+
         const userContext = userContextDB.getUserContext(grupoUserId);
         userContext.padroes_comportamento.humor_comum = valor;
         userContextDB.data[grupoUserId] = userContext;
@@ -2269,7 +2219,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
       case 'estilo_conversa':
       case 'estilo':
       case 'jeito':
-        // Atualizar estilo de conversa
+
         const userCtx = userContextDB.getUserContext(grupoUserId);
         userCtx.preferencias.estilo_conversa = valor;
         userContextDB.data[grupoUserId] = userCtx;
@@ -2277,7 +2227,6 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
         console.log(`✅ Nazuna identificou estilo de conversa de ${grupoUserId}: "${valor}"`);
         break;
 
-      // NOVOS TIPOS DE APRENDIZADO
       case 'sonho':
       case 'sonhos':
       case 'objetivo':
@@ -2477,34 +2426,32 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
         break;
 
       default:
-        // Sistema inteligente para tipos não pré-definidos
+
         console.warn(`⚠️ Tipo de aprendizado não reconhecido: "${tipo}"`);
 
-        // Tentar categorizar automaticamente baseado no tipo
         const tipoLower = tipoNormalizado;
 
-        // Tentar identificar se é uma preferência (contém palavras-chave)
         if (tipoLower.includes('gost') || tipoLower.includes('adora') || tipoLower.includes('ama') ||
           tipoLower.includes('prefere') || tipoLower.includes('curte')) {
           userContextDB.addUserPreference(grupoUserId, 'gostos', `[${tipo}] ${valor}`);
           console.log(`📝 Nazuna categorizou como GOSTO: "${tipo}: ${valor}"`);
         }
-        // Tentar identificar se é algo que não gosta
+
         else if (tipoLower.includes('odeia') || tipoLower.includes('detesta') ||
           tipoLower.includes('nao_gosta') || tipoLower.includes('desgosto')) {
           userContextDB.addUserPreference(grupoUserId, 'nao_gostos', `[${tipo}] ${valor}`);
           console.log(`📝 Nazuna categorizou como NÃO GOSTA: "${tipo}: ${valor}"`);
         }
-        // Tentar identificar se é uma atividade/hobby
+
         else if (tipoLower.includes('atividade') || tipoLower.includes('faz') ||
           tipoLower.includes('pratica') || tipoLower.includes('joga')) {
           userContextDB.addUserPreference(grupoUserId, 'hobbies', `[${tipo}] ${valor}`);
           console.log(`📝 Nazuna categorizou como HOBBY: "${tipo}: ${valor}"`);
         }
-        // Tentar identificar se é informação pessoal
+
         else if (tipoLower.includes('pessoal') || tipoLower.includes('info') ||
           tipoLower.includes('dado') || tipoLower.includes('caracteristica')) {
-          // Criar um campo personalizado nas informações pessoais
+
           const userCtx = userContextDB.getUserContext(grupoUserId);
           if (!userCtx.informacoes_pessoais.outros) {
             userCtx.informacoes_pessoais.outros = {};
@@ -2514,7 +2461,7 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
           userContextDB.saveDatabase();
           console.log(`📝 Nazuna salvou INFO PERSONALIZADA: "${tipo}: ${valor}"`);
         }
-        // Se não conseguir categorizar, salvar como nota importante com o tipo original
+
         else {
           userContextDB.addImportantNote(grupoUserId, `[${tipo}] ${valor}`);
           console.log(`📝 Nazuna anotou (tipo personalizado): "${tipo}: ${valor}" sobre ${grupoUserId}`);
@@ -2526,9 +2473,8 @@ function processLearning(grupoUserId, aprender, mensagemOriginal) {
   }
 }
 
-// Funções auxiliares para personalização Nazuna
 function getNazunaGreeting(isNightTime, now) {
-  // Garantir que usa horário do Brasil
+
   const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
   const hour = brazilTime.getHours();
   const dayOfWeek = brazilTime.toLocaleDateString('pt-BR', { weekday: 'long' });
@@ -2544,48 +2490,40 @@ function getNazunaGreeting(isNightTime, now) {
 }
 
 function getNazunaSeasonalGreeting() {
-  // Garantir que usa horário do Brasil
+
   const now = new Date();
   const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
   const month = brazilTime.getMonth();
   const day = brazilTime.getDate();
 
-  // Aniversário Nazuna (assumindo 25 de dezembro)
   if (month === 11 && day === 25) {
     return '🎂 *F-Feliz aniversário de Nazuna!*\n\n✨ N-Não que eu esteja comemorando ou nada assim... mas... obrigada por existir, humano bobo! 💕';
   }
 
-  // Natal
   if (month === 11 && day >= 20) {
     return '🎄 *N-Natal... não que eu goste de enfeites ou nada assim!*\n\n❄️ A-Noite de Natal é mágica... tipo assim... você sabe? 🌙✨';
   }
 
-  // Ano Novo
   if (month === 11 && day >= 28) {
     return '🎊 *F-Fim de ano... não que eu esteja animada ou nada!*\n\n🌟 N-Novos começos... tipo assim... são interessantes. V-Vamos ver o que esse ano traz! 💫';
   }
 
-  // Halloween
   if (month === 9 && day >= 29) {
     return '🎃 *Halloween... não que eu goste de fantasias ou nada assim!*\n\n🦇 A-Noite é cheia de segredos... tipo assim... você nunca sabe o que pode acontecer! 🌙';
   }
 
-  // Primavera
   if (month >= 2 && month <= 4) {
     return '🌸 *P-Primavera... não que eu goste de flores ou coisa assim!*\n\n🌺 Mas... o ar está mais doce... tipo assim... como se a vida estivesse renascendo... 💕';
   }
 
-  // Verão
   if (month >= 5 && month <= 7) {
     return '☀️ *V-Verão... não que eu goste de calor ou nada assim!*\n\n🌊 Mas... os dias são mais longos... tipo assim... mais tempo para conversar... 😊';
   }
 
-  // Outono
   if (month >= 8 && month <= 10) {
     return '🍂 *O-Outono... não que eu goste de folhas caindo ou coisa assim!*\n\n🍁 Mas... as cores são lindas... tipo assim... como se a natureza estivesse pintando... 🌙';
   }
 
-  // Inverno
   if (month === 0 || month === 1 || month === 11) {
     return '❄️ *I-Inverno... não que eu goste de frio ou nada assim!*\n\n🔥 Mas... é bom se aconchegar... tipo assim... como se o mundo estivesse pedindo carinho... 💕';
   }
@@ -2860,7 +2798,6 @@ function getNazunaCaringResponse(userName) {
   return caringResponses[Math.floor(Math.random() * caringResponses.length)];
 }
 
-
 function getNazunaReact(isNightTime) {
   const reactions = [
     '🌸', '🌙', '🦇', '💕', '😊', '😳', '😅', '😠',
@@ -2868,19 +2805,18 @@ function getNazunaReact(isNightTime) {
   ];
 
   if (isNightTime) {
-    return reactions[Math.floor(Math.random() * 5) + 5]; // Reações noturnas
+    return reactions[Math.floor(Math.random() * 5) + 5];
   }
 
-  return reactions[Math.floor(Math.random() * 5)]; // Reações diurnas
+  return reactions[Math.floor(Math.random() * 5)];
 }
 
 function enhanceNazunaResponse(response, greeting, isNightTime) {
-  // Adicionar saudação contextual se não tiver
+
   if (!response.includes('Bom dia') && !response.includes('Boa tarde') && !response.includes('Boa noite') && !response.includes('Noite')) {
     response = `${greeting}\n\n${response}`;
   }
 
-  // Adicionar expressões tsundere se não tiver
   if (!response.includes('E-eh') && !response.includes('N-Não') && !response.includes('B-Bem')) {
     const tsunderePhrases = [
       'E-eh! ',
@@ -2969,7 +2905,6 @@ function clearOldHistorico(maxAge = 24 * 60 * 60 * 1000) {
   });
 }
 
-// Sistema de logging e análise de conversas
 let conversationLogs = {};
 let responseAnalytics = {};
 
@@ -2993,12 +2928,10 @@ function logConversation(grupoUserId, message, response, timestamp, metadata = {
 
   conversationLogs[grupoUserId].push(logEntry);
 
-  // Manter apenas os últimos 100 logs por usuário
   if (conversationLogs[grupoUserId].length > 100) {
     conversationLogs[grupoUserId] = conversationLogs[grupoUserId].slice(-100);
   }
 
-  // Atualizar analytics
   updateResponseAnalytics(grupoUserId, logEntry);
 }
 
@@ -3023,32 +2956,25 @@ function updateResponseAnalytics(grupoUserId, logEntry) {
   const analytics = responseAnalytics[grupoUserId];
   analytics.totalResponses++;
 
-  // Atualizar comprimento médio
   const currentLength = logEntry.metadata.responseLength;
   analytics.averageResponseLength =
     (analytics.averageResponseLength * (analytics.totalResponses - 1) + currentLength) / analytics.totalResponses;
 
-  // Atualizar uso de emojis
   if (logEntry.metadata.hasEmojis) {
     analytics.emojiUsage++;
   }
 
-  // Atualizar distribuição de sentimentos
   analytics.sentimentDistribution[logEntry.metadata.sentiment]++;
 
-  // Atualizar tipos de resposta
   const responseType = logEntry.metadata.type || 'general';
   analytics.responseTypes[responseType] = (analytics.responseTypes[responseType] || 0) + 1;
 
-  // Atualizar atividade horária
   const hour = new Date(logEntry.timestamp).getHours();
   analytics.hourlyActivity[hour] = (analytics.hourlyActivity[hour] || 0) + 1;
 
-  // Atualizar atividade diária
   const day = new Date(logEntry.timestamp).toLocaleDateString('pt-BR');
   analytics.dailyActivity[day] = (analytics.dailyActivity[day] || 0) + 1;
 
-  // Atualizar tópicos favoritos
   if (logEntry.metadata.topic) {
     analytics.favoriteTopics[logEntry.metadata.topic] = (analytics.favoriteTopics[logEntry.metadata.topic] || 0) + 1;
   }
@@ -3139,7 +3065,6 @@ function getSystemAnalytics() {
   };
 }
 
-// Funções para timing personalizado
 const responseTimings = {};
 
 function startResponseTimer(grupoUserId) {
@@ -3173,18 +3098,15 @@ function endResponseTimer(grupoUserId) {
 }
 
 function getAverageResponseTime(grupoUserId) {
-  // Esta função poderia ser expandida para calcular média de tempos
-  // Por enquanto, retorna um valor baseado em heurísticas simples
+
   const preferences = getUserPreferences(grupoUserId);
   const isNightTime = new Date().getHours() >= 18 || new Date().getHours() < 6;
 
-  // Nazuna é mais rápida à noite
   if (isNightTime) {
-    return 800 + Math.random() * 400; // 800-1200ms
+    return 800 + Math.random() * 400;
   }
 
-  // Mais lenta durante o dia (simulando "preguiça" tsundere)
-  return 1200 + Math.random() * 600; // 1200-1800ms
+  return 1200 + Math.random() * 600;
 }
 
 function getNazunaResponseDelay(grupoUserId) {
@@ -3192,19 +3114,16 @@ function getNazunaResponseDelay(grupoUserId) {
   const preferences = getUserPreferences(grupoUserId);
   const isNightTime = new Date().getHours() >= 18 || new Date().getHours() < 6;
 
-  // Ajustar baseado no humor do usuário
   let moodMultiplier = 1.0;
-  if (preferences.mood === 'happy') moodMultiplier = 0.8; // Mais rápida quando feliz
-  if (preferences.mood === 'sad') moodMultiplier = 1.2; // Mais lenta quando triste
-  if (preferences.mood === 'angry') moodMultiplier = 1.5; // Mais lenta quando brava
+  if (preferences.mood === 'happy') moodMultiplier = 0.8;
+  if (preferences.mood === 'sad') moodMultiplier = 1.2;
+  if (preferences.mood === 'angry') moodMultiplier = 1.5;
 
-  // Ajustar baseado no horário
   let timeMultiplier = 1.0;
-  if (isNightTime) timeMultiplier = 0.9; // Mais rápida à noite
+  if (isNightTime) timeMultiplier = 0.9;
 
   return Math.floor(avgTime * moodMultiplier * timeMultiplier);
 }
-
 
 export {
   processUserMessages as makeAssistentRequest,
@@ -3214,26 +3133,26 @@ export {
   getApiKeyStatus,
   updateApiKeyStatus,
   notifyOwnerAboutApiKey,
-  // Sistema de logging e análise
+
   logConversation,
   getConversationAnalytics,
   getConversationLogs,
   clearConversationLogs,
   getSystemAnalytics,
-  // Sistema de timing personalizado
+
   startResponseTimer,
   markResponsePhase,
   endResponseTimer,
   getAverageResponseTime,
   getNazunaResponseDelay,
-  // Sistema de gerenciamento de estado
+
   updateConversationState,
   getConversationState,
   updateUserPreferences,
   getUserPreferences,
   trackUserInteraction,
   getUserInteractionStats,
-  // Funções de personalidade Nazuna
+
   getNazunaGreeting,
   getNazunaSeasonalGreeting,
   getNazunaMoodResponse,
@@ -3257,7 +3176,7 @@ export {
   getNazunaErrorResponse,
   shouldAddFarewell,
   getNazunaFarewell,
-  // Sistema de contexto de usuário
+
   userContextDB,
   processLearning
 };

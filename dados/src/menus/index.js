@@ -1,14 +1,9 @@
-// Loader ESM-safe para todos os menus.
-// Mantém a mesma API: objeto `menus` com chaves nomeadas (menu, menuAlterador, etc.)
-// e adiciona `getMenus()` para acesso explícito assíncrono.
-
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Mapa estático dos menus e seus arquivos correspondentes.
 const menuModules = {
     menu: './menu.js',
     menuAlterador: './alteradores.js',

@@ -26,7 +26,7 @@ export default async function menurpg(prefix, botName = "MeuBot", userName = "Us
     adminMenuTitle = "🔧 ADMIN RPG (DONO)"
 } = {}) {
   const h = header.replace(/#user#/g, userName);
-    return `${h} 
+    return `${h}
 
 ${menuTopBorder}${separatorIcon} *${profileMenuTitle}*
 ${middleBorder}

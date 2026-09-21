@@ -19,40 +19,31 @@ class MediaCleaner {
             '/tmp/baileys_media_cache'
         ];
         this.tempPrefixes = ['tmp_', 'temp_', 'download_', 'media_', 'baileys_'];
-        this.maxFileAge = 2 * 60 * 60 * 1000; // 2 horas para arquivos temporários
-        this.maxMediaAge = 24 * 60 * 60 * 1000; // 24 horas para mídia em geral
-        this.maxDirSize = 500 * 1024 * 1024; // 500MB por diretório
+        this.maxFileAge = 2 * 60 * 60 * 1000;
+        this.maxMediaAge = 24 * 60 * 60 * 1000;
+        this.maxDirSize = 500 * 1024 * 1024;
         this.allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.ogg', '.webp', '.pdf'];
     }
 
-    /**
-     * Inicia limpeza automática de mídia
-     */
     async startMediaCleaning() {
-        
+
         try {
-            // Cria diretórios necessários
+
             await this.ensureDirectories();
-            
-            // Limpa cada diretório de mídia
+
             for (const dir of this.mediaDirs) {
                 await this.cleanDirectory(dir);
             }
-            
-            // Limpa cache do Baileys
+
             await this.cleanBaileysCache();
-            
-            // Limpa downloads antigos
+
             await this.cleanOldDownloads();
-            
+
         } catch (error) {
             console.error('❌ Erro na limpeza automática de mídia:', error.message);
         }
     }
 
-    /**
-     * Garante que os diretórios necessários existem
-     */
     async ensureDirectories() {
         for (const dir of this.mediaDirs) {
             try {
@@ -67,9 +58,6 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Limpa um diretório específico
-     */
     async cleanDirectory(dirPath) {
         try {
             const exists = await fs.access(dirPath).then(() => true).catch(() => false);
@@ -83,15 +71,14 @@ class MediaCleaner {
 
             for (const file of files) {
                 const filePath = path.join(dirPath, file);
-                
+
                 try {
                     const stats = await fs.stat(filePath);
-                    
-                    // Pula diretórios
+
                     if (stats.isDirectory()) continue;
-                    
+
                     const shouldDelete = await this.shouldDeleteFile(filePath, stats);
-                    
+
                     if (shouldDelete) {
                         freedSpace += stats.size;
                         await fs.unlink(filePath);
@@ -99,7 +86,7 @@ class MediaCleaner {
                     }
                 } catch (error) {
                     console.warn(`⚠️ Erro ao processar arquivo ${file}:`, error.message);
-                    // Continue processing other files
+
                 }
             }
 
@@ -113,51 +100,39 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Determina se um arquivo deve ser deletado
-     */
     async shouldDeleteFile(filePath, stats) {
         const fileName = path.basename(filePath);
         const fileExt = path.extname(filePath).toLowerCase();
         const fileAge = Date.now() - stats.mtime.getTime();
-        
-        // Remove arquivos com extensões não permitidas
+
         if (!this.allowedExtensions.includes(fileExt) && fileExt !== '') {
             return true;
         }
-        
-        // Remove arquivos temporários antigos
+
         const isTemp = this.tempPrefixes.some(prefix => fileName.startsWith(prefix));
         if (isTemp && fileAge > this.maxFileAge) {
             return true;
         }
-        
-        // Remove mídia muito antiga
+
         if (fileAge > this.maxMediaAge) {
             return true;
         }
-        
-        // Remove arquivos muito grandes (>50MB)
+
         if (stats.size > 50 * 1024 * 1024) {
             return true;
         }
-        
-        // Remove arquivos corrompidos ou ilegíveis
+
         if (await this.isFileCorrupted(filePath)) {
             return true;
         }
-        
+
         return false;
     }
 
-    /**
-     * Verifica se um arquivo está corrompido
-     */
     async isFileCorrupted(filePath) {
         try {
             const fileExt = path.extname(filePath).toLowerCase();
-            
-            // Verifica imagens
+
             if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.webm', '.avi', '.mkv'].includes(fileExt)) {
                 try {
                     await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, { timeout: 10000 });
@@ -166,8 +141,7 @@ class MediaCleaner {
                     return true;
                 }
             }
-            
-            // Para outros tipos, verifica se é legível
+
             const stats = await fs.stat(filePath);
             return stats.size === 0;
         } catch {
@@ -175,9 +149,6 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Limpa cache específico do Baileys
-     */
     async cleanBaileysCache() {
         const cacheLocations = [
             '/tmp/baileys_media_cache',
@@ -197,9 +168,6 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Limpa downloads antigos
-     */
     async cleanOldDownloads() {
         const downloadPaths = [
             path.join(process.env.HOME || '/tmp', 'Downloads/nazuna_*'),
@@ -210,15 +178,15 @@ class MediaCleaner {
         for (const downloadPath of downloadPaths) {
             try {
                 if (downloadPath.includes('*')) {
-                    // Usa glob pattern
+
                     const { stdout } = await execAsync(`find ${path.dirname(downloadPath)} -name "${path.basename(downloadPath)}" -type f 2>/dev/null || true`);
                     const files = stdout.trim().split('\n').filter(f => f);
-                    
+
                     for (const file of files) {
                         try {
                             const stats = await fs.stat(file);
                             const age = Date.now() - stats.mtime.getTime();
-                            
+
                             if (age > this.maxMediaAge) {
                                 await fs.unlink(file);
                             }
@@ -238,9 +206,6 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Verifica se o diretório excede o tamanho máximo
-     */
     async getDirectorySize(dirPath) {
         try {
             const { stdout } = await execAsync(`du -sb "${dirPath}" 2>/dev/null || echo "0"`);
@@ -250,13 +215,10 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Remove arquivos mais antigos até atingir o tamanho limite
-     */
     async enforceDirectoryLimit(dirPath) {
         try {
             const currentSize = await this.getDirectorySize(dirPath);
-            
+
             if (currentSize <= this.maxDirSize) {
                 return { success: true, freedSpace: 0 };
             }
@@ -281,7 +243,6 @@ class MediaCleaner {
                 }
             }
 
-            // Ordena por data de modificação (mais antigos primeiro)
             fileStats.sort((a, b) => a.mtime - b.mtime);
 
             let deletedFiles = 0;
@@ -300,7 +261,7 @@ class MediaCleaner {
                     console.warn(`⚠️ Erro ao remover arquivo ${file.name}:`, error.message);
                 }
             }
-            
+
             return { success: true, deletedFiles, freedSpace };
         } catch (error) {
             console.error(`❌ Erro ao aplicar limite do diretório ${dirPath}:`, error.message);
@@ -308,11 +269,8 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Comprime mídia grande
-     */
     async compressLargeMedia() {
-        
+
         for (const dir of this.mediaDirs) {
             try {
                 const exists = await fs.access(dir).then(() => true).catch(() => false);
@@ -325,9 +283,6 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Comprime mídia em um diretório específico
-     */
     async compressMediaInDirectory(dirPath) {
         try {
             const files = await fs.readdir(dirPath);
@@ -337,12 +292,11 @@ class MediaCleaner {
             for (const file of files) {
                 const filePath = path.join(dirPath, file);
                 const fileExt = path.extname(file).toLowerCase();
-                
+
                 try {
                     const stats = await fs.stat(filePath);
                     if (stats.isDirectory()) continue;
 
-                    // Comprimir imagens grandes (>2MB)
                     if (['.jpg', '.jpeg', '.png'].includes(fileExt) && stats.size > 2 * 1024 * 1024) {
                         const result = await this.compressImage(filePath);
                         if (result.success) {
@@ -350,8 +304,7 @@ class MediaCleaner {
                             compressedCount++;
                         }
                     }
-                    
-                    // Comprimir vídeos grandes (>10MB)
+
                     if (['.mp4', '.webm'].includes(fileExt) && stats.size > 10 * 1024 * 1024) {
                         const result = await this.compressVideo(filePath);
                         if (result.success) {
@@ -372,9 +325,6 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Comprime uma imagem
-     */
     async compressImage(filePath) {
         try {
             const originalStats = await fs.stat(filePath);
@@ -401,20 +351,15 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Comprime um vídeo
-     */
     async compressVideo(filePath) {
         try {
             const originalStats = await fs.stat(filePath);
             const tempPath = filePath + '.compressed.mp4';
-            
-            // Comprime vídeo com ffmpeg
+
             await execAsync(`ffmpeg -i "${filePath}" -c:v libx264 -preset medium -crf 25 -c:a aac -b:a 128k -movflags +faststart -y "${tempPath}"`, { timeout: 60000 });
-            
+
             const compressedStats = await fs.stat(tempPath);
-            
-            // Só substitui se a compressão foi significativa
+
             if (compressedStats.size < originalStats.size * 0.7) {
                 await fs.unlink(filePath);
                 await fs.rename(tempPath, filePath);
@@ -432,9 +377,6 @@ class MediaCleaner {
         }
     }
 
-    /**
-     * Formata bytes para formato legível
-     */
     formatBytes(bytes) {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         if (bytes === 0) return '0 Bytes';
@@ -442,17 +384,12 @@ class MediaCleaner {
         return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
     }
 
-    /**
-     * Inicia limpeza programada
-     */
     startScheduledCleaning() {
-        
-        // Limpeza rápida a cada 10 minutos
+
         setInterval(async () => {
             await this.startMediaCleaning();
         }, 10 * 60 * 1000);
 
-        // Limpeza profunda a cada hora
         setInterval(async () => {
             await this.compressLargeMedia();
             for (const dir of this.mediaDirs) {
@@ -460,7 +397,6 @@ class MediaCleaner {
             }
         }, 60 * 60 * 1000);
 
-        // Executa limpeza inicial após 30 segundos
         setTimeout(() => {
             this.startMediaCleaning();
         }, 30000);

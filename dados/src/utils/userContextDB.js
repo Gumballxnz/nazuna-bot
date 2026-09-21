@@ -5,21 +5,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Caminho do arquivo de banco de dados
 const DB_PATH = path.join(__dirname, '../../database/userContext.json');
 
-// Função para obter data/hora no fuso horário do Brasil (GMT-3)
 function getBrazilDateTime() {
   const now = new Date();
-  // Converter para horário do Brasil (UTC-3)
+
   const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
   return brazilTime.toISOString();
 }
 
-/**
- * Classe para gerenciar o contexto de usuários
- * Armazena informações importantes sobre cada usuário para personalizar conversas
- */
 class UserContextDB {
   constructor() {
     this.data = this.loadDatabase();
@@ -27,9 +21,6 @@ class UserContextDB {
     this.isSaving = false;
   }
 
-  /**
-   * Carrega o banco de dados do arquivo
-   */
   loadDatabase() {
     try {
       if (fs.existsSync(DB_PATH)) {
@@ -45,9 +36,6 @@ class UserContextDB {
     }
   }
 
-  /**
-   * Salva o banco de dados no arquivo (com debounce)
-   */
   async saveDatabase() {
     this.saveQueue.push(Date.now());
 
@@ -55,7 +43,6 @@ class UserContextDB {
 
     this.isSaving = true;
 
-    // Aguarda 2 segundos para acumular várias alterações
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
@@ -74,9 +61,6 @@ class UserContextDB {
     this.saveQueue = [];
   }
 
-  /**
-   * Obtém o contexto completo de um usuário
-   */
   getUserContext(userId) {
     if (!this.data[userId]) {
       this.data[userId] = this.createNewUserContext(userId);
@@ -85,9 +69,6 @@ class UserContextDB {
     return this.data[userId];
   }
 
-  /**
-   * Cria um novo contexto para um usuário
-   */
   createNewUserContext(userId) {
     return {
       userId,
@@ -139,9 +120,6 @@ class UserContextDB {
     };
   }
 
-  /**
-   * Atualiza informações básicas do usuário
-   */
   updateUserInfo(userId, nome = null, apelido = null) {
     const context = this.getUserContext(userId);
 
@@ -160,9 +138,6 @@ class UserContextDB {
     this.saveDatabase();
   }
 
-  /**
-   * Adiciona uma preferência ou interesse do usuário
-   */
   addUserPreference(userId, tipo, valor) {
     const context = this.getUserContext(userId);
 
@@ -176,7 +151,6 @@ class UserContextDB {
     if (!context.preferencias[tipo].includes(valor)) {
       context.preferencias[tipo].push(valor);
 
-      // Manter apenas os 20 mais recentes
       if (context.preferencias[tipo].length > 20) {
         context.preferencias[tipo] = context.preferencias[tipo].slice(-20);
       }
@@ -186,9 +160,6 @@ class UserContextDB {
     this.saveDatabase();
   }
 
-  /**
-   * Atualiza informações pessoais do usuário
-   */
   updatePersonalInfo(userId, campo, valor) {
     const context = this.getUserContext(userId);
 
@@ -199,9 +170,6 @@ class UserContextDB {
     }
   }
 
-  /**
-   * Adiciona uma nota importante sobre o usuário
-   */
   addImportantNote(userId, nota) {
     const context = this.getUserContext(userId);
 
@@ -213,7 +181,6 @@ class UserContextDB {
 
     context.notas_importantes.push(novaNota);
 
-    // Manter apenas as 50 notas mais recentes
     if (context.notas_importantes.length > 50) {
       context.notas_importantes = context.notas_importantes.slice(-50);
     }
@@ -222,32 +189,24 @@ class UserContextDB {
     this.saveDatabase();
   }
 
-  /**
-   * Registra uma interação do usuário
-   */
   registerInteraction(userId, mensagem, tipo = 'afirmacao') {
     const context = this.getUserContext(userId);
 
-    // Atualizar contadores
     context.historico_conversa.total_mensagens++;
     context.historico_conversa.ultima_conversa = getBrazilDateTime();
 
-    // Atualizar tipo de mensagens
     if (context.padroes_comportamento.tipo_mensagens[tipo] !== undefined) {
       context.padroes_comportamento.tipo_mensagens[tipo]++;
     }
 
-    // Atualizar horário de atividade
     const hora = new Date().getHours();
     context.padroes_comportamento.horarios_ativos[hora] =
       (context.padroes_comportamento.horarios_ativos[hora] || 0) + 1;
 
-    // Atualizar dia da semana
     const dia = new Date().toLocaleDateString('pt-BR', { weekday: 'long' });
     context.padroes_comportamento.dias_semana_ativos[dia] =
       (context.padroes_comportamento.dias_semana_ativos[dia] || 0) + 1;
 
-    // Calcular frequência de interação
     const primeiraConversa = new Date(context.historico_conversa.primeira_conversa);
     const diasDesde = Math.floor((Date.now() - primeiraConversa.getTime()) / (1000 * 60 * 60 * 24));
     const msgPorDia = context.historico_conversa.total_mensagens / Math.max(diasDesde, 1);
@@ -268,16 +227,12 @@ class UserContextDB {
     this.saveDatabase();
   }
 
-  /**
-   * Adiciona um tópico recente de conversa
-   */
   addRecentTopic(userId, topico) {
     const context = this.getUserContext(userId);
 
     if (!context.historico_conversa.topicos_recentes.includes(topico)) {
       context.historico_conversa.topicos_recentes.push(topico);
 
-      // Manter apenas os 10 tópicos mais recentes
       if (context.historico_conversa.topicos_recentes.length > 10) {
         context.historico_conversa.topicos_recentes = context.historico_conversa.topicos_recentes.slice(-10);
       }
@@ -287,9 +242,6 @@ class UserContextDB {
     this.saveDatabase();
   }
 
-  /**
-   * Atualiza o relacionamento com Nazuna
-   */
   updateRelationship(userId, campo, valor) {
     const context = this.getUserContext(userId);
 
@@ -300,9 +252,6 @@ class UserContextDB {
     }
   }
 
-  /**
-   * Adiciona uma memória especial
-   */
   addSpecialMemory(userId, memoria) {
     const context = this.getUserContext(userId);
 
@@ -314,7 +263,6 @@ class UserContextDB {
 
     context.relacionamento_nazuna.memorias_especiais.push(novaMemoria);
 
-    // Manter apenas as 30 memórias mais especiais
     if (context.relacionamento_nazuna.memorias_especiais.length > 30) {
       context.relacionamento_nazuna.memorias_especiais =
         context.relacionamento_nazuna.memorias_especiais.slice(-30);
@@ -324,9 +272,6 @@ class UserContextDB {
     this.saveDatabase();
   }
 
-  /**
-   * Atualiza/edita uma informação existente do usuário
-   */
   updateMemory(userId, tipo, valorAntigo, valorNovo) {
     const context = this.getUserContext(userId);
     let atualizado = false;
@@ -425,7 +370,7 @@ class UserContextDB {
         break;
 
       default:
-        // Tentar atualizar em outros campos personalizados
+
         if (context.informacoes_pessoais.outros &&
           context.informacoes_pessoais.outros[tipo] === valorAntigo) {
           context.informacoes_pessoais.outros[tipo] = valorNovo;
@@ -442,9 +387,6 @@ class UserContextDB {
     return false;
   }
 
-  /**
-   * Remove/exclui uma informação do usuário
-   */
   deleteMemory(userId, tipo, valor) {
     const context = this.getUserContext(userId);
     let removido = false;
@@ -540,7 +482,7 @@ class UserContextDB {
         break;
 
       default:
-        // Tentar remover de campos personalizados
+
         if (context.informacoes_pessoais.outros &&
           context.informacoes_pessoais.outros[tipo]) {
           delete context.informacoes_pessoais.outros[tipo];
@@ -557,9 +499,6 @@ class UserContextDB {
     return false;
   }
 
-  /**
-   * Obtém um resumo formatado do contexto do usuário
-   */
   getUserContextSummary(userId) {
     const context = this.getUserContext(userId);
 
@@ -581,9 +520,6 @@ class UserContextDB {
     return summary;
   }
 
-  /**
-   * Limpa dados antigos (usuários inativos por mais de 90 dias)
-   */
   cleanOldData(maxAge = 90 * 24 * 60 * 60 * 1000) {
     const now = Date.now();
     let cleaned = 0;
@@ -606,9 +542,6 @@ class UserContextDB {
     return cleaned;
   }
 
-  /**
-   * Obtém estatísticas gerais do banco
-   */
   getStats() {
     const totalUsers = Object.keys(this.data).length;
     const activeUsers = Object.values(this.data).filter(ctx => {
@@ -629,7 +562,6 @@ class UserContextDB {
   }
 }
 
-// Instância única (singleton)
 const userContextDB = new UserContextDB();
 
 export default userContextDB;
