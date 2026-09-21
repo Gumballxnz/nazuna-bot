@@ -23,16 +23,9 @@ const otpFlag = otpArg ? ` ${otpArg}` : '';
 
 try {
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('1/2  Publicando como: nazuna-bot (público global)');
+    console.log('Publicando como: nazuna-bot (público global)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     pkg.name = 'nazuna-bot';
-    writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
-    run(`npm publish --access public${otpFlag}`);
-
-    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('2/2  Publicando como: @gumballxnz/nazuna-bot (scoped)');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    pkg.name = '@gumballxnz/nazuna-bot';
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
     run(`npm publish --access public${otpFlag}`);
 } finally {
@@ -40,8 +33,9 @@ try {
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
 }
 
-console.log('\n✅ Publicado nos dois registros npm!');
-console.log('\nFormas de instalar e rodar:');
+console.log('\n✅ Publicado no registro oficial do NPM com sucesso!');
+console.log('\nFormas de rodar em qualquer lugar:');
 console.log('  npx nazuna-bot init');
-console.log('  npx @gumballxnz/nazuna-bot init');
+console.log('  npx nazuna-bot pair [numero]');
+console.log('  npx nazuna-bot start');
 console.log('  npx github:Gumballxnz/nazuna-bot init\n');
