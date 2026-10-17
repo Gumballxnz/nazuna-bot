@@ -29016,20 +29016,37 @@ ${nivelSorte >= 70 ? '🎉 Hoje é seu dia de sorte!' : nivelSorte >= 40 ? '🤔
           let GamezinData = fs.existsSync(__dirname + '/funcs/json/markgame.json') ? JSON.parse(fs.readFileSync(__dirname + '/funcs/json/markgame.json')) : {
             ranks: {}
           };
-          let responseText = GamezinData[command].replaceAll('#nome#', `@${getUserName(menc_os2)}`) || `Voce acabou de dar um(a) ${command} no(a) @${getUserName(menc_os2)}`;
+          let responseTemplate = GamezinData[command] || GamezinData[command.replace(/r$/, '')] || `Voce acabou de dar um(a) ${command} no(a) #nome#`;
+          let targetName = `@${getUserName(menc_os2) || menc_os2.split('@')[0]}`;
+          let responseText = responseTemplate.replaceAll('#nome#', targetName);
           let media = gamesData.games2[command];
-          if (media?.image) {
+          let videoSource = null;
+          if (media?.video) {
+            const fileName = typeof media.video === 'string' ? media.video : (media.video.file || media.video.url);
+            if (fileName) {
+              const localPath = pathz.isAbsolute(fileName) 
+                ? fileName 
+                : pathz.join(__dirname, 'funcs/media/games', pathz.basename(fileName));
+              if (fs.existsSync(localPath)) {
+                videoSource = fs.readFileSync(localPath);
+              } else if (media.video.url && media.video.url.startsWith('http')) {
+                videoSource = { url: media.video.url };
+              }
+            }
+          }
+
+          if (videoSource) {
+            await nazu.sendMessage(from, {
+              video: videoSource,
+              caption: responseText,
+              mentions: [menc_os2],
+              gifPlayback: true
+            });
+          } else if (media?.image) {
             await nazu.sendMessage(from, {
               image: media.image,
               caption: responseText,
               mentions: [menc_os2]
-            });
-          } else if (media?.video) {
-            await nazu.sendMessage(from, {
-              video: media.video,
-              caption: responseText,
-              mentions: [menc_os2],
-              gifPlayback: true
             });
           } else {
             await nazu.sendMessage(from, {
