@@ -18315,7 +18315,7 @@ return reply(`❌ Erro: ${result.msg}`);
               nazu.sendMessage(from, {
                 image: { url: thumbnail },
                 caption: caption
-              }).catch(err => {
+              }, { quoted: info }).catch(err => {
                 console.error('Erro ao enviar thumbnail do Twitch:', err);
               });
             }
@@ -18571,7 +18571,7 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               nazu.sendMessage(from, {
                 image: { url: thumbnail },
                 caption: caption
-              }).catch(err => {
+              }, { quoted: info }).catch(err => {
                 console.error('Erro ao enviar thumbnail do Dailymotion:', err);
               });
             }
@@ -18696,7 +18696,7 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
               nazu.sendMessage(from, {
                 image: { url: thumbnail },
                 caption: caption
-              }).catch(err => {
+              }, { quoted: info }).catch(err => {
                 console.error('Erro ao enviar thumbnail do Streamable:', err);
               });
             }

@@ -489,7 +489,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                     document: { url: finalFilePath },
                     mimetype: 'video/mp4',
                     fileName: resultado.filename || path.basename(finalFilePath) || 'video.mp4'
-                });
+                }, { quoted: m });
             } else {
 
                 console.log(`[enviarMidia] Enviando como player de vídeo nativo (${stats ? (stats.size / 1024 / 1024).toFixed(2) : '?'}MB <= 60MB).`);
@@ -497,7 +497,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                     video: { url: finalFilePath },
                     mimetype: 'video/mp4',
                     caption: captionMsg
-                });
+                }, { quoted: m });
             }
 
             try { fs.unlinkSync(finalFilePath); } catch {}
@@ -534,7 +534,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                     mimetype: 'video/mp4',
                     fileName: resultado.filename || 'video.mp4',
                     ...extraAttrs
-                });
+                }, { quoted: m });
             } catch (errStream) {
                 console.error(`[enviarMidia] Erro no stream do documento:`, errStream.message);
                 throw errStream;
@@ -549,7 +549,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                 mimetype: 'application/octet-stream',
                 fileName: resultado.filename || `arquivo.${resultado.ext || 'bin'}`,
                 ...extraAttrs
-            });
+            }, { quoted: m });
             try { fs.unlinkSync(resultado.filePath); } catch {}
         } else {
             const filePath = await baixarStreamLocal(resultado.url, resultado.ext || 'bin');
@@ -558,7 +558,7 @@ async function enviarMidia(nazu, from, m, resultado, plataforma) {
                 mimetype: 'application/octet-stream',
                 fileName: resultado.filename || `arquivo.${resultado.ext || 'bin'}`,
                 ...extraAttrs
-            });
+            }, { quoted: m });
             try { fs.unlinkSync(filePath); } catch {}
         }
     } else if (resultado.type === 'image') {
