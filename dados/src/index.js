@@ -773,7 +773,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const urlLower = url.toLowerCase();
 
     const supportedSites = [
-      'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
+      'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com', 'tt.site',
       'twitter.com', 'x.com',
       'instagram.com', 'instagr.am',
       'youtube.com', 'youtu.be',
@@ -4617,7 +4617,7 @@ Entre em contato com o dono do bot:
       'alldl', 'dl', 'down', 'baixar', 'video'
     ];
 
-    const isUrl = q && (q.includes('http://') || q.includes('https://') || q.includes('.com/') || q.includes('.be/'));
+    const isUrl = q && (q.includes('http://') || q.includes('https://') || q.includes('.com/') || q.includes('.be/') || q.includes('.site/') || q.includes('tt.site'));
 
     if (cmdDownloadURL.includes(command) && isUrl) {
       try {
@@ -18042,7 +18042,7 @@ return reply('❌ Erro de autenticação da API. O dono foi notificado.');
           if (q.includes('facebook.com') || q.includes('fb.watch')) {
             return reply('❌ Esse link é do *Facebook*, não do TikTok!\n\n💡 Use: ' + prefix + 'fb ' + q);
           }
-          let isTikTokUrl = q.includes('tiktok');
+          let isTikTokUrl = q.includes('tiktok') || q.includes('tt.site');
           const tiktokPromise = isTikTokUrl ? tiktok.dl(q, null) : tiktok.search(q, null);
 
           tiktokPromise

@@ -38,6 +38,16 @@ async function tiktokSearch(query) {
 
 async function tiktokDownload(url) {
   try {
+    if (url && url.includes('tt.site')) {
+      try {
+        const redirRes = await fetch(url, { redirect: 'follow' });
+        if (redirRes && redirRes.url && !redirRes.url.includes('tt.site')) {
+          url = redirRes.url;
+        }
+      } catch (redirErr) {
+        console.warn('[TikTok Download] Falha ao resolver redirecionamento tt.site:', redirErr.message);
+      }
+    }
     const fg = await getFg();
     const res = await fg.tiktok(url);
     if (res && res.result) {

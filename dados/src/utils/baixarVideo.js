@@ -78,7 +78,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 
 function detectarPlataforma(url) {
     const u = url.toLowerCase();
-    if (u.includes('tiktok.com') || u.includes('vt.tiktok') || u.includes('vm.tiktok')) return 'TikTok';
+    if (u.includes('tiktok.com') || u.includes('vt.tiktok') || u.includes('vm.tiktok') || u.includes('tt.site')) return 'TikTok';
     if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YouTube';
     if (u.includes('instagram.com') || u.includes('instagr.am')) return 'Instagram';
     if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com')) return 'Facebook';
@@ -98,6 +98,16 @@ function detectarPlataforma(url) {
 
 async function baixarTiktok(url) {
     try {
+        if (url && url.includes('tt.site')) {
+            try {
+                const res = await fetch(url, { redirect: 'follow' });
+                if (res && res.url && !res.url.includes('tt.site')) {
+                    url = res.url;
+                }
+            } catch (redirErr) {
+                console.warn('[TikTok] Falha ao resolver redirecionamento tt.site:', redirErr.message);
+            }
+        }
         const tiktokMod = await import('../funcs/downloads/tiktok.js');
         const dlFn = tiktokMod.dl || tiktokMod.default?.dl;
         if (typeof dlFn === 'function') {
