@@ -24201,7 +24201,36 @@ ${prefix}togglecmdvip premium_ia off`);
           await reply("❌ Ocorreu um erro ao configurar captcha.");
         }
         break;
-      case 'promover':
+      case 'x9':
+      case 'antix9':
+        try {
+          if (!isGroup) return reply("⚠️ Este comando só pode ser usado em grupos!");
+          if (!isGroupAdmin) return reply("⚠️ Apenas administradores podem configurar o X9.");
+
+          const opt = q ? q.trim().toLowerCase() : '';
+
+          if (opt === 'on' || opt === '1' || opt === 'ativar' || opt === 'ligar') {
+            groupData.x9 = true;
+          } else if (opt === 'off' || opt === '0' || opt === 'desativar' || opt === 'desligar') {
+            groupData.x9 = false;
+          } else if (!opt) {
+            groupData.x9 = !groupData.x9;
+          } else {
+            return reply(`💡 *Uso correto:* \`${prefix}x9 on\` ou \`${prefix}x9 off\``);
+          }
+
+          persistGroupData();
+
+          if (groupData.x9) {
+            await reply("🕵️‍♂️ *X9 ATIVADO!*\n\nAgora o grupo será notificado sempre que alguém for promovido ou rebaixado de administrador (tanto nativo no WhatsApp quanto por comandos).");
+          } else {
+            await reply("🕵️‍♂️ *X9 DESATIVADO!*\n\nNotificações de promoção e rebaixamento foram desativadas.");
+          }
+        } catch (e) {
+          console.error('Erro no comando x9:', e);
+          reply("❌ Ocorreu um erro ao alterar a configuração do X9.");
+        }
+        break;
       case 'promover':
       case 'promote':
         try {
@@ -24212,8 +24241,9 @@ ${prefix}togglecmdvip premium_ia off`);
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'promote');
 
           if (groupData.x9) {
+            const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Maputo' });
             await nazu.sendMessage(from, {
-              text: `⬆️ *X9 Report:* @${menc_os2.split('@')[0]} foi promovido(a) a ADM por @${sender.split('@')[0]}.`,
+              text: `╭┈⊰ 🎖️ 『 *X9 - PROMOÇÃO* 』\n┊\n┊👤 *Promovido:* @${menc_os2.split('@')[0]}\n┊👑 *Feito por:* @${sender.split('@')[0]}\n┊⏰ *Horário:* ${timeStr}\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
               mentions: [menc_os2, sender],
             }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
           }
@@ -24225,7 +24255,6 @@ ${prefix}togglecmdvip premium_ia off`);
         }
         break;
       case 'rebaixar':
-      case 'rebaixar':
       case 'demote':
         try {
           if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -24235,8 +24264,9 @@ ${prefix}togglecmdvip premium_ia off`);
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'demote');
 
           if (groupData.x9) {
+            const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Maputo' });
             await nazu.sendMessage(from, {
-              text: `⬇️ *X9 Report:* @${menc_os2.split('@')[0]} foi rebaixado(a) de ADM por @${sender.split('@')[0]}.`,
+              text: `╭┈⊰ 🕵️‍♂️ 『 *X9 - REBAIXAMENTO* 』\n┊\n┊👤 *Rebaixado:* @${menc_os2.split('@')[0]}\n┊👑 *Feito por:* @${sender.split('@')[0]}\n┊⏰ *Horário:* ${timeStr}\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
               mentions: [menc_os2, sender],
             }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
           }

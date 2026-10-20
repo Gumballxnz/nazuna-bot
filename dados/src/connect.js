@@ -569,9 +569,68 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                 }
                 break;
             }
-            case 'promote':
+            case 'promote': {
+                if (groupSettings?.x9) {
+                    const botId = NazunaSock.user?.id?.split(':')[0]?.split('@')[0];
+                    const authorId = inf.author ? inf.author.split('@')[0].split(':')[0] : null;
+                    if (botId && authorId === botId) {
+                        break;
+                    }
+                    const timeStr = new Date().toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                        timeZone: 'Africa/Maputo'
+                    });
+                    for (const participant of inf.participants) {
+                        const targetId = participant.split('@')[0].split(':')[0];
+                        const mentions = [participant];
+                        let authorText = 'WhatsApp / Sistema';
+                        if (inf.author) {
+                            authorText = `@${authorId}`;
+                            mentions.push(inf.author);
+                        }
+                        const text = `╭┈⊰ 🎖️ 『 *X9 - PROMOÇÃO* 』\n┊\n┊👤 *Promovido:* @${targetId}\n┊👑 *Feito por:* ${authorText}\n┊⏰ *Horário:* ${timeStr}\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`;
+                        await NazunaSock.sendMessage(from, {
+                            text,
+                            mentions
+                        }).catch(err => {
+                            console.error(`❌ Erro ao enviar X9 promoção: ${err.message}`);
+                        });
+                    }
+                }
+                break;
+            }
             case 'demote': {
-
+                if (groupSettings?.x9) {
+                    const botId = NazunaSock.user?.id?.split(':')[0]?.split('@')[0];
+                    const authorId = inf.author ? inf.author.split('@')[0].split(':')[0] : null;
+                    if (botId && authorId === botId) {
+                        break;
+                    }
+                    const timeStr = new Date().toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                        timeZone: 'Africa/Maputo'
+                    });
+                    for (const participant of inf.participants) {
+                        const targetId = participant.split('@')[0].split(':')[0];
+                        const mentions = [participant];
+                        let authorText = 'WhatsApp / Sistema';
+                        if (inf.author) {
+                            authorText = `@${authorId}`;
+                            mentions.push(inf.author);
+                        }
+                        const text = `╭┈⊰ 🕵️‍♂️ 『 *X9 - REBAIXAMENTO* 』\n┊\n┊👤 *Rebaixado:* @${targetId}\n┊👑 *Feito por:* ${authorText}\n┊⏰ *Horário:* ${timeStr}\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`;
+                        await NazunaSock.sendMessage(from, {
+                            text,
+                            mentions
+                        }).catch(err => {
+                            console.error(`❌ Erro ao enviar X9 rebaixamento: ${err.message}`);
+                        });
+                    }
+                }
                 break;
             }
         }

@@ -25,6 +25,7 @@ ${middleBorder}${menuItemIcon}${prefix}bam (ban fake)
 ${middleBorder}${menuItemIcon}${prefix}setbammsg
 ${middleBorder}${menuItemIcon}${prefix}promover
 ${middleBorder}${menuItemIcon}${prefix}rebaixar
+${middleBorder}${menuItemIcon}${prefix}x9 <on/off>
 ${middleBorder}${menuItemIcon}${prefix}mute
 ${middleBorder}${menuItemIcon}${prefix}desmute
 ${middleBorder}${menuItemIcon}${prefix}mute2
@@ -158,6 +159,7 @@ ${bottomBorder}
 ${menuTopBorder}${separatorIcon} *⚡ MODO & ATIVAÇÕES*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}autodl
+${middleBorder}${menuItemIcon}${prefix}x9 <on/off>
 ${middleBorder}${menuItemIcon}${prefix}minmessage
 ${middleBorder}${menuItemIcon}${prefix}assistente
 ${middleBorder}${menuItemIcon}${prefix}modobn
