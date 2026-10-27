@@ -584,6 +584,9 @@ const botVersion = packageJson.version;
 
 initJidLidCache(JID_LID_CACHE_FILE);
 
+const cooldownNotices = new Map();
+const globalUserCommandRate = new Map();
+
 async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirationManager = null) {
 
   const msgId = info?.key?.id?.slice(-6) || 'unknown';
@@ -2100,6 +2103,32 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     };
     nazu.react = reagir;
 
+    const notifyCooldown = async (action, cd, customMsg = null) => {
+      const noticeKey = `${from}_${sender}_${action}`;
+      const lastNotice = cooldownNotices.get(noticeKey) || 0;
+      const now = Date.now();
+
+      // Se já avisou nos últimos 25s nesta ação no grupo, reage com ⏳ sem flodar o chat com texto
+      if (now - lastNotice < 25000) {
+        try {
+          await reagir('⏳');
+        } catch (_) {}
+        return;
+      }
+
+      cooldownNotices.set(noticeKey, now);
+
+      if (cooldownNotices.size > 2000) {
+        const cutoff = now - 60000;
+        for (const [k, v] of cooldownNotices.entries()) {
+          if (v < cutoff) cooldownNotices.delete(k);
+        }
+      }
+
+      const text = customMsg || `⏳ Aguarde ${timeLeft(cd)} para ${action} novamente.`;
+      return reply(text);
+    };
+
     async function processReactionMessage() {
       try {
         if (!isGroup) {
@@ -3198,18 +3227,33 @@ Código: *${roleCode}*`,
         });
       }
     }
-    if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
-      antifloodData[from].users = antifloodData[from].users || {};
+    if (isGroup && isCmd && !isGroupAdmin) {
       const now = Date.now();
-      const lastCmd = antifloodData[from].users[sender]?.lastCmd || 0;
-      const interval = antifloodData[from].interval * 1000;
-      if (now - lastCmd < interval) {
-        return reply(`⏳ Aguarde ${Math.ceil((interval - (now - lastCmd)) / 1000)} segundos antes de usar outro comando.`);
-      }
-      antifloodData[from].users[sender] = {
-        lastCmd: now
-      };
+      const userRateKey = `${from}_${sender}`;
+      const userRate = globalUserCommandRate.get(userRateKey) || { lastCmd: 0, warnedUntil: 0 };
+      const isCustomAntiflood = antifloodData[from]?.enabled;
+      const interval = isCustomAntiflood ? ((antifloodData[from].interval || 5) * 1000) : 1200;
 
+      if (now - userRate.lastCmd < interval) {
+        if (now > userRate.warnedUntil) {
+          userRate.warnedUntil = now + 15000;
+          globalUserCommandRate.set(userRateKey, userRate);
+          const waitSecs = Math.max(1, Math.ceil((interval - (now - userRate.lastCmd)) / 1000));
+          return reply(`⏳ Aguarde ${waitSecs}s antes de enviar outro comando.`);
+        }
+        try { await reagir('⏳'); } catch (_) {}
+        return;
+      }
+
+      userRate.lastCmd = now;
+      globalUserCommandRate.set(userRateKey, userRate);
+
+      if (globalUserCommandRate.size > 2000) {
+        const cutoff = now - 60000;
+        for (const [k, v] of globalUserCommandRate.entries()) {
+          if (v.lastCmd < cutoff) globalUserCommandRate.delete(k);
+        }
+      }
     }
     if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
       if (!isUserWhitelisted(sender, 'antidoc')) {
@@ -5838,7 +5882,7 @@ Entre em contato com o dono do bot:
 
           if (sub === 'apostar' || sub === 'bet') {
             const cdBet = me.cooldowns?.bet || 0;
-            if (Date.now() < cdBet) return reply(`⏳ Aguarde ${timeLeft(cdBet)} para apostar novamente.`);
+            if (Date.now() < cdBet) return notifyCooldown('apostar', cdBet);
             const amount = parseAmount(args[0], me.wallet);
             if (!isFinite(amount) || amount <= 0) return reply('Valor inválido.');
             if (amount > me.wallet) return reply('Saldo insuficiente.');
@@ -5857,7 +5901,7 @@ Entre em contato com o dono do bot:
           }
           if (sub === 'slots') {
             const cdSlots = me.cooldowns?.slots || 0;
-            if (Date.now() < cdSlots) return reply(`⏳ Aguarde ${timeLeft(cdSlots)} para jogar slots novamente.`);
+            if (Date.now() < cdSlots) return notifyCooldown('jogar slots', cdSlots);
             const amount = parseAmount(args[0] || '100', me.wallet);
             if (!isFinite(amount) || amount <= 0) return reply('Valor inválido.');
             if (amount > me.wallet) return reply('Saldo insuficiente.');
@@ -5983,7 +6027,7 @@ Entre em contato com o dono do bot:
           }
 
           if (sub === 'pescar' || sub === 'fish') {
-            const cd = me.cooldowns?.fish || 0; if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para pescar novamente.`);
+            const cd = me.cooldowns?.fish || 0; if (Date.now() < cd) return notifyCooldown('pescar', cd);
             const base = 80 + Math.floor(Math.random() * 121);
             const skillB = getSkillBonus(me, 'fishing');
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB)); const total = base + bonus;
@@ -6015,7 +6059,7 @@ Entre em contato com o dono do bot:
 
           if (sub === 'explorar' || sub === 'explore') {
             const cd = me.cooldowns?.explore || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para explorar novamente.`);
+            if (Date.now() < cd) return notifyCooldown('explorar', cd);
             const base = 100 + Math.floor(Math.random() * 151);
             const skillB = getSkillBonus(me, 'exploring');
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
@@ -6056,7 +6100,7 @@ Entre em contato com o dono do bot:
           }
 
           if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
-            const cd = me.cooldowns?.hunt || 0; if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para caçar novamente.`);
+            const cd = me.cooldowns?.hunt || 0; if (Date.now() < cd) return notifyCooldown('caçar', cd);
             const base = 22 + Math.floor(Math.random() * 34);
             const skillB = getSkillBonus(me, 'hunting');
             const bonus = Math.floor(base * ((huntBonus || 0) + skillB) * 0.4); const total = base + bonus;
@@ -6148,7 +6192,7 @@ Entre em contato com o dono do bot:
               return reply(`⚒️ Você forjou ${item?.name || craftKey}!`);
             }
 
-            const cd = me.cooldowns?.forge || 0; if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para forjar novamente.`);
+            const cd = me.cooldowns?.forge || 0; if (Date.now() < cd) return notifyCooldown('forjar', cd);
             const cost = 150; if (me.wallet < cost) return reply(`Você precisa de ${fmt(cost)} para materiais.`);
             me.wallet -= cost;
             const success = Math.random() < 0.35;
@@ -6165,7 +6209,7 @@ Entre em contato com o dono do bot:
 
           if (sub === 'crime') {
             const cd = me.cooldowns?.crime || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para tentar de novo.`);
+            if (Date.now() < cd) return notifyCooldown('crime', cd, `⏳ Aguarde ${timeLeft(cd)} para tentar de novo.`);
             const success = Math.random() < 0.18;
             if (success) {
               const base = 40 + Math.floor(Math.random() * 61);
@@ -6260,7 +6304,7 @@ Entre em contato com o dono do bot:
 
             const cd = me.cooldowns?.cook || 0;
             if (Date.now() < cd) {
-              return reply(`⏳ Você ainda está cozinhando! Aguarde ${timeLeft(cd)}.`);
+              return notifyCooldown('cozinhar', cd, `⏳ Você ainda está cozinhando! Aguarde ${timeLeft(cd)}.`);
             }
 
             if (me.wallet < recipe.gold) {
@@ -6566,7 +6610,7 @@ Entre em contato com o dono do bot:
 
           if (sub === 'minerar' || sub === 'mine') {
             const cd = me.cooldowns?.mine || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para minerar novamente.`);
+            if (Date.now() < cd) return notifyCooldown('minerar', cd);
             const pk = getActivePickaxe(me);
             if (!pk) return reply(`⛏️ Você precisa de uma picareta para minerar. Compre na ${prefix}loja (ex: ${prefix}comprar pickaxe_bronze) ou repare com ${prefix}reparar.`);
 
@@ -6607,7 +6651,7 @@ Entre em contato com o dono do bot:
 
           if (sub === 'trabalhar' || sub === 'work') {
             const cd = me.cooldowns?.work || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para trabalhar novamente.`);
+            if (Date.now() < cd) return notifyCooldown('trabalhar', cd);
             const base = 150 + Math.floor(Math.random() * 151);
             const skillB = getSkillBonus(me, 'working');
             const bonus = Math.floor(base * (workBonus + skillB));
@@ -6774,7 +6818,7 @@ Entre em contato com o dono do bot:
             if (!mentioned) return reply('Marque alguém para assaltar.');
             if (mentioned === sender) return reply('Você não pode assaltar a si mesmo.');
             const cd = me.cooldowns?.rob || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para tentar novamente.`);
+            if (Date.now() < cd) return notifyCooldown('roubar', cd, `⏳ Aguarde ${timeLeft(cd)} para tentar novamente.`);
             const target = getEcoUser(econ, mentioned);
             const chance = Math.random();
             const maxSteal = Math.min(target.wallet, 300);
@@ -10366,7 +10410,7 @@ Entre em contato com o dono do bot:
         const me = getEcoUser(econ, sender);
 
         const cdRoleta = me.cooldowns?.roleta || 0;
-        if (Date.now() < cdRoleta) return reply(`⏳ Aguarde ${timeLeft(cdRoleta)} para jogar roleta novamente.`);
+        if (Date.now() < cdRoleta) return notifyCooldown('roleta', cdRoleta, `⏳ Aguarde ${timeLeft(cdRoleta)} para jogar roleta novamente.`);
 
         const bet = parseInt(args[0]) || 0;
         const rawChoice = (args[1] || '');
@@ -10438,7 +10482,7 @@ Entre em contato com o dono do bot:
         const me = getEcoUser(econ, sender);
 
         const cdBJ = me.cooldowns?.blackjack || 0;
-        if (Date.now() < cdBJ) return reply(`⏳ Aguarde ${timeLeft(cdBJ)} para jogar blackjack novamente.`);
+        if (Date.now() < cdBJ) return notifyCooldown('blackjack', cdBJ, `⏳ Aguarde ${timeLeft(cdBJ)} para jogar blackjack novamente.`);
 
         const bet = parseInt(args[0]) || 0;
         if (bet <= 0) return reply(`🃏 *BLACKJACK*\n\n💡 Uso: ${prefix}blackjack <valor>\n\n📜 Regras: Chegue mais perto de 21 sem passar!`);
@@ -10532,7 +10576,7 @@ Entre em contato com o dono do bot:
         const me = getEcoUser(econ, sender);
 
         const cdSlots2 = me.cooldowns?.slots2 || 0;
-        if (Date.now() < cdSlots2) return reply(`⏳ Aguarde ${timeLeft(cdSlots2)} para jogar slots novamente.`);
+        if (Date.now() < cdSlots2) return notifyCooldown('slots', cdSlots2, `⏳ Aguarde ${timeLeft(cdSlots2)} para jogar slots novamente.`);
 
         const bet = parseInt(args[0]) || 0;
         if (bet <= 0) return reply(`🎰 *CAÇA-NÍQUEIS*\n\n💡 Uso: ${prefix}slots <valor>\n\n🎲 Alinhe 3 símbolos iguais para ganhar!`);
@@ -11430,7 +11474,7 @@ Entre em contato com o dono do bot:
         if (me.wallet < bet) return reply('💰 Você não tem moedas suficientes!');
 
         const cdDados = me.cooldowns?.dados || 0;
-        if (Date.now() < cdDados) return reply(`⏳ Aguarde ${timeLeft(cdDados)} para jogar dados novamente.`);
+        if (Date.now() < cdDados) return notifyCooldown('dados', cdDados, `⏳ Aguarde ${timeLeft(cdDados)} para jogar dados novamente.`);
 
         const playerRoll = Math.floor(Math.random() * 6) + 1;
 
@@ -11507,7 +11551,7 @@ Entre em contato com o dono do bot:
         if (me.wallet < bet) return reply('💰 Você não tem moedas suficientes!');
 
         const cdCoin = me.cooldowns?.coinflip || 0;
-        if (Date.now() < cdCoin) return reply(`⏳ Aguarde ${timeLeft(cdCoin)} para jogar novamente.`);
+        if (Date.now() < cdCoin) return notifyCooldown('moeda', cdCoin, `⏳ Aguarde ${timeLeft(cdCoin)} para jogar novamente.`);
 
         const playerWins = Math.random() < 0.05;
         const result = playerWins ? choice : (choice === 'cara' ? 'coroa' : 'cara');
@@ -11548,7 +11592,7 @@ Entre em contato com o dono do bot:
         if (me.wallet < bet) return reply('💰 Você não tem moedas suficientes!');
 
         const cdCrash = me.cooldowns?.crash || 0;
-        if (Date.now() < cdCrash) return reply(`⏳ Aguarde ${timeLeft(cdCrash)} para jogar crash novamente.`);
+        if (Date.now() < cdCrash) return notifyCooldown('crash', cdCrash, `⏳ Aguarde ${timeLeft(cdCrash)} para jogar crash novamente.`);
 
         let crashPoint;
         const crashRoll = Math.random();

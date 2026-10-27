@@ -1219,6 +1219,8 @@ async function createBotSocket(authDir) {
 
         messageQueue.setErrorHandler(queueErrorHandler);
 
+        const processedMessageIds = new Set();
+
         const processMessage = async (info) => {
 
             const isJoinRequest = info?.messageStubType === 172;
@@ -1233,6 +1235,18 @@ async function createBotSocket(authDir) {
 
             if (!info || !info.message || !info.key?.remoteJid) {
                 return;
+            }
+
+            const msgKeyId = info.key?.id;
+            if (msgKeyId) {
+                if (processedMessageIds.has(msgKeyId)) {
+                    return;
+                }
+                processedMessageIds.add(msgKeyId);
+                if (processedMessageIds.size > 3000) {
+                    const first = processedMessageIds.values().next().value;
+                    processedMessageIds.delete(first);
+                }
             }
 
             if (messagesCache && info.key?.id && info.key?.remoteJid) {
